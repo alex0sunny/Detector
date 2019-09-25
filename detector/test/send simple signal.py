@@ -3,7 +3,7 @@ import time
 
 from obspy import *
 
-from detector.test.header_util import chunk_stream, stream_to_bin
+from detector.header_util import chunk_stream, stream_to_bin
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.bind(('localhost', 5555))

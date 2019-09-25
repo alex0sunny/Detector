@@ -2,7 +2,7 @@ from obspy import *
 import numpy as np
 import zmq
 
-from detector.test.header_util import unpack_ch_header, prep_name
+from detector.header_util import unpack_ch_header, prep_name
 
 
 class StaLtaTriggerCore:
@@ -51,6 +51,8 @@ def sta_lta_picker(station, channel):
     raw_data = socket.recv()
     raw_header = raw_data[:12]
     sampling_rate, starttime = unpack_ch_header(raw_header)
+    data = raw_data[12:]
+
 
 
 st = read()

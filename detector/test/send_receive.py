@@ -7,7 +7,7 @@ from multiprocessing import Process
 import socket
 
 #from detector.test import send_signal, receive_signal
-from detector.test.header_util import chunk_stream, stream_to_bin, bin_to_stream
+from detector.header_util import chunk_stream, stream_to_bin, bin_to_stream
 from detector.test.signal_generator import SignalGenerator
 
 
