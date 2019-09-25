@@ -74,12 +74,6 @@ def sta_lta_picker(station, channel, sta, lta, init_level, stop_level):
             date_time += 1.0 / sampling_rate
 
 
-
-
-
-
-
-
 st = read()
 tr = st[1]
 sta = 1
