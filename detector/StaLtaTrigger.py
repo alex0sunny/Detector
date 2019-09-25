@@ -41,17 +41,42 @@ class StaLtaTrigger:
         return retVal
 
 
-def sta_lta_picker(station, channel):
+def sta_lta_picker(station, channel, sta, lta, init_level, stop_level):
     port = 5559
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
     socket.connect("tcp://localhost:%s" % port)
     topicfilter = prep_name(station) + prep_name(channel)
     socket.setsockopt_string(zmq.SUBSCRIBE, topicfilter)
-    raw_data = socket.recv()
-    raw_header = raw_data[:12]
-    sampling_rate, starttime = unpack_ch_header(raw_header)
-    data = raw_data[12:]
+    data_trigger = None
+    trigger_on = False
+    while True:
+        raw_data = socket.recv()
+        raw_header = raw_data[:12]
+        sampling_rate, starttime = unpack_ch_header(raw_header)
+        data = np.frombuffer(raw_data[12:], dtype='float32')
+        if not data_trigger:
+            nsta = round(sta * sampling_rate)
+            nlta = round(lta * sampling_rate)
+            data_trigger = StaLtaTrigger(nsta, nlta)
+        trigger_data = data_trigger.trigger(data)
+        activ_data = trigger_data > init_level
+        deactiv_data = trigger_data < stop_level
+        date_time = starttime
+        events_list = []
+        for a, d in zip(activ_data, deactiv_data):
+            if trigger_on and d:
+                events_list.append({'dt': date_time, 'trigger': False})
+                trigger_on = False
+            if not trigger_on and a:
+                events_list.append({'dt:': date_time, 'trigger': True})
+                trigger_on = True
+            date_time += 1.0 / sampling_rate
+
+
+
+
+
 
 
 
