@@ -1,11 +1,9 @@
 import zmq
-import pickle
-import time
 
 from obspy import *
 from matplotlib import pyplot
 
-from detector.test.header_util import bin_to_stream
+from detector.header_util import bin_to_stream
 
 
 def receive_signal():
