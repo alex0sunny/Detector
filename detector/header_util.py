@@ -5,7 +5,7 @@ import numpy as np
 def prep_name(stch):
     if type(stch) == bytes:
         stch = stch.decode()
-    stch.strip()[-4:].ljust(4)
+    stch = stch.strip()[-4:].ljust(4)
     return stch.encode()
 
 
@@ -17,8 +17,8 @@ def pack_ch_header(station, channel, sampling_rate, stamp_ns):
 
 
 def unpack_ch_header(bin_data):
-    sampling_rate = int.from_bytes(bin_data[:4], byteorder='big')
-    stamp_ns = int.from_bytes(bin_data[4:12], byteorder='big')
+    sampling_rate = int.from_bytes(bin_data[:2], byteorder='big')
+    stamp_ns = int.from_bytes(bin_data[2:10], byteorder='big')
     stamp = UTCDateTime(stamp_ns / 10 ** 9)
     return sampling_rate, stamp
 
@@ -58,7 +58,7 @@ def chunk_stream(st):
     stats = st[0].stats
     npts = stats.npts
     n_of_chans = len(st)
-    k = max(1, st[0].stats.npts * len(st) * 4 // 1000)
+    k = max(1, npts * n_of_chans * 4 // 1000)
     sts = [Stream(trs) for trs in zip(*[tr / k for tr in st]) if trs[0]]    # bug walkaround?
     for st in sts:
         if not st:

@@ -1,8 +1,15 @@
+# master
+import time     # for test only
+from matplotlib import pyplot
+from multiprocessing import Process
+
 from obspy import *
 import numpy as np
 import zmq
 
-from detector.header_util import unpack_ch_header, prep_name
+from detector.header_util import unpack_ch_header, prep_name, pack_ch_header, chunk_stream
+from detector.test.filter_exp import bandpass_zi
+from detector.test.signal_generator import SignalGenerator
 
 
 class StaLtaTriggerCore:
@@ -10,6 +17,7 @@ class StaLtaTriggerCore:
     def __init__(self, nsta, nlta):
         self.nsta = nsta
         self.nlta = nlta
+        #print('nlta:' + str(nlta))
         self.lta = np.require(np.zeros(nlta), dtype='float32')
         self.sta = np.require(np.zeros(nsta), dtype='float32')
         self.buf = self.lta.copy()
@@ -21,7 +29,10 @@ class StaLtaTriggerCore:
             next_lta = self.lta[-1] + (data_val - self.buf[0]) / self.nlta
             self.lta = np.append(self.lta, next_lta)
             self.buf = np.append(self.buf, data_val)[1:]
-        return self.sta[-data.size:] / self.lta[-data.size:]
+        ret_val = self.sta[-data.size:] / self.lta[-data.size:]
+        self.sta = self.sta[-self.nsta:]
+        self.lta = self.sta[-self.nlta:]
+        return ret_val
 
 
 class StaLtaTrigger:
@@ -31,30 +42,33 @@ class StaLtaTrigger:
         self.bufsize = 0
 
     def trigger(self, data):
-        retVal = self.triggerCore.trigger(data)
+        ret_val = self.triggerCore.trigger(data)
         self.bufsize += data.size
         tail = self.bufsize - self.triggerCore.nlta + 1
         if 0 < tail < data.size:
-            retVal = np.append(np.require(np.zeros(data.size - tail), dtype='float32'), retVal[-tail:])
+            ret_val = np.append(np.require(np.zeros(data.size - tail), dtype='float32'), ret_val[-tail:])
         elif tail <= 0:
-            retVal = np.require(np.zeros(data.size), dtype='float32')
-        return retVal
+            ret_val = np.require(np.zeros(data.size), dtype='float32')
+        return ret_val
 
 
-def sta_lta_picker(station, channel, sta, lta, init_level, stop_level):
-    port = 5559
+def sta_lta_picker(station, channel, freqmin, freqmax, sta, lta, init_level, stop_level):
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
-    socket.connect("tcp://localhost:%s" % port)
-    topicfilter = prep_name(station) + prep_name(channel)
+    socket.connect('tcp://localhost:5559')
+    topicfilter = prep_name(station).decode() + prep_name(channel).decode()
     socket.setsockopt_string(zmq.SUBSCRIBE, topicfilter)
     data_trigger = None
     trigger_on = False
+    zi = None
     while True:
         raw_data = socket.recv()
-        raw_header = raw_data[:12]
+        raw_header = raw_data[8:18]
+        # print('raw_header received:' + str(raw_header))
         sampling_rate, starttime = unpack_ch_header(raw_header)
-        data = np.frombuffer(raw_data[12:], dtype='float32')
+        # print('sampling_rate:' + str(sampling_rate) + ' starttime:' + str(starttime))
+        data = np.frombuffer(raw_data[18:], dtype='int32')
+        data, zi = bandpass_zi(data, sampling_rate, freqmin, freqmax, zi)
         if not data_trigger:
             nsta = round(sta * sampling_rate)
             nlta = round(lta * sampling_rate)
@@ -72,10 +86,11 @@ def sta_lta_picker(station, channel, sta, lta, init_level, stop_level):
                 events_list.append({'dt:': date_time, 'trigger': True})
                 trigger_on = True
             date_time += 1.0 / sampling_rate
-
+        if events_list:
+            print('events_list:' + str(events_list))
 
 st = read()
-tr = st[1]
+tr = st[0]
 sta = 1
 lta = 4
 nsta = int(tr.stats.sampling_rate * sta)
@@ -90,4 +105,44 @@ for tr in tr / 10:
     data_trigger = np.append(data_trigger, data)
 print('data_trigger size:' + str(data_trigger.size))
 tr_triggered.data = data_trigger
-tr_triggered.plot()
+(Stream() + tr + tr_triggered).plot()
+
+# def sender_test():
+#     st = read('d:/converter_data/example/onem.mseed')
+#     tr = st[0]
+#     tr.stats.station = 'ND01'
+#     tr.stats.channel = 'X'
+#     st = Stream() + tr
+#     signal_generator = SignalGenerator(st)
+#
+#     context = zmq.Context()
+#     socket = context.socket(zmq.PUB)
+#     socket.bind('tcp://*:5559')
+#
+#     pyplot.ion()
+#     figure = pyplot.figure()
+#
+#     while True:
+#         st = signal_generator.get_stream()
+#         pyplot.clf()
+#         st.plot(fig=figure)
+#         pyplot.show()
+#         sts = chunk_stream(st)
+#         for st in sts:
+#             tr = st[0]
+#             bin_header = pack_ch_header(tr.stats.station, tr.stats.channel, tr.stats.sampling_rate,
+#                                         tr.stats.starttime._ns)
+#             bin_data = bin_header + tr.data.tobytes()
+#             #print('data len:' + str(len(tr.data.tobytes())))
+#             # print('bin_data size:' + str(len(bin_data)))
+#             socket.send(bin_data)
+#             #print('bin header sent:' + str(bin_header))
+#         pyplot.pause(.5)
+#         #time.sleep(.5)
+#
+#
+# if __name__ == '__main__':
+#     p_sender = Process(target=sender_test, args=())
+#     p_receiver = Process(target=sta_lta_picker, args=('ND01', 'X', 100, 300, 1, 4, 2, 1))
+#     p_sender.start()
+#     p_receiver.start()

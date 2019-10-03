@@ -65,6 +65,7 @@ def receive_signal(conn_tuples):
                 pyplot.clf()
                 st.plot(fig=figure)
                 pyplot.show()
+                pyplot.pause(.01)
 
 
 def bandpass_filter(st, conn_str_sub, conn_str_pub):
