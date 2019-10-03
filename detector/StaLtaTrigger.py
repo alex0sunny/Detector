@@ -28,7 +28,7 @@ class StaLtaTriggerCore:
             self.sta = np.append(self.sta, next_sta)
             next_lta = self.lta[-1] + (data_val - self.buf[0]) / self.nlta
             self.lta = np.append(self.lta, next_lta)
-            self.buf = np.append(self.buf, data_val)[1:]
+            self.buf = np.append(self.buf, data_val)
         ret_val = self.sta[-data.size:] / self.lta[-data.size:]
         self.sta = self.sta[-self.nsta:]
         self.lta = self.sta[-self.nlta:]
@@ -89,23 +89,27 @@ def sta_lta_picker(station, channel, freqmin, freqmax, sta, lta, init_level, sto
         if events_list:
             print('events_list:' + str(events_list))
 
-st = read()
+st = read('D:/converter_data/example/onem.mseed')
 tr = st[0]
-sta = 1
-lta = 4
+sta = 2
+lta = 10
 nsta = int(tr.stats.sampling_rate * sta)
 nlta = int(tr.stats.sampling_rate * lta)
 tr_triggered = tr.copy()
+tr_triggered.stats.station = 'tri'
 data = tr.data
-slTrigger = StaLtaTrigger(nsta, nlta)
+slTrigger = StaLtaTriggerCore(nsta, nlta)
 # tr.data = slTrigger.trigger(data)
 data_trigger = np.empty(0, 'float32')
-for tr in tr / 10:
-    data = slTrigger.trigger(tr.data)
+for tr_chunked in tr / 10:
+    data = slTrigger.trigger(tr_chunked.data)
     data_trigger = np.append(data_trigger, data)
 print('data_trigger size:' + str(data_trigger.size))
 tr_triggered.data = data_trigger
-(Stream() + tr + tr_triggered).plot()
+tr_classic = tr.copy()
+tr_classic.trigger(type='classicstalta', sta=sta, lta=lta)
+tr_classic.stats.station = 'cla'
+(Stream() + tr + tr_triggered + tr_classic).plot(equal_scale=False)
 
 # def sender_test():
 #     st = read('d:/converter_data/example/onem.mseed')
