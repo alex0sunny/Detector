@@ -1,5 +1,7 @@
 from obspy import *
 import numpy as np
+import json
+import base64
 
 
 def prep_name(stch):
@@ -79,6 +81,25 @@ def stream_to_bin(st):
     return bin_stats + data_multiplexed.tobytes()
 
 
+def stream_to_json(st):
+    stats = st[0].stats
+    station = stats.station
+    sampling_rate = stats.sampling_rate
+    stamp_ns = stats.starttime._ns
+    n_of_chans = len(st)
+    json_dic = {}
+    signal_dic = {}
+    signal_dic['sample_rate'] = sampling_rate
+    signal_dic['timestmp'] = stamp_ns / 10**9
+    samples_dic = {}
+    for tr in st:
+        data_decoded = base64.encodebytes(tr.data.tobytes()).decode('ASCII')
+        samples_dic[tr.stats.channel] = data_decoded
+    signal_dic['samples'] = samples_dic
+    json_dic['signal'] = signal_dic
+    return json.dumps(json_dic)
+
+
 def bin_to_stream(bin_data):
     station, sampling_rate, stamp, n_of_chans = unpack_header(bin_data[:24])
     data_multiplexed = np.frombuffer(bin_data[24:], dtype='int32')
@@ -94,6 +115,7 @@ def bin_to_stream(bin_data):
         st += tr
     return st
 
+# print(stream_to_json(read()))
 
 # st = read('D:/converter_data/example/onem.mseed')
 # sts = chunk_stream(st)

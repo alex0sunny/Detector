@@ -3,7 +3,7 @@ import time
 
 from obspy import *
 
-from detector.header_util import chunk_stream, stream_to_bin
+from detector.header_util import chunk_stream, stream_to_bin, stream_to_json
 from detector.test.signal_generator import SignalGenerator
 
 
@@ -20,12 +20,14 @@ def send_signal(st, host, port):
             while True:
                 st = signal_generator.get_stream()
                 sts = chunk_stream(st)
-                bin_datas = [stream_to_bin(st) for st in sts]
-                for bin_data in bin_datas:
-                    print('bdata size:' + str(len(bin_data)))
-                    conn.sendall(bin_data)
+                json_datas = [stream_to_json(st).encode('utf8') for st in sts]
+                for json_data in json_datas:
+                    data_len = len(json_data)
+                    print('bdata size:' + str(data_len))
+                    size_bytes = int(data_len).to_bytes(4, byteorder='little')
+                    conn.sendall(size_bytes + json_data)
                     time.sleep(.01)
-                time.sleep(.5)
+                time.sleep(.1)
 
 
 st = read('D:/converter_data/example/onem.mseed')

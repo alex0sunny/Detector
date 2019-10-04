@@ -1,4 +1,7 @@
 # master
+import base64
+import json
+import socket as sock
 import time     # for test only
 from matplotlib import pyplot
 from multiprocessing import Process
@@ -64,9 +67,9 @@ def sta_lta_picker(station, channel, freqmin, freqmax, sta, lta, init_level, sto
     while True:
         raw_data = socket.recv()
         raw_header = raw_data[8:18]
-        # print('raw_header received:' + str(raw_header))
+        #print('raw_header received:' + str(raw_header))
         sampling_rate, starttime = unpack_ch_header(raw_header)
-        # print('sampling_rate:' + str(sampling_rate) + ' starttime:' + str(starttime))
+        #print('sampling_rate:' + str(sampling_rate) + ' starttime:' + str(starttime))
         data = np.frombuffer(raw_data[18:], dtype='int32')
         data, zi = bandpass_zi(data, sampling_rate, freqmin, freqmax, zi)
         if not data_trigger:
@@ -83,7 +86,7 @@ def sta_lta_picker(station, channel, freqmin, freqmax, sta, lta, init_level, sto
                 events_list.append({'dt': date_time, 'trigger': False})
                 trigger_on = False
             if not trigger_on and a:
-                events_list.append({'dt:': date_time, 'trigger': True})
+                events_list.append({'dt': date_time, 'trigger': True})
                 trigger_on = True
             date_time += 1.0 / sampling_rate
         if events_list:
@@ -111,47 +114,81 @@ def sta_lta_picker(station, channel, freqmin, freqmax, sta, lta, init_level, sto
 # tr_classic.stats.station = 'cla'
 # (Stream() + tr + tr_triggered + tr_classic).plot(equal_scale=False)
 
+
 def sender_test():
-    st = read('d:/converter_data/example/onem.mseed')
-    tr = st[0]
-    tr.stats.station = 'ND01'
-    tr.stats.channel = 'X'
-    st = Stream() + tr
-    signal_generator = SignalGenerator(st)
+    s = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
+    s.setsockopt(sock.SOL_SOCKET, sock.SO_RCVBUF, 8192)
+    # s.connect(("192.168.0.200", 10003))
+    s.connect(("localhost", 5555))
+
+    st_buf = Stream()
+
+    pyplot.ion()
+    figure = pyplot.figure()
+
+    cur_time = time.time()
 
     context = zmq.Context()
     socket = context.socket(zmq.PUB)
     socket.bind('tcp://*:5559')
 
-    pyplot.ion()
-    figure = pyplot.figure()
-
-    st_vis = Stream()
     while True:
-        st = signal_generator.get_stream()
-        st_vis += st
-        st_vis.merge()
-        st_vis.trim(st_vis[0].stats.endtime - 10)
-        pyplot.clf()
-        st_vis.plot(fig=figure)
-        pyplot.show()
-        pyplot.pause(.01)
-        sts = chunk_stream(st)
-        for st in sts:
-            tr = st[0]
-            bin_header = pack_ch_header(tr.stats.station, tr.stats.channel, tr.stats.sampling_rate,
-                                        tr.stats.starttime._ns)
-            bin_data = bin_header + tr.data.tobytes()
-            #print('data len:' + str(len(tr.data.tobytes())))
-            # print('bin_data size:' + str(len(bin_data)))
-            socket.send(bin_data)
-            #print('bin header sent:' + str(bin_header))
-        pyplot.pause(.5)
-        #time.sleep(.5)
+        size_data = s.recv(4)
+        size = int.from_bytes(size_data, byteorder='little')
+        if size > 20000:
+            print('possibly incorrect size:' + str(size))
+        bdata = b''
+        bytes_recvd = 0
+        while bytes_recvd < size:
+            bdata += s.recv(size - bytes_recvd)
+            bytes_recvd = len(bdata)
+        # print('bdata size:' + str(len(bdata)) + '\nbdata:' + str(bdata))
+        if bdata[-1] == 125:
+            json_data = json.loads(bdata.decode('utf-8'))
+            if 'signal' in json_data:
+                # print(json_data)
+                sampling_rate = json_data['signal']['sample_rate']
+                starttime = UTCDateTime(json_data['signal']['timestmp'])
+                chs = json_data['signal']['samples']
+                st = Stream()
+                for ch in chs:
+                    bin_signal = (base64.decodebytes(json_data['signal']['samples'][ch].encode("ASCII")))
+                    # print('bin signal received')
+                    data = np.frombuffer(bin_signal, dtype='int32')
+                    # print('data:' + str(data[:100]))
+                    tr = Trace()
+                    tr.stats.station = 'ND01'
+                    tr.stats.starttime = starttime
+                    tr.stats.sampling_rate = sampling_rate
+                    tr.stats.channel = ch
+                    tr.data = data
+                    st += tr
+                for tr in st:
+                    bin_header = pack_ch_header(tr.stats.station, tr.stats.channel, tr.stats.sampling_rate,
+                                                tr.stats.starttime._ns)
+                    bin_data = bin_header + tr.data.tobytes()
+                    socket.send(bin_data)
+                st_buf += st
+                st_buf.sort()
+                st_buf.merge(fill_value='latest')
+                st_buf = st_buf.trim(starttime=st_buf[-1].stats.endtime - 5)
+                if time.time() > cur_time + 2:
+                    cur_time = time.time()
+                    pyplot.clf()
+                    st_buf.plot(fig=figure)
+                    pyplot.show()
+                    pyplot.pause(.01)
+                    #print(st_buf)
+            # else:
+            #     print('bdata:' + str(bdata))
+        else:
+            while bdata[-1] != 125:
+                print('skip packet')
+                bdata = s.recv(10000)
 
 
 if __name__ == '__main__':
     p_sender = Process(target=sender_test, args=())
-    p_receiver = Process(target=sta_lta_picker, args=('ND01', 'X', 100, 300, 1, 4, 2, 1))
+    p_receiver = Process(target=sta_lta_picker, args=('ND01', 'EHE', 100, 300, 1, 4, 2, 1))
     p_sender.start()
     p_receiver.start()

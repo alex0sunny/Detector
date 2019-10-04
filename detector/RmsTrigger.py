@@ -21,13 +21,13 @@ class RmsTriggerCore:
         self.rms = self.buf.copy()
 
     def trigger(self, data):
-        for data_val in data ** 2:
-            next_val = (self.sta[-1] + (data_val - self.buf[-self.n]) / self.n)
-            self.rms = np.append(self.sta, next_val)
-            self.buf = np.append(self.buf, data_val)[1:]
-        ret_val = self.rms[-data.size:] ** .5
         self.rms = self.rms[-self.n:]
-        return ret_val
+        self.buf = self.buf[-self.n:]
+        for data_val in data ** 2:
+            rms_val = (self.sta[-1] + (data_val - self.buf[-self.n]) / self.n)
+            self.rms = np.append(self.rms, rms_val)
+            self.buf = np.append(self.buf, data_val)
+        return self.rms[-data.size:] ** .5
 
 
 class RmsTrigger:
