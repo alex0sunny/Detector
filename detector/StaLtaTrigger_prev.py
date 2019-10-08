@@ -10,17 +10,16 @@ from obspy import *
 import numpy as np
 import zmq
 
+from detector.header_util import unpack_ch_header, prep_name, pack_ch_header, chunk_stream
+from detector.test.filter_exp import bandpass_zi
+# from detector.test.signal_generator import SignalGenerator
+
 import logging
 
 logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
                            '%(message)s',
                     level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-
-
-from detector.header_util import unpack_ch_header, prep_name, pack_ch_header, chunk_stream
-from detector.test.filter_exp import bandpass_zi
-# from detector.test.signal_generator import SignalGenerator
 
 
 class StaLtaTriggerCore:
@@ -34,20 +33,17 @@ class StaLtaTriggerCore:
         self.buf = self.lta.copy()
 
     def trigger(self, data):
-        if data.size > self.nsta:
-            res1 = self.trigger(data[:self.nsta])
-            res2 = self.trigger(data[self.nsta:])
-            return np.append(res1, res2)
         self.buf = self.buf[-self.nlta:]
         self.sta = self.sta[-self.nsta:]
         self.lta = self.lta[-self.nlta:]
-        self.buf = np.append(self.buf, data ** 2)
-        cum_sum = np.cumsum(self.buf[-data.size:])
-        next_sta = self.sta[-1] + (cum_sum - np.cumsum(self.buf[-self.nsta-data.size:-self.nsta])) / nsta
-        next_lta = self.lta[-1] + (cum_sum - np.cumsum(self.buf[-self.nlta-data.size:-self.nlta])) / nlta
-        self.sta = np.append(self.sta, next_sta)
-        self.lta = np.append(self.lta, next_lta)
-        logger.debug('\nsta:' + str(self.sta[-data.size:])) # + '\nlta:' + str(self.lta[-data.size:]))
+        for data_val in data ** 2:
+            next_sta = self.sta[-1] + (data_val - self.buf[-self.nsta]) / self.nsta
+            logger.debug('next sta:' + str(next_sta))
+            self.sta = np.append(self.sta, next_sta)
+            next_lta = self.lta[-1] + (data_val - self.buf[0]) / self.nlta
+            #logger.debug('next lta:' + str(next_lta))
+            self.lta = np.append(self.lta, next_lta)
+            self.buf = np.append(self.buf, data_val)[1:]
         return self.sta[-data.size:] / self.lta[-data.size:]
 
 
