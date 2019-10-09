@@ -2,9 +2,10 @@ from obspy import *
 import numpy as np
 from obspy.signal.filter import highpass
 from scipy.signal import iirfilter, zpk2sos, sosfilt, sosfilt_zi
+#from butterworth import Butter
 
 
-def bandpass_zi(data, sampling_rate, freqmin, freqmax, zi=None):
+def bandpass_zi(data, sampling_rate, freqmin, freqmax, zi=None, sos=None):
     corners = 4
     zerophase = False
 
@@ -22,13 +23,13 @@ def bandpass_zi(data, sampling_rate, freqmin, freqmax, zi=None):
     if low > 1:
         msg = "Selected low corner frequency is above Nyquist."
         raise ValueError(msg)
-    z, p, k = iirfilter(corners, [low, high], btype='band',
-                        ftype='butter', output='zpk')
-    sos = zpk2sos(z, p, k)
     if zi is None:
+        z, p, k = iirfilter(corners, [low, high], btype='bandpass',
+                            ftype='butter', output='zpk')
+        sos = zpk2sos(z, p, k)
         zi = sosfilt_zi(sos)
     data, zo = sosfilt(sos, data, zi=zi)
-    return data, zo
+    return data, zo, sos
 
 
 # st = read()
@@ -42,9 +43,9 @@ def bandpass_zi(data, sampling_rate, freqmin, freqmax, zi=None):
 #     tr.filter(type='bandpass', freqmin=.1, freqmax=1)
 #     tr.stats.station = 'ND02'
 # zi = None
+# sos = None
 # for tr in st_zi:
-#     tr.data, zi = bandpass_zi(tr.data, tr.stats.sampling_rate, .1, 1, zi)
-#     #tr.filter(type='bandpass', freqmin=.1, freqmax=1)
+#     tr.data, zi, sos = bandpass_zi(tr.data, tr.stats.sampling_rate, .1, 1, zi, sos)
 #     tr.stats.station = 'ND03'
 # (st + st_filt + st_chunked.merge() + st_zi.merge()).plot()
 

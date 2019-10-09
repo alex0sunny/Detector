@@ -38,7 +38,7 @@ class StaLtaTriggerCore:
         self.lta = self.lta[-self.nlta:]
         for data_val in data ** 2:
             next_sta = self.sta[-1] + (data_val - self.buf[-self.nsta]) / self.nsta
-            logger.debug('next sta:' + str(next_sta))
+            #logger.debug('next sta:' + str(next_sta))
             self.sta = np.append(self.sta, next_sta)
             next_lta = self.lta[-1] + (data_val - self.buf[0]) / self.nlta
             #logger.debug('next lta:' + str(next_lta))
@@ -47,9 +47,13 @@ class StaLtaTriggerCore:
         return self.sta[-data.size:] / self.lta[-data.size:]
 
 
-nsta = 5
-nlta = 10
-data = np.arange(20)
+nsta = 1000
+nlta = 3000
+data = np.arange(10000)
 slTrigger = StaLtaTriggerCore(nsta, nlta)
-slTrigger.trigger(data)
+data_trigger = slTrigger.trigger(data)
+i = 1000
+while i < 3000:
+    logger.debug('\ndata_trigger:' + str(data_trigger[i:i+100]))
+    i += 100
 
