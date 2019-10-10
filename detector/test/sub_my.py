@@ -12,11 +12,11 @@ socket.bind("tcp://*:5556")
 
 total_value = 0
 while True:
-    id = socket.recv()
+    id = socket.expand()
     print('id:' + str(id))
-    str_data = str(socket.recv())
+    str_data = str(socket.expand())
     print('recv:' + str_data)
-    id = socket.recv()   # id
+    id = socket.expand()   # id
     print('id:' + str(id))
-    str_data = str(socket.recv())
+    str_data = str(socket.expand())
     print('recv:' + str_data)

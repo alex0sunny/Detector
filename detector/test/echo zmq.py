@@ -14,9 +14,9 @@ while True:
     socket.send(b'Hello, world') #, zmq.SNDMORE)
     print('message sent')
 
-    id = socket.recv()
+    id = socket.expand()
     print('received id:' + str(id))
-    data = socket.recv()
+    data = socket.expand()
     print('received data:' + str(data))
 
 

@@ -57,7 +57,7 @@ def rms_picker(station, channel, freqmin, freqmax, len, init_level, stop_level):
     trigger_on = False
     zi = None
     while True:
-        raw_data = socket.recv()
+        raw_data = socket.expand()
         raw_header = raw_data[8:18]
         # print('raw_header received:' + str(raw_header))
         sampling_rate, starttime = unpack_ch_header(raw_header)

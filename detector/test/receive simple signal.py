@@ -8,8 +8,8 @@ socket = context.socket(zmq.STREAM)
 
 socket.connect("tcp://localhost:5555")
 while True:
-    id = socket.recv()
-    bin_data = socket.recv()
+    id = socket.expand()
+    bin_data = socket.expand()
     if not bin_data:
         print('empty data')
     else:

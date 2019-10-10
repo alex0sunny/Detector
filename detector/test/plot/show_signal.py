@@ -13,7 +13,7 @@ socket.connect("tcp://127.0.0.1:5556")
 socket.setsockopt_string(zmq.SUBSCRIBE, '')
 print('socket connected')
 while True:
-    st = pickle.loads(socket.recv())
+    st = pickle.loads(socket.expand())
     print('signal received')
     pyplot.clf()
     st.plot(fig=figure)

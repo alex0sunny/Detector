@@ -11,15 +11,15 @@ import numpy as np
 import zmq
 
 import logging
+from detector.header_util import unpack_ch_header, prep_name, pack_ch_header, chunk_stream
+from detector.test.filter_exp import bandpass_zi
+
 
 logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
                            '%(message)s',
                     level=logging.DEBUG)
 logger = logging.getLogger('detector')
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
-
-from detector.header_util import unpack_ch_header, prep_name, pack_ch_header, chunk_stream
-from detector.test.filter_exp import bandpass_zi
 
 
 # from detector.test.signal_generator import SignalGenerator
@@ -85,7 +85,7 @@ def sta_lta_picker(station, channel, freqmin, freqmax, sta, lta, init_level, sto
     zi = None
     sos = None
     while True:
-        raw_data = socket.recv()
+        raw_data = socket.expand()
         raw_header = raw_data[8:18]
         #print('raw_header received:' + str(raw_header))
         sampling_rate, starttime = unpack_ch_header(raw_header)

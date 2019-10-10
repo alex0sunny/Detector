@@ -48,8 +48,8 @@ def receive_signal(conn_tuples):
     figure = pyplot.figure()
 
     while True:
-        id = socket.recv()
-        bin_data = socket.recv()
+        id = socket.expand()
+        bin_data = socket.expand()
         if not bin_data:
             print('empty data')
         else:
@@ -75,7 +75,7 @@ def bandpass_filter(st, conn_str_sub, conn_str_pub):
     socket_pub = context.socket(zmq.PUB)
     socket_pub.bind('tcp://*:5567')
     while True:
-        bin_data = socket_sub.recv()
+        bin_data = socket_sub.expand()
 
 
 st = read('D:/converter_data/example/onem.mseed')
