@@ -1,12 +1,18 @@
-import os
-import sys
 from multiprocessing import Process
 
-from detector.StaLtaTrigger import *
+
+import os
+
+from detector.filter_trigger.StaLtaTrigger import sta_lta_picker
+from detector.send_receive.signal_receiver import signal_receiver
 
 if __name__ == '__main__':
-    p_sender = Process(target=sender_test, args=())
-    p_receiver = Process(target=sta_lta_picker, args=('ND01', 'EHE', 100, 300, 1, 4, 2, 1))
-    p_sender.start()
+    p_receiver = Process(target=signal_receiver, args=("tcp://192.168.0.189:5555",))
+    p_picker = Process(target=sta_lta_picker, args=('ND01', 'EHE', 100, 300, 1, 4, 2, 1))
+    p_picker2 = Process(target=sta_lta_picker, args=('ND01', 'EHN', 100, 300, 1, 4, 2, 1))
+    p_picker3 = Process(target=sta_lta_picker, args=('ND01', 'EHZ', 100, 300, 1, 4, 2, 1))
     p_receiver.start()
+    p_picker.start()
+    p_picker2.start()
+    p_picker3.start()
 

@@ -3,7 +3,7 @@ import time
 
 from obspy import *
 
-from detector.header_util import chunk_stream, stream_to_bin
+from detector.misc.header_util import chunk_stream, stream_to_bin
 from detector.test.signal_generator import SignalGenerator
 
 st = read('D:/converter_data/example/threeCh100.mseed')

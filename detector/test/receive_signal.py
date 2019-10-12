@@ -3,7 +3,7 @@ import zmq
 from obspy import *
 from matplotlib import pyplot
 
-from detector.header_util import bin_to_stream
+from detector.misc.header_util import bin_to_stream
 
 
 def receive_signal():

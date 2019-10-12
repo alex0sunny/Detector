@@ -1,15 +1,11 @@
 # master
-import time     # for test only
-from matplotlib import pyplot
-from multiprocessing import Process
 
 from obspy import *
 import numpy as np
 import zmq
 
-from detector.header_util import unpack_ch_header, prep_name, pack_ch_header, chunk_stream
-from detector.test.filter_exp import bandpass_zi
-from detector.test.signal_generator import SignalGenerator
+from detector.misc.header_util import unpack_ch_header, prep_name
+from detector.filter_trigger import bandpass_zi
 
 
 class RmsTriggerCore:

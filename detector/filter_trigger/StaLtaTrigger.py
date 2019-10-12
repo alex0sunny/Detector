@@ -2,17 +2,15 @@
 import base64
 import json
 import socket as sock
-import time  # for test only
 # from matplotlib import pyplot
-from multiprocessing import Process
 
 from obspy import *
 import numpy as np
 import zmq
 
 import logging
-from detector.header_util import unpack_ch_header, prep_name, pack_ch_header, chunk_stream
-from detector.test.filter_exp import bandpass_zi
+from detector.misc.header_util import unpack_ch_header, prep_name, pack_ch_header
+from detector.filter_trigger.filter_bandpass import bandpass_zi
 
 
 logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
@@ -85,7 +83,7 @@ def sta_lta_picker(station, channel, freqmin, freqmax, sta, lta, init_level, sto
     zi = None
     sos = None
     while True:
-        raw_data = socket.expand()
+        raw_data = socket.recv()
         raw_header = raw_data[8:18]
         #print('raw_header received:' + str(raw_header))
         sampling_rate, starttime = unpack_ch_header(raw_header)
@@ -103,53 +101,14 @@ def sta_lta_picker(station, channel, freqmin, freqmax, sta, lta, init_level, sto
         events_list = []
         for a, d in zip(activ_data, deactiv_data):
             if trigger_on and d:
-                events_list.append({'dt': date_time, 'trigger': False})
+                events_list.append({'channel': channel, 'dt': date_time, 'trigger': False})
                 trigger_on = False
             if not trigger_on and a:
-                events_list.append({'dt': date_time, 'trigger': True})
+                events_list.append({'channel': channel, 'dt': date_time, 'trigger': True})
                 trigger_on = True
             date_time += 1.0 / sampling_rate
         if events_list:
             print('events_list:' + str(events_list))
-
-
-def sender_test():
-    s = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
-    s.setsockopt(sock.SOL_SOCKET, sock.SO_RCVBUF, 8192)
-    # s.connect(("192.168.0.200", 10003))
-    s.connect(("192.168.0.189", 5555))
-
-    context = zmq.Context()
-    socket = context.socket(zmq.PUB)
-    socket.bind('tcp://*:5559')
-
-    while True:
-        size_data = s.recv(4)
-        size = int.from_bytes(size_data, byteorder='little')
-        if size > 20000:
-            print('possibly incorrect size:' + str(size))
-        bdata = b''
-        bytes_recvd = 0
-        while bytes_recvd < size:
-            bdata += s.recv(size - bytes_recvd)
-            bytes_recvd = len(bdata)
-        # print('bdata size:' + str(len(bdata)) + '\nbdata:' + str(bdata))
-        if bdata[-1] == 125:
-            json_data = json.loads(bdata.decode('utf-8'))
-            if 'signal' in json_data:
-                sampling_rate = json_data['signal']['sample_rate']
-                starttime = UTCDateTime(json_data['signal']['timestmp'])
-                #print('current time:' + str(starttime))
-                chs = json_data['signal']['samples']
-                for ch in chs:
-                    bin_header = pack_ch_header('ND01', ch, sampling_rate, starttime._ns)
-                    bin_signal = (base64.decodebytes(json_data['signal']['samples'][ch].encode("ASCII")))
-                    bin_data = bin_header + bin_signal
-                    socket.send(bin_data)
-        else:
-            while bdata[-1] != 125:
-                print('skip packet')
-                bdata = s.recv(10000)
 
 
 # st = read('D:/converter_data/example/onem.mseed')

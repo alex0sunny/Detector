@@ -4,7 +4,7 @@ import time
 from obspy import *
 from matplotlib import pyplot
 
-from detector.header_util import chunk_stream, stream_to_bin, stream_to_json
+from detector.misc.header_util import chunk_stream, stream_to_json
 from detector.test.signal_generator import SignalGenerator
 
 

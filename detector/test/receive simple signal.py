@@ -1,7 +1,7 @@
 import zmq
 from obspy import *
 
-from detector.header_util import bin_to_stream
+from detector.misc.header_util import bin_to_stream
 
 context = zmq.Context()
 socket = context.socket(zmq.STREAM)
