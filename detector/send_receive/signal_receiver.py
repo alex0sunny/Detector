@@ -13,20 +13,17 @@ from obspy import UTCDateTime
 
 from detector.filter_trigger.StaLtaTrigger import logger
 from detector.misc.header_util import pack_ch_header
+from detector.send_receive.reciever_zmq import ZmqReceiver
 
 
 def signal_receiver(conn_str):
     context = zmq.Context()
-    socket = context.socket(zmq.STREAM)
-    socket.connect(conn_str)
-    id_net = socket.recv()
-    socket.recv()   # empty data here
+    socket = ZmqReceiver(conn_str, context)
 
     socket_pub = context.socket(zmq.PUB)
     socket_pub.bind('tcp://*:5559')
 
     while True:
-        assert(id_net == socket.recv())
         raw_data = socket.recv()
         size_bytes = raw_data[:4]
         size = int.from_bytes(size_bytes, byteorder='little')
@@ -60,3 +57,4 @@ def signal_receiver(conn_str):
                 socket_pub.send(bin_data)
         else:
             logger.debug('received packet is not signal')
+

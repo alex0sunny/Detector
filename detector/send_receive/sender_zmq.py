@@ -5,9 +5,9 @@ from detector.filter_trigger.StaLtaTrigger import logger
 
 class ZmqSender:
 
-    def __init__(self, conn_str):
+    def __init__(self, conn_str, context):
         self.net_id = None
-        self.context = zmq.Context()
+        self.context = context
         self.socket = self.context.socket(zmq.STREAM)
         self.socket.bind(conn_str)
         self.net_id = self.socket.recv()
@@ -24,5 +24,4 @@ class ZmqSender:
 
     def __del__(self):
         self.socket.close()
-        self.context.destroy()
 
