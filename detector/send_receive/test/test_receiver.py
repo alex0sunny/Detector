@@ -5,7 +5,7 @@ from obspy import *
 import numpy as np
 import time
 
-from detector.send_receive.reciever_zmq import NdasReceiver
+from detector.send_receive.client_zmq import NdasReceiver
 from detector.filter_trigger.StaLtaTrigger import logger
 
 pyplot.ion()

@@ -1,6 +1,6 @@
 from obspy import *
 
-from detector.filter_trigger.filter_bandpass import bandpass_zi
+from detector.filter_trigger.filter_bandpass import Filter
 
 st = read()
 st = Stream() + st[0]
@@ -12,10 +12,9 @@ st_zi = st_chunked.copy()
 for tr in st_chunked:
     tr.filter(type='bandpass', freqmin=.1, freqmax=1)
     tr.stats.station = 'ND02'
-zi = None
-sos = None
+filter = Filter(tr.stats.sampling_rate, .1, 1)
 for tr in st_zi:
-    tr.data, zi, sos = bandpass_zi(tr.data, tr.stats.sampling_rate, .1, 1, zi, sos)
+    tr.data = filter.bandpass(tr.data)
     tr.stats.station = 'ND03'
 (st + st_filt + st_chunked.merge() + st_zi.merge()).plot()
 

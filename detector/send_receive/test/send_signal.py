@@ -1,4 +1,3 @@
-import socket
 import time
 
 from obspy import *
@@ -6,7 +5,7 @@ from matplotlib import pyplot
 
 from detector.misc.header_util import chunk_stream, stream_to_json
 from detector.test.signal_generator import SignalGenerator
-from detector.send_receive.sender_zmq import ZmqSender
+from detector.send_receive.server_zmq import ZmqServer
 import zmq
 
 
@@ -14,7 +13,7 @@ def send_signal(st, conn_str):
     signal_generator = SignalGenerator(st)
 
     context = zmq.Context()
-    sender = ZmqSender(conn_str, context)
+    sender = ZmqServer(conn_str, context)
     pyplot.ion()
     figure = pyplot.figure()
     st_vis = Stream()

@@ -3,7 +3,7 @@ import zmq
 from detector.filter_trigger.StaLtaTrigger import logger
 
 
-class ZmqSender:
+class ZmqServer:
 
     def __init__(self, conn_str, context):
         self.net_id = None

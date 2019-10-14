@@ -1,10 +1,3 @@
-# import base64
-# import json
-#
-# from obspy import UTCDateTime
-#
-# from detector.filter.StaLtaTrigger import logger
-# from detector.misc.header_util import pack_ch_header
 import base64
 import json
 
@@ -16,14 +9,9 @@ from detector.misc.header_util import pack_ch_header
 from detector.send_receive.client_zmq import ZmqClient
 
 
-def signal_receiver(conn_str):
+def test_receiver(conn_str):
     context = zmq.Context()
     socket = ZmqClient(conn_str, context)
-
-    socket_pub = context.socket(zmq.PUB)
-    socket_pub.bind('tcp://*:5559')
-    socket_buf = context.socket(zmq.PUB)
-    socket_buf.bind('tcp://*:5560')
 
     while True:
         size_bytes = socket.recv(4)
@@ -46,14 +34,15 @@ def signal_receiver(conn_str):
         if 'signal' in json_data:
             sampling_rate = json_data['signal']['sample_rate']
             starttime = UTCDateTime(json_data['signal']['timestmp'])
+            logger.debug('signal received, dt:' + str(starttime))
             chs = json_data['signal']['samples']
             for ch in chs:
                 bin_header = pack_ch_header('ND01', ch, sampling_rate, starttime._ns)
                 bin_signal = (base64.decodebytes(json_data['signal']['samples'][ch].encode("ASCII")))
                 bin_data = bin_header + bin_signal
-                socket_pub.send(bin_data)
-                socket_buf.send(int.to_bytes(starttime._ns, 8, byteorder='big'))
-                socket_buf.send(size_bytes + raw_data)
         else:
             logger.debug('received packet is not signal')
+
+
+test_receiver('tcp://192.168.0.189:5561')
 

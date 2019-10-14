@@ -10,8 +10,7 @@ import zmq
 
 import logging
 from detector.misc.header_util import unpack_ch_header, prep_name, pack_ch_header
-from detector.filter_trigger.filter_bandpass import bandpass_zi
-
+from detector.filter_trigger.filter_bandpass import Filter
 
 logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
                            '%(message)s',
@@ -78,10 +77,14 @@ def sta_lta_picker(station, channel, freqmin, freqmax, sta, lta, init_level, sto
     socket.connect('tcp://localhost:5559')
     topicfilter = prep_name(station).decode() + prep_name(channel).decode()
     socket.setsockopt_string(zmq.SUBSCRIBE, topicfilter)
+
+    socket_events = context.socket(zmq.PUB)
+    socket_events.connect('tcp://localhost:5562')
+    # events_list = []
+
     data_trigger = None
     trigger_on = False
-    zi = None
-    sos = None
+    filter = None
     while True:
         raw_data = socket.recv()
         raw_header = raw_data[8:18]
@@ -89,7 +92,9 @@ def sta_lta_picker(station, channel, freqmin, freqmax, sta, lta, init_level, sto
         sampling_rate, starttime = unpack_ch_header(raw_header)
         #print('sampling_rate:' + str(sampling_rate) + ' starttime:' + str(starttime))
         data = np.frombuffer(raw_data[18:], dtype='int32')
-        data, zi, sos = bandpass_zi(data, sampling_rate, freqmin, freqmax, zi, sos)
+        if not filter:
+            filter = Filter(sampling_rate, freqmin, freqmax)
+        data = filter.bandpass(data)
         if not data_trigger:
             nsta = round(sta * sampling_rate)
             nlta = round(lta * sampling_rate)
@@ -98,17 +103,19 @@ def sta_lta_picker(station, channel, freqmin, freqmax, sta, lta, init_level, sto
         activ_data = trigger_data > init_level
         deactiv_data = trigger_data < stop_level
         date_time = starttime
-        events_list = []
+        #events_list = []
         for a, d in zip(activ_data, deactiv_data):
             if trigger_on and d:
-                events_list.append({'channel': channel, 'dt': date_time, 'trigger': False})
+                socket_events.send(b'ND01' + channel.encode() + b'0')
+                # events_list.append({'channel': channel, 'dt': date_time, 'trigger': False})
                 trigger_on = False
             if not trigger_on and a:
-                events_list.append({'channel': channel, 'dt': date_time, 'trigger': True})
+                socket_events.send(b'ND01' + channel.encode() + b'1')
+                #events_list.append({'channel': channel, 'dt': date_time, 'trigger': True})
                 trigger_on = True
             date_time += 1.0 / sampling_rate
-        if events_list:
-            print('events_list:' + str(events_list))
+        # if events_list:
+        #     print('events_list:' + str(events_list))
 
 
 # st = read('D:/converter_data/example/onem.mseed')
