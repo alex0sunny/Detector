@@ -1,4 +1,3 @@
-# master
 import base64
 import json
 import socket as sock
@@ -78,8 +77,8 @@ def sta_lta_picker(station, channel, freqmin, freqmax, sta, lta, init_level, sto
     topicfilter = prep_name(station).decode() + prep_name(channel).decode()
     socket.setsockopt_string(zmq.SUBSCRIBE, topicfilter)
 
-    socket_events = context.socket(zmq.PUB)
-    socket_events.connect('tcp://localhost:5562')
+    socket_trigger = context.socket(zmq.PUB)
+    socket_trigger.connect('tcp://localhost:5562')
     # events_list = []
 
     data_trigger = None
@@ -106,48 +105,13 @@ def sta_lta_picker(station, channel, freqmin, freqmax, sta, lta, init_level, sto
         #events_list = []
         for a, d in zip(activ_data, deactiv_data):
             if trigger_on and d:
-                socket_events.send(b'ND01' + channel.encode() + b'0')
+                socket_trigger.send(b'ND01' + channel.encode() + b'0')
                 # events_list.append({'channel': channel, 'dt': date_time, 'trigger': False})
                 trigger_on = False
             if not trigger_on and a:
-                socket_events.send(b'ND01' + channel.encode() + b'1')
+                socket_trigger.send(b'ND01' + channel.encode() + b'1')
                 #events_list.append({'channel': channel, 'dt': date_time, 'trigger': True})
                 trigger_on = True
             date_time += 1.0 / sampling_rate
         # if events_list:
         #     print('events_list:' + str(events_list))
-
-
-# st = read('D:/converter_data/example/onem.mseed')
-# tr = st[0]
-# sta = 2
-# lta = 10
-# nsta = int(tr.stats.sampling_rate * sta)
-# nlta = int(tr.stats.sampling_rate * lta)
-# tr_triggered = tr.copy()
-# tr_triggered.stats.station = 'tri'
-# data = tr.data
-# slTrigger = StaLtaTrigger(nsta, nlta)
-# # tr.data = slTrigger.trigger(data)
-# data_trigger = np.empty(0, 'float32')
-# for tr_chunked in tr / 10:
-#     data = slTrigger.trigger(tr_chunked.data)
-#     data_trigger = np.append(data_trigger, data)
-# # logger.debug('data_trigger size:' + str(data_trigger.size))
-# tr_triggered.data = data_trigger
-# tr_classic = tr.copy()
-# tr_classic.trigger(type='classicstalta', sta=sta, lta=lta)
-# tr_classic.stats.station = 'cla'
-# (Stream() + tr + tr_triggered + tr_classic).plot(equal_scale=False)
-
-
-# nsta = 1000
-# nlta = 3000
-# data = np.arange(10000)
-# slTrigger = StaLtaTriggerCore(nsta, nlta)
-# data_trigger = slTrigger.trigger(data)
-# i = 1000
-# while i < 3000:
-#     logger.debug('\ndata_trigger:' + str(data_trigger[i:i+100]))
-#     i += 100
-
