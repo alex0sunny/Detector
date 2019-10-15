@@ -2,16 +2,25 @@ import base64
 import json
 
 import zmq
+from matplotlib import pyplot
 from obspy import UTCDateTime
 
 from detector.filter_trigger.StaLtaTrigger import logger
 from detector.misc.header_util import pack_ch_header
 from detector.send_receive.client_zmq import ZmqClient
 
+from obspy import *
+import numpy as np
+
 
 def test_receiver(conn_str):
     context = zmq.Context()
     socket = ZmqClient(conn_str, context)
+
+    pyplot.ion()
+    figure = pyplot.figure()
+    st = Stream()
+    check_time = UTCDateTime()
 
     while True:
         size_bytes = socket.recv(4)
@@ -34,15 +43,32 @@ def test_receiver(conn_str):
         if 'signal' in json_data:
             sampling_rate = json_data['signal']['sample_rate']
             starttime = UTCDateTime(json_data['signal']['timestmp'])
-            logger.debug('signal received, dt:' + str(starttime))
+            # logger.debug('signal received, dt:' + str(starttime))
             chs = json_data['signal']['samples']
             for ch in chs:
-                bin_header = pack_ch_header('ND01', ch, sampling_rate, starttime._ns)
                 bin_signal = (base64.decodebytes(json_data['signal']['samples'][ch].encode("ASCII")))
-                bin_data = bin_header + bin_signal
+                data = np.frombuffer(bin_signal, dtype='int32')
+                #print('data:' + str(data[:100]))
+                tr = Trace()
+                tr.stats.starttime = starttime
+                tr.stats.sampling_rate = sampling_rate
+                tr.stats.channel = ch
+                tr.data = data
+                st += tr
         else:
             logger.debug('received packet is not signal')
+        cur_time = UTCDateTime()
+        if cur_time > check_time + 1:
+            check_time = cur_time
+            st.sort().merge()
+            starttime = st[0].stats.endtime - 5
+            st.trim(starttime=starttime)
+            pyplot.clf()
+            st.plot(fig=figure)
+            pyplot.show()
+            pyplot.pause(.01)
 
 
-test_receiver('tcp://192.168.0.189:5561')
+
+test_receiver('tcp://192.168.0.200:5561')
 
