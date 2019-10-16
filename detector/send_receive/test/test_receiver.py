@@ -4,9 +4,10 @@ from matplotlib import pyplot
 from obspy import *
 import numpy as np
 import time
+import zmq
 
-from detector.send_receive.client_zmq import NdasReceiver
 from detector.filter_trigger.StaLtaTrigger import logger
+from detector.send_receive.client_zmq import ZmqClient
 
 pyplot.ion()
 figure = pyplot.figure()
@@ -14,7 +15,8 @@ figure = pyplot.figure()
 cur_time = time.time()
 st = Stream()
 
-receiver = NdasReceiver('tcp://192.168.0.200:10003')
+context = zmq.Context()
+receiver = ZmqClient('tcp://192.168.0.200:10003', context)
 while True:
     json_data = receiver.recv()
     if 'signal' in json_data:
@@ -36,7 +38,7 @@ while True:
             logger.debug('bufsize:' + str(len(receiver.buffer_manager.buf)))
             st.sort()
             st.merge(fill_value='latest')
-            st = st.trim(starttime=st[-1].stats.endtime - 5)
+            st = st.trim(starttime=st[-1].stats.endtime - 10)
             cur_time = time.time()
             pyplot.clf()
             st.plot(fig=figure)

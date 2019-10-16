@@ -106,10 +106,12 @@ def sta_lta_picker(station, channel, freqmin, freqmax, sta, lta, init_level, sto
         for a, d in zip(activ_data, deactiv_data):
             if trigger_on and d:
                 socket_trigger.send(b'ND01' + channel.encode() + b'0')
+                #logger.debug('detriggered, ch:' + channel)
                 # events_list.append({'channel': channel, 'dt': date_time, 'trigger': False})
                 trigger_on = False
             if not trigger_on and a:
                 socket_trigger.send(b'ND01' + channel.encode() + b'1')
+                #logger.debug('triggered, ch:' + channel)
                 #events_list.append({'channel': channel, 'dt': date_time, 'trigger': True})
                 trigger_on = True
             date_time += 1.0 / sampling_rate

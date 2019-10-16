@@ -21,7 +21,8 @@ def test_receiver(conn_str):
     figure = pyplot.figure()
     st = Stream()
     check_time = UTCDateTime()
-
+    data_dic = {}
+    packet_time = None
     while True:
         size_bytes = socket.recv(4)
         size = int.from_bytes(size_bytes, byteorder='little')
@@ -43,11 +44,17 @@ def test_receiver(conn_str):
         if 'signal' in json_data:
             sampling_rate = json_data['signal']['sample_rate']
             starttime = UTCDateTime(json_data['signal']['timestmp'])
-            # logger.debug('signal received, dt:' + str(starttime))
+            if not packet_time:
+                packet_time = starttime
+            logger.debug('signal received, dt:' + str(starttime))
             chs = json_data['signal']['samples']
             for ch in chs:
                 bin_signal = (base64.decodebytes(json_data['signal']['samples'][ch].encode("ASCII")))
                 data = np.frombuffer(bin_signal, dtype='int32')
+                if ch in data_dic:
+                    data_dic[ch] = np.append(data_dic[ch], data)
+                else:
+                    data_dic[ch] = data
                 #print('data:' + str(data[:100]))
                 tr = Trace()
                 tr.stats.starttime = starttime
@@ -55,20 +62,17 @@ def test_receiver(conn_str):
                 tr.stats.channel = ch
                 tr.data = data
                 st += tr
-        else:
-            logger.debug('received packet is not signal')
-        cur_time = UTCDateTime()
-        if cur_time > check_time + 1:
-            check_time = cur_time
             st.sort().merge()
-            starttime = st[0].stats.endtime - 5
-            st.trim(starttime=starttime)
+            st.trim(starttime=st[0].stats.endtime - 10)
             pyplot.clf()
             st.plot(fig=figure)
             pyplot.show()
-            pyplot.pause(.01)
+            pyplot.pause(.1)
+            data_dic = {}
+        else:
+            logger.debug('received packet is not signal')
 
 
-
-test_receiver('tcp://192.168.0.200:5561')
+#test_receiver('tcp://192.168.0.200:5561')
+test_receiver('tcp://192.168.0.189:5561')
 
