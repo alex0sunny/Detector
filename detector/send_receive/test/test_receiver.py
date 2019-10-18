@@ -1,46 +1,74 @@
 import base64
+import json
 
-from matplotlib import pyplot
-from obspy import *
-import numpy as np
-import time
 import zmq
+from matplotlib import pyplot
+from obspy import UTCDateTime
 
 from detector.filter_trigger.StaLtaTrigger import logger
+from detector.misc.header_util import pack_ch_header
 from detector.send_receive.client_zmq import ZmqClient
 
-pyplot.ion()
-figure = pyplot.figure()
+from obspy import *
+import numpy as np
 
-cur_time = time.time()
-st = Stream()
 
-context = zmq.Context()
-receiver = ZmqClient('tcp://192.168.0.200:10003', context)
-while True:
-    json_data = receiver.recv()
-    if 'signal' in json_data:
-        # print(json_data)
-        sampling_rate = json_data['signal']['sample_rate']
-        starttime = UTCDateTime(json_data['signal']['timestmp'])
-        for ch in json_data['signal']['samples']:
-            bin_signal = (base64.decodebytes(json_data['signal']['samples'][ch].encode("ASCII")))
-            # print('bin signal received')
-            data = np.frombuffer(bin_signal, dtype='int32')
-            # print('data:' + str(data[:100]))
-            tr = Trace()
-            tr.stats.starttime = starttime
-            tr.stats.sampling_rate = sampling_rate
-            tr.stats.channel = ch
-            tr.data = data
-            st += tr
-        if time.time() > cur_time + 2:
-            logger.debug('bufsize:' + str(len(receiver.buffer_manager.buf)))
-            st.sort()
-            st.merge(fill_value='latest')
-            st = st.trim(starttime=st[-1].stats.endtime - 10)
-            cur_time = time.time()
+def test_receiver(conn_str):
+    context = zmq.Context()
+    socket = ZmqClient(conn_str, context)
+
+    pyplot.ion()
+    figure = pyplot.figure()
+    st = Stream()
+    check_time = UTCDateTime()
+    packet_time = None
+    while True:
+        size_bytes = socket.recv(4)
+        size = int.from_bytes(size_bytes, byteorder='little')
+        if not 20 < size < 50000:
+            logger.warning('possibly incorrect data size:' + str(size))
+            continue
+        raw_data = socket.recv(size)
+        if not raw_data[:1] == b'{':
+            logger.error('no start \'{\' symbol')
+            continue
+        if raw_data[-1:] != b'}':
+            logger.error('incorrect last symbol, \'}\' expected')
+            continue
+        try:
+            json_data = json.loads(raw_data.decode('utf-8'))
+        except Exception as e:
+            logger.error('cannot parse json data:\n' + str(raw_data) + '\n' + str(e))
+            continue
+        if 'signal' in json_data:
+            sampling_rate = json_data['signal']['sample_rate']
+            starttime = UTCDateTime(json_data['signal']['timestmp'])
+            if not packet_time:
+                packet_time = starttime
+            logger.debug('signal received, dt:' + str(starttime))
+            chs = json_data['signal']['samples']
+            for ch in chs:
+                bin_signal = (base64.decodebytes(json_data['signal']['samples'][ch].encode("ASCII")))
+                data = np.frombuffer(bin_signal, dtype='int32')
+                tr = Trace()
+                tr.stats.starttime = starttime
+                tr.stats.sampling_rate = sampling_rate
+                tr.stats.channel = ch
+                tr.data = data
+                st += tr
+        cur_time = UTCDateTime()
+        if cur_time > check_time + 1:
+            check_time = cur_time
+            st.sort().merge()
+            st.trim(starttime=st[0].stats.endtime - 10)
             pyplot.clf()
             st.plot(fig=figure)
             pyplot.show()
             pyplot.pause(.1)
+        else:
+            logger.debug('received packet is not signal')
+
+
+#test_receiver('tcp://192.168.0.200:5561')
+test_receiver('tcp://192.168.0.189:5561')
+
