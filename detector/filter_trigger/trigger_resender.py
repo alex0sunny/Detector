@@ -29,18 +29,19 @@ def resend(conn_str, channels, pem, pet):
         try:
             bin_data = socket_trigger.recv(zmq.NOBLOCK)
             trigger_data = bin_data[-1:]
+            trigger_time = UTCDateTime(int.from_bytes(bin_data[-9:-1], byteorder='big') / 10**9)
             if trigger and trigger_data[-1:] == b'0':
                 trigger = False
-                pet_time = dt + pet
-                logger.info('detriggered\ndetrigger time:' + str(dt) + '\npet time:' + str(dt + pet) +
-                            '\nchannel:' + str(bin_data[4:-1]))
+                pet_time = trigger_time + pet
+                logger.info('detriggered\ndetrigger time:' + str(trigger_time) + '\npet time:' +
+                            str(trigger_time + pet) + '\nchannel:' + str(bin_data[4:-9]))
             if not trigger and trigger_data[-1:] == b'1':
                 trigger = True
-                logger.info('triggered\ntrigger time:' + str(dt) + '\npem time:' + str(dt - pem) +
-                            '\nchannel:' + str(bin_data[4:-1]))
-            if buf:
-                logger.info('current buf:' + str(buf[0][0]) + '-' + str(buf[-1][0]))
-            else:
+                logger.info('triggered\ntrigger time:' + str(trigger_time) + '\npem time:' +
+                            str(trigger_time - pem) + '\nchannel:' + str(bin_data[4:-9]))
+                if buf:
+                    logger.info('buf item dt:' + str(buf[0][0]))
+            if not buf:
                 logger.warning('buf is empty')
         except zmq.ZMQError:
             pass
@@ -62,13 +63,13 @@ def resend(conn_str, channels, pem, pet):
         else:
             if test_send and buf:
                 socket_server.send(buf[0][1])
-            logger.debug('append to buf with dt:' + str(dt))
+            #logger.debug('append to buf with dt:' + str(dt))
             buf.append((dt, bdata))
         #logger.debug('buf[0]:' + str(buf[0]) + '\nbuf[0][0]:' + str(buf[0][0]))
         if buf:
             dt_begin = buf[0][0]
-            while dt_begin < dt - pem:
-                logger.debug('delete from buf with dt:' + str(buf[0][0]) + '\ncurrent pem:' +
-                             str(dt-pem) + '\ncurrent buf:' + str(buf[0][0]) + '-' + str(buf[-1][0]))
+            while dt_begin < dt - pem and buf[3:]:
+                # logger.debug('delete from buf with dt:' + str(buf[0][0]) + '\ncurrent pem:' +
+                #              str(dt-pem) + '\ncurrent buf:' + str(buf[0][0]) + '-' + str(buf[-1][0]))
                 buf = buf[1:]
                 dt_begin = buf[0][0]

@@ -56,19 +56,13 @@ def test_receiver(conn_str):
                 tr.stats.channel = ch
                 tr.data = data
                 st += tr
-        cur_time = UTCDateTime()
-        if cur_time > check_time + 1:
-            check_time = cur_time
-            st.sort().merge()
-            st.trim(starttime=st[0].stats.endtime - 10)
-            pyplot.clf()
-            st.plot(fig=figure)
-            pyplot.show()
-            pyplot.pause(.1)
-        else:
-            logger.debug('received packet is not signal')
+        st.sort().merge()
+        st.trim(starttime=st[0].stats.endtime - 10)
+        pyplot.clf()
+        st.plot(fig=figure)
+        pyplot.show()
+        pyplot.pause(.1)
 
 
-#test_receiver('tcp://192.168.0.200:5561')
-test_receiver('tcp://192.168.0.189:5561')
-
+test_receiver('tcp://192.168.0.200:5561')
+#test_receiver('tcp://192.168.0.189:5561')

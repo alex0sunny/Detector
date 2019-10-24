@@ -7,8 +7,11 @@
 # from detector.misc.header_util import pack_ch_header
 import base64
 import json
+import numpy as np
+from obspy import *
 
 import zmq
+from matplotlib import pyplot
 from obspy import UTCDateTime
 
 from detector.filter_trigger.StaLtaTrigger import logger
@@ -16,14 +19,13 @@ from detector.misc.header_util import pack_ch_header
 from detector.send_receive.client_zmq import ZmqClient
 
 
-def signal_receiver(conn_str):
+def receive_original(conn_str):
     context = zmq.Context()
     socket = ZmqClient(conn_str, context)
 
-    socket_pub = context.socket(zmq.PUB)
-    socket_pub.bind('tcp://*:5559')
-    socket_buf = context.socket(zmq.PUB)
-    socket_buf.bind('tcp://*:5560')
+    pyplot.ion()
+    figure = pyplot.figure()
+    st = Stream()
 
     while True:
         size_bytes = socket.recv(4)
@@ -48,10 +50,21 @@ def signal_receiver(conn_str):
             starttime = UTCDateTime(json_data['signal']['timestmp'])
             chs = json_data['signal']['samples']
             for ch in chs:
-                bin_header = pack_ch_header('ND01', ch, sampling_rate, starttime._ns)
                 bin_signal = (base64.decodebytes(json_data['signal']['samples'][ch].encode("ASCII")))
-                bin_data = bin_header + bin_signal
-                socket_pub.send(bin_data)
-                socket_buf.send(int.to_bytes(starttime._ns, 8, byteorder='big'))
-                socket_buf.send(size_bytes + raw_data)
+                data = np.frombuffer(bin_signal, dtype='int32')
+                tr = Trace()
+                tr.stats.starttime = starttime
+                tr.stats.sampling_rate = sampling_rate
+                tr.stats.channel = ch
+                tr.data = data
+                st += tr
+            st.sort().merge()
+            st.trim(starttime=st[0].stats.endtime - 10)
+            pyplot.clf()
+            st.plot(fig=figure)
+            pyplot.show()
+            pyplot.pause(.1)
+
+
+receive_original('tcp://192.168.0.200:10003')
 

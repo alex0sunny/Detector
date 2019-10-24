@@ -6,11 +6,11 @@ context = zmq.Context()
 socket = context.socket(zmq.STREAM)
 socket.bind("tcp://*:8080")
 while True:
-    id = socket.expand()
+    id = socket.recv()
     print('id:' + str(id))
     raw = []
     while len(raw) == 0 or len(raw) == len(id):
-        raw = socket.expand()
+        raw = socket.recv()
         print('raw:' + str(raw))
     http_response = 'HTTP/1.0 200 OK\r\n' + \
         'HTTP/1.0 200 OK\r\n' + \
