@@ -12,18 +12,20 @@ import zmq
 from obspy import UTCDateTime
 
 from detector.filter_trigger.StaLtaTrigger import logger
+from detector.misc.globals import Port
 from detector.misc.header_util import pack_ch_header
-from detector.send_receive.client_zmq import ZmqClient
+from detector.send_receive.tcp_client import TcpClient
+
 
 
 def signal_receiver(conn_str):
     context = zmq.Context()
-    socket = ZmqClient(conn_str, context)
+    socket = TcpClient(conn_str, context)
 
     socket_pub = context.socket(zmq.PUB)
-    socket_pub.bind('tcp://*:5559')
+    socket_pub.bind('tcp://*:%d' % Port.signal_route.value)
     socket_buf = context.socket(zmq.PUB)
-    socket_buf.bind('tcp://*:5560')
+    socket_buf.bind('tcp://*:%d' % Port.internal_resend.value)
 
     while True:
         size_bytes = socket.recv(4)

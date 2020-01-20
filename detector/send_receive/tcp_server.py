@@ -3,7 +3,7 @@ import zmq
 from detector.filter_trigger.StaLtaTrigger import logger
 
 
-class ZmqServer:
+class TcpServer:
 
     def __init__(self, conn_str, context):
         self.identity = None

@@ -7,7 +7,7 @@ from obspy import UTCDateTime
 
 from detector.filter_trigger.StaLtaTrigger import logger
 from detector.misc.header_util import pack_ch_header
-from detector.send_receive.client_zmq import ZmqClient
+from detector.send_receive.tcp_client import TcpClient
 
 from obspy import *
 import numpy as np
@@ -15,7 +15,7 @@ import numpy as np
 
 def test_receiver(conn_str):
     context = zmq.Context()
-    socket = ZmqClient(conn_str, context)
+    socket = TcpClient(conn_str, context)
 
     pyplot.ion()
     figure = pyplot.figure()

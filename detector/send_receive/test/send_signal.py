@@ -3,17 +3,22 @@ import time
 from obspy import *
 from matplotlib import pyplot
 
+#from detector.misc.globals import ports_map
+from detector.misc.globals import Port
 from detector.misc.header_util import chunk_stream, stream_to_json
 from detector.test.signal_generator import SignalGenerator
-from detector.send_receive.server_zmq import ZmqServer
+from detector.send_receive.tcp_server import TcpServer
 import zmq
+import os
+import detector.misc as misc
+import inspect
 
 
 def send_signal(st, conn_str):
     signal_generator = SignalGenerator(st)
 
     context = zmq.Context()
-    sender = ZmqServer(conn_str, context)
+    sender = TcpServer(conn_str, context)
     pyplot.ion()
     figure = pyplot.figure()
     st_vis = Stream()
@@ -42,8 +47,8 @@ def send_signal(st, conn_str):
         time.sleep(.1)
 
 
-st = read('D:/converter_data/example/onem.mseed')
+st = read(os.path.split(inspect.getfile(misc))[0] + '/onem.mseed')
 for tr in st:
     tr.stats.station = 'ND01'
 
-send_signal(st, 'tcp://*:5555')
+send_signal(st, 'tcp://*:%d' % Port.test_signal.value)

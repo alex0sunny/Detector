@@ -2,19 +2,20 @@ import zmq
 from obspy import *
 
 from detector.filter_trigger.StaLtaTrigger import logger
-from detector.send_receive.server_zmq import ZmqServer
+from detector.misc.globals import Port
+from detector.send_receive.tcp_server import TcpServer
 
 
 def resend(conn_str, channels, pem, pet):
     context = zmq.Context()
 
     socket_sub = context.socket(zmq.SUB)
-    socket_sub.connect('tcp://localhost:5560')
+    socket_sub.connect('tcp://localhost:%d' % Port.internal_resend.value)
     socket_sub.setsockopt(zmq.SUBSCRIBE, b'')
 
-    socket_server = ZmqServer(conn_str, context)
+    socket_server = TcpServer(conn_str, context)
 
-    event_conn_str = 'tcp://*:5562'
+    event_conn_str = 'tcp://*:%d' % Port.trigger.value
 
     socket_trigger = context.socket(zmq.SUB)
     socket_trigger.bind(event_conn_str)

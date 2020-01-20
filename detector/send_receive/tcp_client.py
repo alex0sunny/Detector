@@ -4,7 +4,7 @@ import zmq
 from detector.filter_trigger.StaLtaTrigger import logger
 
 
-class ZmqClient:
+class TcpClient:
 
     def __init__(self, conn_str, context):
         self.identity = None

@@ -8,6 +8,8 @@ import numpy as np
 import zmq
 
 import logging
+
+from detector.misc.globals import Port
 from detector.misc.header_util import unpack_ch_header, prep_name, pack_ch_header
 from detector.filter_trigger.filter_bandpass import Filter
 
@@ -15,6 +17,7 @@ logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:
                            '%(message)s',
                     level=logging.DEBUG)
 logger = logging.getLogger('detector')
+
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
 
@@ -73,12 +76,12 @@ class StaLtaTrigger:
 def sta_lta_picker(station, channel, freqmin, freqmax, sta, lta, init_level, stop_level):
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
-    socket.connect('tcp://localhost:5559')
+    socket.connect('tcp://localhost:%d' % Port.signal_route.value)
     topicfilter = prep_name(station).decode() + prep_name(channel).decode()
     socket.setsockopt_string(zmq.SUBSCRIBE, topicfilter)
 
     socket_trigger = context.socket(zmq.PUB)
-    socket_trigger.connect('tcp://localhost:5562')
+    socket_trigger.connect('tcp://localhost:%d' % Port.trigger.value)
     # events_list = []
 
     data_trigger = None
@@ -106,12 +109,12 @@ def sta_lta_picker(station, channel, freqmin, freqmax, sta, lta, init_level, sto
         for a, d in zip(activ_data, deactiv_data):
             if trigger_on and d:
                 socket_trigger.send(b'ND01' + channel.encode() + date_time._ns.to_bytes(8, byteorder='big') + b'0')
-                #logger.debug('detriggered, ch:' + channel)
+                logger.debug('detriggered, ch:' + channel)
                 # events_list.append({'channel': channel, 'dt': date_time, 'trigger': False})
                 trigger_on = False
             if not trigger_on and a:
                 socket_trigger.send(b'ND01' + channel.encode() + date_time._ns.to_bytes(8, byteorder='big') + b'1')
-                #logger.debug('triggered, ch:' + channel)
+                logger.debug('triggered, ch:' + channel)
                 #events_list.append({'channel': channel, 'dt': date_time, 'trigger': True})
                 trigger_on = True
             date_time += 1.0 / sampling_rate

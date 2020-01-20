@@ -3,10 +3,10 @@ import zmq
 
 from obspy import UTCDateTime
 
-from detector.send_receive.server_zmq import ZmqServer
+from detector.send_receive.tcp_server import TcpServer
 
 context = zmq.Context()
-server = ZmqServer('tcp://*:5555', context)
+server = TcpServer('tcp://*:5555', context)
 
 while True:
     server.send(str(UTCDateTime()).encode())
