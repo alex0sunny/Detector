@@ -73,7 +73,8 @@ class StaLtaTrigger:
         return ret_val
 
 
-def sta_lta_picker(station, channel, freqmin, freqmax, sta, lta, init_level, stop_level):
+def sta_lta_picker(trigger_index, station, channel, freqmin, freqmax, sta, lta, init_level, stop_level):
+    trigger_index_s = ('%02d' % trigger_index).encode()
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
     socket.connect('tcp://localhost:%d' % Port.signal_route.value)
@@ -108,12 +109,14 @@ def sta_lta_picker(station, channel, freqmin, freqmax, sta, lta, init_level, sto
         #events_list = []
         for a, d in zip(activ_data, deactiv_data):
             if trigger_on and d:
-                socket_trigger.send(b'ND01' + channel.encode() + date_time._ns.to_bytes(8, byteorder='big') + b'0')
+                socket_trigger.send(b'ND01' + trigger_index_s + b'0' +
+                                    date_time._ns.to_bytes(8, byteorder='big'))
                 logger.debug('detriggered, ch:' + channel)
                 # events_list.append({'channel': channel, 'dt': date_time, 'trigger': False})
                 trigger_on = False
             if not trigger_on and a:
-                socket_trigger.send(b'ND01' + channel.encode() + date_time._ns.to_bytes(8, byteorder='big') + b'1')
+                socket_trigger.send(b'ND01' + trigger_index_s + b'1' +
+                                    date_time._ns.to_bytes(8, byteorder='big'))
                 logger.debug('triggered, ch:' + channel)
                 #events_list.append({'channel': channel, 'dt': date_time, 'trigger': True})
                 trigger_on = True

@@ -6,6 +6,7 @@ from matplotlib import pyplot
 from obspy import UTCDateTime
 
 from detector.filter_trigger.StaLtaTrigger import logger
+from detector.misc.globals import Port
 from detector.misc.header_util import pack_ch_header
 from detector.send_receive.tcp_client import TcpClient
 
@@ -56,13 +57,16 @@ def test_receiver(conn_str):
                 tr.stats.channel = ch
                 tr.data = data
                 st += tr
-        st.sort().merge()
-        st.trim(starttime=st[0].stats.endtime - 10)
-        pyplot.clf()
-        st.plot(fig=figure)
-        pyplot.show()
-        pyplot.pause(.1)
+        cur_time = UTCDateTime()
+        if cur_time > check_time + 1:
+            check_time = cur_time
+            st.sort().merge()
+            st.trim(starttime=st[0].stats.endtime - 10)
+            pyplot.clf()
+            st.plot(fig=figure)
+            pyplot.show()
+            pyplot.pause(.1)
 
 
-test_receiver('tcp://192.168.0.200:5561')
-#test_receiver('tcp://192.168.0.189:5561')
+#test_receiver('tcp://192.168.0.200:' + str(Port.signal_resend.value))
+test_receiver('tcp://192.168.0.189:' + str(Port.signal_resend.value))

@@ -6,7 +6,7 @@ from detector.misc.globals import Port
 from detector.send_receive.tcp_server import TcpServer
 
 
-def resend(conn_str, channels, pem, pet):
+def resend(conn_str, triggers, pem, pet):
     context = zmq.Context()
 
     socket_sub = context.socket(zmq.SUB)
@@ -19,8 +19,9 @@ def resend(conn_str, channels, pem, pet):
 
     socket_trigger = context.socket(zmq.SUB)
     socket_trigger.bind(event_conn_str)
-    for channel in channels:
-        socket_trigger.setsockopt(zmq.SUBSCRIBE, b'ND01' + channel.encode())
+    for trigger_index in triggers:
+        trigger_index_s = '%02d' % trigger_index
+        socket_trigger.setsockopt(zmq.SUBSCRIBE, b'ND01' + trigger_index_s.encode())
 
     test_send = False
     trigger = False
@@ -29,17 +30,17 @@ def resend(conn_str, channels, pem, pet):
     while True:
         try:
             bin_data = socket_trigger.recv(zmq.NOBLOCK)
-            trigger_data = bin_data[-1:]
-            trigger_time = UTCDateTime(int.from_bytes(bin_data[-9:-1], byteorder='big') / 10**9)
-            if trigger and trigger_data[-1:] == b'0':
+            trigger_data = bin_data[6:7]
+            trigger_time = UTCDateTime(int.from_bytes(bin_data[-8:], byteorder='big') / 10**9)
+            if trigger and trigger_data == b'0':
                 trigger = False
                 pet_time = trigger_time + pet
                 logger.info('detriggered\ndetrigger time:' + str(trigger_time) + '\npet time:' +
-                            str(trigger_time + pet) + '\nchannel:' + str(bin_data[4:-9]))
-            if not trigger and trigger_data[-1:] == b'1':
+                            str(trigger_time + pet) + '\ntrigger:' + str(bin_data[4:6]))
+            if not trigger and trigger_data == b'1':
                 trigger = True
                 logger.info('triggered\ntrigger time:' + str(trigger_time) + '\npem time:' +
-                            str(trigger_time - pem) + '\nchannel:' + str(bin_data[4:-9]))
+                            str(trigger_time - pem) + '\ntrigger:' + str(bin_data[4:6]))
                 if buf:
                     logger.info('buf item dt:' + str(buf[0][0]))
             if not buf:

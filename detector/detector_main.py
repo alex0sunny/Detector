@@ -22,15 +22,18 @@ if __name__ == '__main__':
         kwargs_list = [{'target': signal_receiver,
                         'kwargs': {'conn_str': 'tcp://192.168.0.189:%d' % Port.test_signal.value}},
                        {'target': resend, 'kwargs': {'conn_str': 'tcp://*:%d' % Port.signal_resend.value,
-                                                     'channels': ['EHN', 'EHZ'], 'pem': 1, 'pet': 1}},
+                                                     'triggers': [1, 2], 'pem': 1, 'pet': 1}},
                        {'target': sta_lta_picker,
-                        'kwargs': {'station': 'ND01', 'channel': 'EHE', 'freqmin': 100, 'freqmax': 300, 'sta': 1, 'lta': 4,
+                        'kwargs': {'trigger_index': 0, 'station': 'ND01', 'channel': 'EHE',
+                                   'freqmin': 100, 'freqmax': 300, 'sta': 1, 'lta': 4,
                                    'init_level': 2, 'stop_level': 1}},
                        {'target': sta_lta_picker,
-                        'kwargs': {'station': 'ND01', 'channel': 'EHN', 'freqmin': 100, 'freqmax': 300, 'sta': 1, 'lta': 4,
+                        'kwargs': {'trigger_index': 1, 'station': 'ND01', 'channel': 'EHN',
+                                   'freqmin': 100, 'freqmax': 300, 'sta': 1, 'lta': 4,
                                    'init_level': 2, 'stop_level': 1}},
                        {'target': sta_lta_picker,
-                        'kwargs': {'station': 'ND01', 'channel': 'EHZ', 'freqmin': 100, 'freqmax': 300, 'sta': 1, 'lta': 4,
+                        'kwargs': {'trigger_index': 2, 'station': 'ND01', 'channel': 'EHZ',
+                                   'freqmin': 100, 'freqmax': 300, 'sta': 1, 'lta': 4,
                                    'init_level': 2, 'stop_level': 1}}]
 
         ps = []
