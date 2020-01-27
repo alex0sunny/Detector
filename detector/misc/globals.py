@@ -43,3 +43,7 @@ class CustomThread(Thread):
             ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
             logger.debug('Exception raise failure')
 
+    def terminate(self):
+        self.raise_exception()
+        self.join()
+

@@ -49,11 +49,7 @@ if __name__ == '__main__':
         socket_backend.recv()
 
         for p in ps:
-            if use_thread:
-                p.raise_exception()
-                p.join()
-            else:
-                p.terminate()
+            p.terminate()
         print('threads stopped')
         continue
     print('after break away from cycle, should exit')
