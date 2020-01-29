@@ -17,7 +17,6 @@ from detector.misc.header_util import pack_ch_header
 from detector.send_receive.tcp_client import TcpClient
 
 
-
 def signal_receiver(conn_str):
     context = zmq.Context()
     socket = TcpClient(conn_str, context)

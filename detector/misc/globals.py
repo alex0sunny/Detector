@@ -20,7 +20,8 @@ class Port(Enum):
     internal_resend = 5560
     signal_resend = 5561
     trigger = 5562
-    backend = 5563
+    proxy = 5563
+    backend = 5564
 
 
 class CustomThread(Thread):

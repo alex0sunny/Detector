@@ -15,10 +15,8 @@ def resend(conn_str, triggers, pem, pet):
 
     socket_server = TcpServer(conn_str, context)
 
-    event_conn_str = 'tcp://*:%d' % Port.trigger.value
-
     socket_trigger = context.socket(zmq.SUB)
-    socket_trigger.bind(event_conn_str)
+    socket_trigger.connect('tcp://localhost:' + str(Port.proxy.value))
     for trigger_index in triggers:
         trigger_index_s = '%02d' % trigger_index
         socket_trigger.setsockopt(zmq.SUBSCRIBE, b'ND01' + trigger_index_s.encode())
