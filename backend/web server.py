@@ -6,6 +6,12 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from os.path import curdir, sep
 import os
 
+logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
+                           '%(message)s',
+                    level=logging.DEBUG)
+logger = logging.getLogger('detector')
+
+
 # curdir = './backend'
 # print('list dir: ' + str(os.listdir()))
 from detector.misc.globals import Port
@@ -16,20 +22,40 @@ context = zmq.Context()
 socket_backend = context.socket(zmq.PUB)
 socket_backend.connect('tcp://localhost:%d' % Port.backend.value)
 
-sockets_trigger = sockets_detrigger = []
+#sockets_trigger = sockets_detrigger = []
 
-conn_str = 'tcp://localhost:' + str(Port.trigger.value)
-for trigger_id in range(3):
+conn_str = 'tcp://localhost:' + str(Port.proxy.value)
+
+# socket_trigger = context.socket(zmq.SUB)
+# socket_trigger.connect(conn_str)
+# socket_trigger.setsockopt(zmq.SUBSCRIBE, b'ND01011')
+sockets_trigger = []
+for trigger_index in range(3):
     socket_trigger = context.socket(zmq.SUB)
-    socket_detrigger = context.socket(zmq.SUB)
     socket_trigger.connect(conn_str)
-    socket_detrigger.connect(conn_str)
-    trigger_index_s = '%02d' % trigger_id
-    subscription = b'ND01' + trigger_index_s.encode()
-    socket_trigger.setsockopt(zmq.SUBSCRIBE, subscription + b'1')
-    socket_detrigger.setsockopt(zmq.SUBSCRIBE, subscription + b'0')
+    trigger_index_s = '%02d' % trigger_index
+    socket_trigger.setsockopt(zmq.SUBSCRIBE, b'ND01' + trigger_index_s.encode() + b'1')
     sockets_trigger.append(socket_trigger)
-    sockets_detrigger.append(socket_detrigger)
+
+socket_detrigger = context.socket(zmq.SUB)
+socket_detrigger.connect(conn_str)
+socket_detrigger.setsockopt(zmq.SUBSCRIBE, b'ND01010')
+
+# for trigger_id in range(3):
+#     socket_trigger = context.socket(zmq.SUB)
+#     socket_detrigger = context.socket(zmq.SUB)
+#     socket_trigger.connect(conn_str)
+#     socket_detrigger.connect(conn_str)
+#     trigger_index_s = '%02d' % trigger_id
+#     subscription = b'ND01' + trigger_index_s.encode()
+#     subscription_trigger = subscription + b'1'
+#     subscription_detrigger = subscription + b'0'
+#     logger.debug('subscription trigger:' + str(subscription_trigger) +
+#                  '\nsubscription detrigger:' + str(subscription_detrigger))
+#     socket_trigger.setsockopt(zmq.SUBSCRIBE, subscription_trigger)
+#     socket_detrigger.setsockopt(zmq.SUBSCRIBE, subscription_detrigger)
+#     sockets_trigger.append(socket_trigger)
+#     sockets_detrigger.append(socket_detrigger)
 
 # This class will handles any incoming request from
 # the browser
@@ -46,7 +72,7 @@ class myHandler(BaseHTTPRequestHandler):
 
             sendReply = False
             if self.path.endswith(".html"):
-                print('do get, html')
+                logger.debug('do get, html')
                 mimetype = 'text/html'
                 sendReply = True
             if self.path.endswith(".jpg"):
@@ -84,26 +110,62 @@ class myHandler(BaseHTTPRequestHandler):
 
     # Handler for the POST requests
     def do_POST(self):
-        print('inside post')
-        print(self.path)
+        # logger.debug('inside post')
+        # logger.debug(self.path)
         # print(self.rfile.read())
-        content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
-        post_data = self.rfile.read(content_length) # <--- Gets the data itself
+        content_length = int(self.headers['Content-Length'])    # <--- Gets the size of data
+        post_data = self.rfile.read(content_length)     # <--- Gets the data itself
         post_data_str = post_data.decode()
         obj = json.loads(post_data_str)
         if self.path == '/url':
             counter = obj['counter']
-            logging.info('obj:' + str(obj))
-            logging.info('triggers str:' + str(obj['triggers']))
+            for socket_trigger in sockets_trigger:
+                try:
+                    mes = socket_trigger.recv(zmq.NOBLOCK)
+                    logger.info('trigger message:' + str(mes))
+                except zmq.ZMQError:
+                    pass
+            try:
+                mes = socket_detrigger.recv(zmq.NOBLOCK)
+                logger.info('detrigger message:' + str(mes))
+            except zmq.ZMQError:
+                pass
+            # logger.debug('obj:' + str(obj) + '\ntriggers str:' + str(obj['triggers']))
+            # for socket_detrigger in sockets_detrigger:
+            #     try:
+            #         mes = socket_detrigger.recv(zmq.NOBLOCK)
+            #         logger.info('received detrigger message:\n' + str(mes))
+            #     except zmq.ZMQError:
+            #         pass
+            # for socket_trigger in sockets_trigger:
+            #     try:
+            #         mes = socket_trigger.recv(zmq.NOBLOCK)
+            #         logger.info('received trigger message:\n' + str(mes))
+            #     except zmq.ZMQError:
+            #         pass
             triggers = list(map(int, obj['triggers'].split(',')))
-            if triggers[1]:
-                triggers[1] = 0
-            else:
-                triggers[1] = 1
-            logging.info('triggers:' + str(triggers))
+            # if triggers[1]:
+            #     logger.debug('wait detrigger..')
+            #     socket_target = sockets_detrigger[1]
+            # else:
+            #     logger.debug('wait detrigger..')
+            #     socket_target = sockets_trigger[1]
+            # try:
+            #     mes = socket_target.recv(zmq.NOBLOCK)
+            #     logger.info('triggering detected\nmessage:' + str(mes))
+            #     if triggers[1]:
+            #         triggers[1] = 0
+            #     else:
+            #         triggers[1] = 1
+            #     while True:
+            #         socket_target.recv(zmq.NOBLOCK)
+            # except zmq.ZMQError:
+            #     pass
+
+            # logging.debug('triggers:' + str(triggers))
             # print('object:' + str(obj))
             # print('counter: ' + counter)
-            print('post data str:\n' + post_data_str)
+            # logger.debug('post data str:\n' + post_data_str)
             # logging.info("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n",
             #              str(self.path), str(self.headers), post_data.decode('utf-8'))
             self.send_response(200)
@@ -111,9 +173,8 @@ class myHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps({'counter': str(int(counter) + 1), 'triggers': str(triggers)[1:-1]}).encode())
         if self.path == '/apply':
-            print('object:' + str(obj))
-            print("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n",
-                  str(self.path), str(self.headers), post_data.decode('utf-8'))
+            logger.debug('object:' + str(obj) + "\nPOST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n",
+                         str(self.path), str(self.headers), post_data.decode('utf-8'))
 
             socket_backend.send(b'AP')
 

@@ -28,6 +28,7 @@ def resend(conn_str, triggers, pem, pet):
     while True:
         try:
             bin_data = socket_trigger.recv(zmq.NOBLOCK)
+            logger.debug('trigger event')
             trigger_data = bin_data[6:7]
             trigger_time = UTCDateTime(int.from_bytes(bin_data[-8:], byteorder='big') / 10**9)
             if trigger and trigger_data == b'0':
