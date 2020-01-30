@@ -15,14 +15,14 @@ if __name__ == '__main__':
 
     context = zmq.Context()
     socket_backend = context.socket(zmq.SUB)
-    socket_backend.bind('tcp://*:%d' % Port.backend.value)
+    socket_backend.bind('tcp://*:' + str(Port.backend.value))
     socket_backend.setsockopt(zmq.SUBSCRIBE, b'AP')
 
     while True:
 
         kwargs_list = [{'target': signal_receiver,
-                        'kwargs': {'conn_str': 'tcp://192.168.0.189:%d' % Port.test_signal.value}},
-                       {'target': resend, 'kwargs': {'conn_str': 'tcp://*:%d' % Port.signal_resend.value,
+                        'kwargs': {'conn_str': 'tcp://192.168.0.189:' + str(Port.test_signal.value)}},
+                       {'target': resend, 'kwargs': {'conn_str': 'tcp://*:' + str(Port.signal_resend.value),
                                                      'triggers': [1, 2], 'pem': 1, 'pet': 1}},
                        {'target': triggers_proxy, 'kwargs': {}},
                        {'target': sta_lta_picker,

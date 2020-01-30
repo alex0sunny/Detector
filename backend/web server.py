@@ -120,51 +120,45 @@ class myHandler(BaseHTTPRequestHandler):
         obj = json.loads(post_data_str)
         if self.path == '/url':
             counter = obj['counter']
-            for socket_trigger in sockets_trigger:
-                try:
-                    mes = socket_trigger.recv(zmq.NOBLOCK)
-                    logger.info('trigger message:' + str(mes))
-                except zmq.ZMQError:
-                    pass
-            for socket_detrigger in sockets_detrigger:
-                try:
-                    mes = socket_detrigger.recv(zmq.NOBLOCK)
-                    logger.info('detrigger message:' + str(mes))
-                except zmq.ZMQError:
-                    pass
-            # logger.debug('obj:' + str(obj) + '\ntriggers str:' + str(obj['triggers']))
-            # for socket_detrigger in sockets_detrigger:
-            #     try:
-            #         mes = socket_detrigger.recv(zmq.NOBLOCK)
-            #         logger.info('received detrigger message:\n' + str(mes))
-            #     except zmq.ZMQError:
-            #         pass
             # for socket_trigger in sockets_trigger:
             #     try:
             #         mes = socket_trigger.recv(zmq.NOBLOCK)
-            #         logger.info('received trigger message:\n' + str(mes))
+            #         logger.info('trigger message:' + str(mes))
             #     except zmq.ZMQError:
             #         pass
+            # for socket_detrigger in sockets_detrigger:
+            #     try:
+            #         mes = socket_detrigger.recv(zmq.NOBLOCK)
+            #         logger.info('detrigger message:' + str(mes))
+            #     except zmq.ZMQError:
+            #         pass
+            # logger.debug('obj:' + str(obj) + '\ntriggers str:' + str(obj['triggers']))
             triggers = list(map(int, obj['triggers'].split(',')))
+            for i in range(len(triggers)):
+                if triggers[i]:
+                    socket_target = sockets_detrigger[i]
+                else:
+                    socket_target = sockets_trigger[i]
+                try:
+                    mes = socket_target.recv(zmq.NOBLOCK)
+                    logger.info('triggering detected, message:' + str(mes))
+                    if triggers[i]:
+                        triggers[i] = 0
+                    else:
+                        triggers[i] = 1
+                    while True:
+                        socket_target.recv(zmq.NOBLOCK)
+                except zmq.ZMQError:
+                    pass
+
             # if triggers[1]:
             #     logger.debug('wait detrigger..')
             #     socket_target = sockets_detrigger[1]
             # else:
             #     logger.debug('wait detrigger..')
             #     socket_target = sockets_trigger[1]
-            # try:
-            #     mes = socket_target.recv(zmq.NOBLOCK)
-            #     logger.info('triggering detected\nmessage:' + str(mes))
-            #     if triggers[1]:
-            #         triggers[1] = 0
-            #     else:
-            #         triggers[1] = 1
-            #     while True:
-            #         socket_target.recv(zmq.NOBLOCK)
-            # except zmq.ZMQError:
-            #     pass
 
-            # logging.debug('triggers:' + str(triggers))
+            logging.debug('triggers:' + str(triggers))
             # print('object:' + str(obj))
             # print('counter: ' + counter)
             # logger.debug('post data str:\n' + post_data_str)

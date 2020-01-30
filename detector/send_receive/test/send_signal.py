@@ -1,4 +1,5 @@
 import time
+import numpy as np
 
 from obspy import *
 from matplotlib import pyplot
@@ -48,6 +49,9 @@ def send_signal(st, conn_str):
 
 
 st = read(os.path.split(inspect.getfile(misc))[0] + '/onem.mseed')
+data = st[-1].data
+data = np.append(data[2000:], data[:2000])
+st[-1].data = data
 for tr in st:
     tr.stats.station = 'ND01'
 
