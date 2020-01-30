@@ -20,7 +20,7 @@ PORT_NUMBER = 8080
 
 context = zmq.Context()
 socket_backend = context.socket(zmq.PUB)
-socket_backend.connect('tcp://localhost:%d' % Port.backend.value)
+socket_backend.connect('tcp://localhost:' + str(Port.backend.value))
 
 #sockets_trigger = sockets_detrigger = []
 
@@ -30,16 +30,17 @@ conn_str = 'tcp://localhost:' + str(Port.proxy.value)
 # socket_trigger.connect(conn_str)
 # socket_trigger.setsockopt(zmq.SUBSCRIBE, b'ND01011')
 sockets_trigger = []
+sockets_detrigger = []
 for trigger_index in range(3):
     socket_trigger = context.socket(zmq.SUB)
+    socket_detrigger = context.socket(zmq.SUB)
     socket_trigger.connect(conn_str)
+    socket_detrigger.connect(conn_str)
     trigger_index_s = '%02d' % trigger_index
     socket_trigger.setsockopt(zmq.SUBSCRIBE, b'ND01' + trigger_index_s.encode() + b'1')
+    socket_detrigger.setsockopt(zmq.SUBSCRIBE, b'ND01' + trigger_index_s.encode() + b'0')
     sockets_trigger.append(socket_trigger)
-
-socket_detrigger = context.socket(zmq.SUB)
-socket_detrigger.connect(conn_str)
-socket_detrigger.setsockopt(zmq.SUBSCRIBE, b'ND01010')
+    sockets_detrigger.append(socket_detrigger)
 
 # for trigger_id in range(3):
 #     socket_trigger = context.socket(zmq.SUB)
@@ -125,11 +126,12 @@ class myHandler(BaseHTTPRequestHandler):
                     logger.info('trigger message:' + str(mes))
                 except zmq.ZMQError:
                     pass
-            try:
-                mes = socket_detrigger.recv(zmq.NOBLOCK)
-                logger.info('detrigger message:' + str(mes))
-            except zmq.ZMQError:
-                pass
+            for socket_detrigger in sockets_detrigger:
+                try:
+                    mes = socket_detrigger.recv(zmq.NOBLOCK)
+                    logger.info('detrigger message:' + str(mes))
+                except zmq.ZMQError:
+                    pass
             # logger.debug('obj:' + str(obj) + '\ntriggers str:' + str(obj['triggers']))
             # for socket_detrigger in sockets_detrigger:
             #     try:
