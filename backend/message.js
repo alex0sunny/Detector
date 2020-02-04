@@ -40,11 +40,13 @@ function myTimer() {
         }
         for (var i = 1; i <= 3; i++) {
             var channelCell = document.getElementById("triggerTable").rows[i].cells[1];
-            console.log("current channel cell:" + channelCell.innerHtml);
-            console.log("row:" + document.getElementById("triggerTable").rows[i].innerHtml);
+            var channelList = channelCell.children[0];
+            var selectedIndex = channelList.options.selectedIndex;
+            var selectedValue = channelList.options[selectedIndex].value;
+            console.log("current channel value:" + selectedValue);
             var optionNodes = Array.prototype.slice.call(channelCell.childNodes[0].childNodes);
             var currentChannels = [];
-            optionNodes.forEach(function(optionNode){
+            optionNodes.forEach(function(optionNode) {
                 currentChannels.push(optionNode.getAttribute("value"));
             });
             channels.sort();
@@ -53,8 +55,8 @@ function myTimer() {
             if (channels.toString() != currentChannels.toString()) {
                 console.log("channels sets are different!");
                 channelCell.innerHTML = "<select>" +
-                                        "<option value=\"ch1\">CHE</option>" +
-                                        "<option value=\"ch2\">CHN</option>" +
+                                        "<option value=\"ch1\">CHX</option>" +
+                                        "<option value=\"ch2\">CHY</option>" +
                                         "<option value=\"ch3\">CHZ</option>" +
                                         "</select>";
             }
@@ -62,7 +64,7 @@ function myTimer() {
         for (var i = 0; i < 3; i++) {
             document.getElementById("triggerTable").rows[i+1].cells[2].innerHTML = triggers[i];
         }
-        console.log("channel:" + document.getElementById("triggerTable").rows[1].cells[1].innerHTML);
+        //console.log("channel:" + document.getElementById("triggerTable").rows[1].cells[1].innerHTML);
     }
   };
   triggers_str = document.getElementById("triggerTable").rows[1].cells[2].innerHTML;
