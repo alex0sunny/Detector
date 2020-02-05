@@ -27,11 +27,15 @@ function myTimer() {
   xhr.onreadystatechange = function () {
     if (xhr.readyState === 4 && xhr.status === 200) {
         var json = JSON.parse(xhr.responseText);
-//        console.log(json);
+        console.log("json:" + json);
 //        document.getElementById("counter").value = json.counter;
         var triggers_str = json.triggers.split(",");
         var triggers = []
-        var channels = ["ch1", "ch2", "ch3"]
+        //var channels = ["ch1", "ch2", "ch3"]
+		var channels = []
+		if (json.hasOwnProperty('channels')) {
+			channels = json.channels.split(", ")
+		}
         for (var i = 0; i < 3; i++)   {
             trigger_str = triggers_str[i]
             //console.log("trigger_str:" + trigger_str)
@@ -52,12 +56,12 @@ function myTimer() {
             channels.sort();
             currentChannels.sort();
             console.log("current channels:" + currentChannels + " sample channels:" + channels);
-            if (channels.toString() != currentChannels.toString()) {
+            if (channels != [] && channels.toString() != currentChannels.toString()) {
                 console.log("channels sets are different!");
                 channelCell.innerHTML = "<select>" +
-                                        "<option value=\"ch1\">CHX</option>" +
-                                        "<option value=\"ch2\">CHY</option>" +
-                                        "<option value=\"ch3\">CHZ</option>" +
+                                        "<option value=\"" + channels[0] + "\">" + channels[0] + "</option>" +
+                                        "<option value=\"" + channels[1] + "\">" + channels[1] + "</option>" +
+                                        "<option value=\"" + channels[2] + "\">" + channels[2] + "</option>" +
                                         "</select>";
             }
         }

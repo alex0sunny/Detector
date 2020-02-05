@@ -22,7 +22,9 @@ context = zmq.Context()
 socket_backend = context.socket(zmq.PUB)
 socket_backend.connect('tcp://localhost:' + str(Port.backend.value))
 
-#sockets_trigger = sockets_detrigger = []
+socket_channels = context.socket(zmq.SUB)
+socket_channels.connect('tcp://localhost:' + str(Port.internal_resend.value))
+socket_channels.subscribe(b'chan')
 
 conn_str = 'tcp://localhost:' + str(Port.proxy.value)
 
@@ -164,10 +166,27 @@ class myHandler(BaseHTTPRequestHandler):
             # logger.debug('post data str:\n' + post_data_str)
             # logging.info("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n",
             #              str(self.path), str(self.headers), post_data.decode('utf-8'))
+            triggers = list(map(int, obj['triggers'].split(',')))
+            chans = []
+            try:
+                bin_data = socket_channels.recv(zmq.NOBLOCK)
+                chans_bin = bin_data[4:]
+                chans = [(chans_bin[i:i + 4]).decode().strip() for i in range(0, len(chans_bin), 4)]
+                # if {}.update(chans_tmp) != {}.update(chans):
+                #     chans = chans_tmp
+                while True:
+                    socket_channels.recv(zmq.NOBLOCK)
+            except zmq.ZMQError:
+                pass
+
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
-            self.wfile.write(json.dumps({'counter': str(int(counter) + 1), 'triggers': str(triggers)[1:-1]}).encode())
+            logger.debug('chans:' + str(chans))
+            json_map = {'counter': str(int(counter) + 1), 'triggers': str(triggers)[1:-1]}
+            if chans:
+                json_map['channels'] = ", ".join(chans)
+            self.wfile.write(json.dumps(json_map).encode())
         if self.path == '/apply':
             logger.debug('object:' + str(obj) + "\nPOST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n",
                          str(self.path), str(self.headers), post_data.decode('utf-8'))

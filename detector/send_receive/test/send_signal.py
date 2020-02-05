@@ -50,9 +50,11 @@ def send_signal(st, conn_str):
 
 st = read(os.path.split(inspect.getfile(misc))[0] + '/onem.mseed')
 data = st[-1].data
-data = np.append(data[2000:], data[:2000])
-st[-1].data = data
+st[-1].data = np.append(data[2000:], data[:2000])
 for tr in st:
     tr.stats.station = 'ND01'
+# st[0].stats.channel = 'CHX'
+# st[1].stats.channel = 'CHY'
+# st[2].stats.channel = 'CHZ'
 
 send_signal(st, 'tcp://*:%d' % Port.test_signal.value)

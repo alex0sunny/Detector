@@ -11,7 +11,7 @@ def resend(conn_str, triggers, pem, pet):
 
     socket_sub = context.socket(zmq.SUB)
     socket_sub.connect('tcp://localhost:%d' % Port.internal_resend.value)
-    socket_sub.setsockopt(zmq.SUBSCRIBE, b'')
+    socket_sub.setsockopt(zmq.SUBSCRIBE, b'ND01')
 
     socket_server = TcpServer(conn_str, context)
 

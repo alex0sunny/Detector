@@ -48,11 +48,14 @@ def signal_receiver(conn_str):
             sampling_rate = json_data['signal']['sample_rate']
             starttime = UTCDateTime(json_data['signal']['timestmp'])
             chs = json_data['signal']['samples']
+            chans_bin = b''
             for ch in chs:
                 bin_header = pack_ch_header('ND01', ch, sampling_rate, starttime._ns)
+                chans_bin += bin_header[4:8]
                 bin_signal = (base64.decodebytes(json_data['signal']['samples'][ch].encode("ASCII")))
                 bin_data = bin_header + bin_signal
                 socket_pub.send(bin_data)
                 socket_buf.send(int.to_bytes(starttime._ns, 8, byteorder='big'))
                 socket_buf.send(size_bytes + raw_data)
+            socket_buf.send(b'chan' + chans_bin)
 
