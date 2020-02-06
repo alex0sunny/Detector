@@ -19,12 +19,12 @@ document.getElementById("counter").value = 1;
 var myVar = setInterval(myTimer, 1000);
 
 function myTimer() {
-  //document.getElementById("counter").stepUp(1);
-  var xhr = new XMLHttpRequest();
-  var url = "url";
-  xhr.open("POST", url, true);
-  xhr.setRequestHeader("Content-Type", "application/json");
-  xhr.onreadystatechange = function () {
+	//document.getElementById("counter").stepUp(1);
+	var xhr = new XMLHttpRequest();
+	var url = "url";
+	xhr.open("POST", url, true);
+	xhr.setRequestHeader("Content-Type", "application/json");
+	xhr.onreadystatechange = function () {
     if (xhr.readyState === 4 && xhr.status === 200) {
         var json = JSON.parse(xhr.responseText);
         console.log("json:" + json);
@@ -46,23 +46,28 @@ function myTimer() {
             var channelCell = document.getElementById("triggerTable").rows[i].cells[1];
             var channelList = channelCell.children[0];
             var selectedIndex = channelList.options.selectedIndex;
-            var selectedValue = channelList.options[selectedIndex].value;
+            var selectedValue = channelList.options[selectedIndex].text;
             console.log("current channel value:" + selectedValue);
             var optionNodes = Array.prototype.slice.call(channelCell.childNodes[0].childNodes);
             var currentChannels = [];
             optionNodes.forEach(function(optionNode) {
-                currentChannels.push(optionNode.getAttribute("value"));
+                currentChannels.push(optionNode.text);
             });
             channels.sort();
             currentChannels.sort();
             console.log("current channels:" + currentChannels + " sample channels:" + channels);
-            if (channels != [] && channels.toString() != currentChannels.toString()) {
-                console.log("channels sets are different!");
-                channelCell.innerHTML = "<select>" +
-                                        "<option value=\"" + channels[0] + "\">" + channels[0] + "</option>" +
-                                        "<option value=\"" + channels[1] + "\">" + channels[1] + "</option>" +
-                                        "<option value=\"" + channels[2] + "\">" + channels[2] + "</option>" +
-                                        "</select>";
+            if (channels.length != 0 && channels.toString() != currentChannels.toString()) {
+                cellInnerHtml = "<select>";
+				channels.forEach(function (channel) {
+					var optionStr = "<option>" + channel+ "</option>";
+					if (channel == selectedValue) {
+						optionStr = "<option selected>" + channel+ "</option>";
+					}
+					cellInnerHtml += optionStr;
+				});
+				cellInnerHtml += "</select>";
+				console.log('cellInnerHtml:' + cellInnerHtml);
+				channelCell.innerHTML = cellInnerHtml;
             }
         }
         for (var i = 0; i < 3; i++) {

@@ -184,6 +184,7 @@ class myHandler(BaseHTTPRequestHandler):
             self.end_headers()
             logger.debug('chans:' + str(chans))
             json_map = {'counter': str(int(counter) + 1), 'triggers': str(triggers)[1:-1]}
+            #chans = ['EH1', 'EH2', 'EHN']
             if chans:
                 json_map['channels'] = ", ".join(chans)
             self.wfile.write(json.dumps(json_map).encode())
