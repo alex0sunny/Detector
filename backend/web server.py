@@ -166,7 +166,6 @@ class myHandler(BaseHTTPRequestHandler):
             # logger.debug('post data str:\n' + post_data_str)
             # logging.info("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n",
             #              str(self.path), str(self.headers), post_data.decode('utf-8'))
-            triggers = list(map(int, obj['triggers'].split(',')))
             chans = []
             try:
                 bin_data = socket_channels.recv(zmq.NOBLOCK)
@@ -182,15 +181,18 @@ class myHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
-            logger.debug('chans:' + str(chans))
+            logger.debug('chans:' + str(chans) + '\ntriggers:' + str(triggers))
             json_map = {'counter': str(int(counter) + 1), 'triggers': str(triggers)[1:-1]}
             #chans = ['EH1', 'EH2', 'EHN']
             if chans:
                 json_map['channels'] = ", ".join(chans)
+            logging.debug('json_map:' + str(json_map))
             self.wfile.write(json.dumps(json_map).encode())
         if self.path == '/apply':
             logger.debug('object:' + str(obj) + "\nPOST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n",
                          str(self.path), str(self.headers), post_data.decode('utf-8'))
+            with open('channels.json', 'w') as f:
+                json.dump(obj, f)
 
             socket_backend.send(b'AP')
 

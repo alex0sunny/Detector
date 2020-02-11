@@ -53,8 +53,8 @@ data = st[-1].data
 st[-1].data = np.append(data[2000:], data[:2000])
 for tr in st:
     tr.stats.station = 'ND01'
-# st[0].stats.channel = 'CHX'
+#st[0].stats.channel = 'CH1'
 # st[1].stats.channel = 'CHY'
-# st[2].stats.channel = 'CHZ'
+#st[2].stats.channel = 'EH1'
 
 send_signal(st, 'tcp://*:%d' % Port.test_signal.value)

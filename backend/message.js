@@ -1,18 +1,34 @@
 function msg(){
-  var xhr = new XMLHttpRequest();
-  var url = "apply";
-  xhr.open("POST", url, true);
-  xhr.setRequestHeader("Content-Type", "application/json");
-  xhr.onreadystatechange = function () {
-    if (xhr.readyState === 4 && xhr.status === 200) {
-        var json = JSON.parse(xhr.responseText);
-        console.log(json);
-        //document.getElementById("counter").value = json.counter;
-        alert('Response arrived!');
-    }
-  };
-  var data = JSON.stringify({"apply": 1});
-  xhr.send(data);
+	var xhr = new XMLHttpRequest();
+	var url = "apply";
+	xhr.open("POST", url, true);
+	xhr.setRequestHeader("Content-Type", "application/json");
+	xhr.onreadystatechange = function () {
+		if (xhr.readyState === 4 && xhr.status === 200) {
+			var json = JSON.parse(xhr.responseText);
+			console.log(json);
+			//document.getElementById("counter").value = json.counter;
+			alert('Response arrived!');
+		}
+	};
+	var rows = document.getElementById("triggerTable").rows;
+	var channels = [];
+	for (var j = 1; j < rows.length; j++) {
+		var row = rows[j];
+		var channelCell = row.cells[1];
+		console.log('inner html:' + channelCell.innerHTML);
+		console.log('channel cell child:' + channelCell.children[0].innerHTML);
+		console.log('option html:' + channelCell.children[0].options[0].innerHTML);
+		var options = rows[j].cells[1].children[0].options;
+		var selectedIndex = options.selectedIndex;
+		console.log('selected index:' + options.selectedIndex);
+		var channel = options[selectedIndex].text;
+		channels.push(channel);
+	};
+	console.log('channels:' + channels.toString());
+	var data = JSON.stringify({"apply": 1,
+										  "channels":  channels.join(" ")});
+	xhr.send(data);
 }
 
 document.getElementById("counter").value = 1;
@@ -27,9 +43,10 @@ function myTimer() {
 	xhr.onreadystatechange = function () {
     if (xhr.readyState === 4 && xhr.status === 200) {
         var json = JSON.parse(xhr.responseText);
-        console.log("json:" + json);
+        //console.log("json:" + json);
 //        document.getElementById("counter").value = json.counter;
         var triggers_str = json.triggers.split(",");
+		console.log('triggers_str:' + triggers_str);
         var triggers = []
         //var channels = ["ch1", "ch2", "ch3"]
 		var channels = []
@@ -47,7 +64,7 @@ function myTimer() {
             var channelList = channelCell.children[0];
             var selectedIndex = channelList.options.selectedIndex;
             var selectedValue = channelList.options[selectedIndex].text;
-            console.log("current channel value:" + selectedValue);
+            //console.log("current channel value:" + selectedValue);
             var optionNodes = Array.prototype.slice.call(channelCell.childNodes[0].childNodes);
             var currentChannels = [];
             optionNodes.forEach(function(optionNode) {
@@ -55,7 +72,7 @@ function myTimer() {
             });
             channels.sort();
             currentChannels.sort();
-            console.log("current channels:" + currentChannels + " sample channels:" + channels);
+            //console.log("current channels:" + currentChannels + " sample channels:" + channels);
             if (channels.length != 0 && channels.toString() != currentChannels.toString()) {
                 cellInnerHtml = "<select>";
 				channels.forEach(function (channel) {
@@ -66,7 +83,7 @@ function myTimer() {
 					cellInnerHtml += optionStr;
 				});
 				cellInnerHtml += "</select>";
-				console.log('cellInnerHtml:' + cellInnerHtml);
+				//console.log('cellInnerHtml:' + cellInnerHtml);
 				channelCell.innerHTML = cellInnerHtml;
             }
         }

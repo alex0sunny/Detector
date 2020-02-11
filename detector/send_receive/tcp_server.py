@@ -27,6 +27,8 @@ class TcpServer:
             self.socket.send(data)
         except Exception as ex:
             logger.warning('Cannot send the data, supposedly client is closing connection. ' + str(ex))
+            #self.socket.setsockopt(zmq.LINGER, 0)
+            #self.socket.setsockopt(zmq.RCVTIMEO, 2000)
             identity = self.socket.recv()
             empty = self.socket.recv()
             if empty:

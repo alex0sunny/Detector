@@ -1,3 +1,4 @@
+import inspect
 from multiprocessing import Process
 
 from detector.filter_trigger.StaLtaTrigger import sta_lta_picker
@@ -6,6 +7,8 @@ from detector.misc.globals import Port, CustomThread
 from detector.send_receive.signal_receiver import signal_receiver
 
 import zmq
+import json, os
+import backend
 
 from detector.send_receive.triggers_proxy import triggers_proxy
 
@@ -20,21 +23,27 @@ if __name__ == '__main__':
 
     while True:
 
+        f = open(os.path.split(inspect.getfile(backend))[0] + '/channels.json')
+        json_obj = json.load(f)
+        f.close()
+        channels = json_obj['channels'].split(' ')
+        print('channels:' + str(channels))
+
         kwargs_list = [{'target': signal_receiver,
                         'kwargs': {'conn_str': 'tcp://192.168.0.189:' + str(Port.test_signal.value)}},
                        {'target': resend, 'kwargs': {'conn_str': 'tcp://*:' + str(Port.signal_resend.value),
                                                      'triggers': [1, 2], 'pem': 1, 'pet': 1}},
                        {'target': triggers_proxy, 'kwargs': {}},
                        {'target': sta_lta_picker,
-                        'kwargs': {'trigger_index': 0, 'station': 'ND01', 'channel': 'EHE',
+                        'kwargs': {'trigger_index': 0, 'station': 'ND01', 'channel': channels[0],
                                    'freqmin': 100, 'freqmax': 300, 'sta': 1, 'lta': 4,
                                    'init_level': 2, 'stop_level': 1}},
                        {'target': sta_lta_picker,
-                        'kwargs': {'trigger_index': 1, 'station': 'ND01', 'channel': 'EHN',
+                        'kwargs': {'trigger_index': 1, 'station': 'ND01', 'channel': channels[1],
                                    'freqmin': 100, 'freqmax': 300, 'sta': 1, 'lta': 4,
                                    'init_level': 2, 'stop_level': 1}},
                        {'target': sta_lta_picker,
-                        'kwargs': {'trigger_index': 2, 'station': 'ND01', 'channel': 'EHZ',
+                        'kwargs': {'trigger_index': 2, 'station': 'ND01', 'channel': channels[2],
                                    'freqmin': 100, 'freqmax': 300, 'sta': 1, 'lta': 4,
                                    'init_level': 2, 'stop_level': 1}}]
 
