@@ -1,14 +1,16 @@
 import cgi
+import inspect
 import json
 import logging
 import zmq
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from os.path import curdir, sep
 import os
+import backend
 
 logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
                            '%(message)s',
-                    level=logging.DEBUG)
+                    level=logging.INFO)
 logger = logging.getLogger('detector')
 
 
@@ -120,22 +122,10 @@ class myHandler(BaseHTTPRequestHandler):
         post_data = self.rfile.read(content_length)     # <--- Gets the data itself
         post_data_str = post_data.decode()
         obj = json.loads(post_data_str)
+        print(self.path)
         if self.path == '/url':
             counter = obj['counter']
-            # for socket_trigger in sockets_trigger:
-            #     try:
-            #         mes = socket_trigger.recv(zmq.NOBLOCK)
-            #         logger.info('trigger message:' + str(mes))
-            #     except zmq.ZMQError:
-            #         pass
-            # for socket_detrigger in sockets_detrigger:
-            #     try:
-            #         mes = socket_detrigger.recv(zmq.NOBLOCK)
-            #         logger.info('detrigger message:' + str(mes))
-            #     except zmq.ZMQError:
-            #         pass
-            # logger.debug('obj:' + str(obj) + '\ntriggers str:' + str(obj['triggers']))
-            triggers = list(map(int, obj['triggers'].split(',')))
+            triggers = list(map(int, obj['triggers'].split(' ')))
             for i in range(len(triggers)):
                 if triggers[i]:
                     socket_target = sockets_detrigger[i]
@@ -153,19 +143,7 @@ class myHandler(BaseHTTPRequestHandler):
                 except zmq.ZMQError:
                     pass
 
-            # if triggers[1]:
-            #     logger.debug('wait detrigger..')
-            #     socket_target = sockets_detrigger[1]
-            # else:
-            #     logger.debug('wait detrigger..')
-            #     socket_target = sockets_trigger[1]
-
             logging.debug('triggers:' + str(triggers))
-            # print('object:' + str(obj))
-            # print('counter: ' + counter)
-            # logger.debug('post data str:\n' + post_data_str)
-            # logging.info("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n",
-            #              str(self.path), str(self.headers), post_data.decode('utf-8'))
             chans = []
             try:
                 bin_data = socket_channels.recv(zmq.NOBLOCK)
@@ -182,10 +160,12 @@ class myHandler(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             logger.debug('chans:' + str(chans) + '\ntriggers:' + str(triggers))
-            json_map = {'counter': str(int(counter) + 1), 'triggers': str(triggers)[1:-1]}
+            json_map = {'counter': str(int(counter) + 1), 'triggers': ' '.join([str(trigger) for trigger in triggers])}
             #chans = ['EH1', 'EH2', 'EHN']
             if chans:
-                json_map['channels'] = ", ".join(chans)
+                json_map['channels'] = ' '.join(chans)
+            else:
+                json_map['channels'] = ''
             logging.debug('json_map:' + str(json_map))
             self.wfile.write(json.dumps(json_map).encode())
         if self.path == '/apply':
@@ -200,6 +180,15 @@ class myHandler(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             self.wfile.write(json.dumps({'apply': 1}).encode())
+        if self.path == '/load':
+            print('load')
+            f = open(os.path.split(inspect.getfile(backend))[0] + '/channels.json')
+            json_obj = json.load(f)
+            f.close()
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({'selectedChannels': json_obj['channels']}).encode())
 
 
 try:

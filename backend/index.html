@@ -3,7 +3,7 @@
     <title>Python is awesome!</title>
     <link rel="shortcut icon" href=""/>
 </head>
-<body>
+<body onload="initPage()">
 <h1>Afternerd</h1>
 <p>Congratulations! The HTTP Server is working again!</p>
 <form>
@@ -51,6 +51,9 @@
 </table>
 <button type="button" onclick="msg()">
     Try it
+</button>
+<button type="button" onclick="initPage()">
+    initPage
 </button>
 <script src="message.js"></script>
 

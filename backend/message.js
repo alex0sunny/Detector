@@ -1,4 +1,25 @@
-function msg(){
+function initPage() {
+	alert("onLoad");
+	var xhr = new XMLHttpRequest();
+	var url = "load";
+	xhr.open("POST", url, true);
+	xhr.setRequestHeader("Content-Type", "application/json");
+	xhr.onreadystatechange = function () {
+		if (xhr.readyState === 4 && xhr.status === 200) {
+			var json = JSON.parse(xhr.responseText);
+			console.log(json);
+			selectedChannels = json.selectedChannels.split(" ");
+			setSelectedChannels(selectedChannels);
+			//document.getElementById("counter").value = json.counter;
+			//alert('Response arrived!');
+		}
+	};
+	var rows = document.getElementById("triggerTable").rows;
+	var data = JSON.stringify({"load": 1});
+	xhr.send(data);
+}
+
+function msg() {
 	var xhr = new XMLHttpRequest();
 	var url = "apply";
 	xhr.open("POST", url, true);
@@ -40,66 +61,23 @@ function myTimer() {
 	var url = "url";
 	xhr.open("POST", url, true);
 	xhr.setRequestHeader("Content-Type", "application/json");
+	var pageMap = getFromHtml();
 	xhr.onreadystatechange = function () {
-    if (xhr.readyState === 4 && xhr.status === 200) {
-        var json = JSON.parse(xhr.responseText);
-        //console.log("json:" + json);
-//        document.getElementById("counter").value = json.counter;
-        var triggers_str = json.triggers.split(",");
-		console.log('triggers_str:' + triggers_str);
-        var triggers = []
-        //var channels = ["ch1", "ch2", "ch3"]
-		var channels = []
-		if (json.hasOwnProperty('channels')) {
-			channels = json.channels.split(", ")
+		if (xhr.readyState === 4 && xhr.status === 200) {
+			var json = JSON.parse(xhr.responseText);
+			var jsonMap = getFromJson(json);
+			var triggers = jsonMap.triggers;
+			setTriggers(triggers);
+			var channels = jsonMap.channels;
+			console.log("page channels:" + pageMap.channels.toString() + "; channels:" + channels.toString());
+			if (channels.toString() != pageMap.channels.toString()) {
+				setChannelsList(channels);
+			}
 		}
-        for (var i = 0; i < 3; i++)   {
-            trigger_str = triggers_str[i]
-            //console.log("trigger_str:" + trigger_str)
-            triggers.push(Number(trigger_str))
-            //console.log("triggers:" + triggers)
-        }
-        for (var i = 1; i <= 3; i++) {
-            var channelCell = document.getElementById("triggerTable").rows[i].cells[1];
-            var channelList = channelCell.children[0];
-            var selectedIndex = channelList.options.selectedIndex;
-            var selectedValue = channelList.options[selectedIndex].text;
-            //console.log("current channel value:" + selectedValue);
-            var optionNodes = Array.prototype.slice.call(channelCell.childNodes[0].childNodes);
-            var currentChannels = [];
-            optionNodes.forEach(function(optionNode) {
-                currentChannels.push(optionNode.text);
-            });
-            channels.sort();
-            currentChannels.sort();
-            //console.log("current channels:" + currentChannels + " sample channels:" + channels);
-            if (channels.length != 0 && channels.toString() != currentChannels.toString()) {
-                cellInnerHtml = "<select>";
-				channels.forEach(function (channel) {
-					var optionStr = "<option>" + channel+ "</option>";
-					if (channel == selectedValue) {
-						optionStr = "<option selected>" + channel+ "</option>";
-					}
-					cellInnerHtml += optionStr;
-				});
-				cellInnerHtml += "</select>";
-				//console.log('cellInnerHtml:' + cellInnerHtml);
-				channelCell.innerHTML = cellInnerHtml;
-            }
-        }
-        for (var i = 0; i < 3; i++) {
-            document.getElementById("triggerTable").rows[i+1].cells[2].innerHTML = triggers[i];
-        }
-        //console.log("channel:" + document.getElementById("triggerTable").rows[1].cells[1].innerHTML);
-    }
-  };
-  triggers_str = document.getElementById("triggerTable").rows[1].cells[2].innerHTML;
-  for (var i = 2; i <= 3; i++) {
-    triggers_str += ", " + document.getElementById("triggerTable").rows[i].cells[2].innerHTML;
-  }
-  var data = JSON.stringify({"triggers": triggers_str, "counter": document.getElementById("counter").value});
-  //console.log("data to send" + data)
-  xhr.send(data);
+	};
+	var triggers_str = pageMap.triggers.join(" ");
+	var data = JSON.stringify({"triggers": triggers_str, "counter": document.getElementById("counter").value});
+	xhr.send(data);
 }
 
 function pauseCounter() {
@@ -108,4 +86,129 @@ function pauseCounter() {
 
 function resumeCounter() {
     myVar = setInterval(myTimer, 1000);
+}
+
+function getFromJson(json) {
+	var triggers_strs = json.triggers.split(" ");
+	var triggers = triggers_strs.map(Number);
+	var channels = json.channels.split(" ");
+	channels.sort();
+	console.log("triggers:" + triggers + " channels:" + channels);
+	return {triggers : triggers, channels : channels};
+}
+
+function getFromHtml()	{
+	var rows = document.getElementById("triggerTable").rows;
+	var triggers = [];
+	var channels = [];
+	var i;
+	var options;
+	if (rows.length > 1) {
+		for (i = 1; i < rows.length; i++)	{
+			triggers.push(rows[i].cells[2].innerHTML + "");
+		}
+		options = rows[1].cells[1].children[0].children;
+		for (i = 0; i < options.length; i++) {
+		    optionNode = options[i];
+		    channels.push(optionNode.text);
+		}
+		channels.sort();
+	}
+	return {triggers : triggers, channels : channels};
+}
+
+function getSelectedChannels () {
+	var rows = document.getElementById("triggerTable").rows;
+	var selectedChannels = [];
+	if (rows.length > 1) {
+		for (var i = 1;  i < rows.length; i++) {
+			options = rows[i].cells[1].children[0].children;
+			var selectedIndex = options.selectedIndex;
+			var selectedChannel = options[selectedIndex].text;
+			selectedChannels.push(selectedChannel);
+		}
+	}
+	return selectedChannels;
+}
+
+function setTriggers(triggers) {
+	var rows = document.getElementById("triggerTable").rows;
+	if (rows.length > 1) {
+		for (var i = 1;  i < rows.length; i++) {
+			rows[i].cells[2] = triggers[i-1];
+		}
+	}
+}
+
+function setChannelsList(channels) {
+	var rows = document.getElementById("triggerTable").rows;
+	if (rows.length > 1) {
+		for (var i = 1;  i < rows.length; i++) {
+			var channelCell = rows[i].cells[1];
+			var options = channelCell.children[0].children;
+			var selectedIndex = options.selectedIndex;
+			var selectedChannel = options[selectedIndex].text;
+			channelCell.children[0].innerHTML = "";
+			channels.forEach(function (channel) {
+				var optionNode = document.createElement("option");
+				optionNode.text = channel;
+				if (channel == selectedChannel) {
+					optionNode.setAttribute("selected", "true");
+				}
+				channelCell.children[0].appendChild(optionNode);
+			});
+		}
+	}
+}
+
+function setSelectedChannels(selectedChannels) {
+	var rows = document.getElementById("triggerTable").rows;
+	if (rows.length > 1) {
+		for (var i = 1;  i < rows.length; i++) {
+			var options = rows[i].cells[1].children[0].children;
+			var selectedChannel = selectedChannels[i-1];
+			var present = false;
+			for (var j = 0; j < options.length; j++)	{
+				if (options[j].text == selectedChannel) {
+					options.selectedIndex = j;
+					options[j].selected = "true";
+					present = true;
+				} else {
+					options[j].removeAttribute("selected");
+				}
+			}
+			if (present == false) {
+				var optionNode = document.createElement("option");
+				optionNode.text = selectedChannel;
+				optionNode.setAttribute("selected", "true");
+				document.getElementById("triggerTable").rows[i].cells[1].children[0].appendChild(optionNode);
+				selectedIndex = options.length - 1;
+				options.selectedIndex = selectedIndex;
+			}
+		}
+	}
+}
+
+function getDefaultChannels() {
+	var channels = [];
+	var rows = document.getElementById("triggerTable").rows;
+	if (rows.length > 1) {
+		for (var i = 1;  i < rows.length; i++) {
+			var channelCell = rows[i].cells[1];
+			var options = channelCell.children[0].children;
+			var channel;
+			for (var j = 0; j < options.length; j++)	{
+				optionNode = options[j];
+				if (optionNode.hasAttribute("selected"))	{
+					channel = optionNode.text;
+				}
+			}
+			if (channel == undefined)	{
+				selectedIndex = options.selectedIndex;
+				channel = options[selectedIndex].text;
+			}
+			channels.push(channel);
+		}
+	}
+	return channels;
 }
