@@ -128,8 +128,10 @@ class myHandler(BaseHTTPRequestHandler):
             for i in range(len(triggers)):
                 if triggers[i]:
                     socket_target = sockets_detrigger[i]
+                    socket_non_target = sockets_trigger[i]
                 else:
                     socket_target = sockets_trigger[i]
+                    socket_non_target = sockets_detrigger[i]
                 try:
                     mes = socket_target.recv(zmq.NOBLOCK)
                     logger.info('triggering detected, message:' + str(mes))
@@ -141,14 +143,21 @@ class myHandler(BaseHTTPRequestHandler):
                         socket_target.recv(zmq.NOBLOCK)
                 except zmq.ZMQError:
                     pass
+                try:
+                    while True:
+                        socket_non_target.recv(zmq.NOBLOCK)
+                except zmq.ZMQError:
+                    pass
 
             logging.debug('triggers:' + str(triggers))
             chans = []
             try:
                 custom_header = socket_channels.recv(zmq.NOBLOCK)
                 if (len(custom_header) == 50):
-                    n_of_chs = int.from_bytes(custom_header[8:9], byteorder='big')
+                    n_of_chs = int.from_bytes(custom_header[12:13], byteorder='big')
+                    logger.debug('n_of_chs:' + str(n_of_chs))
                     chans = [(custom_header[i:i + 4]).decode().strip() for i in range(13, 13 + n_of_chs * 4, 4)]
+                    logger.debug('chans:' + str(chans))
                 else:
                     logger.error('unexpected len ' + str(len(custom_header)) + ' for \'head\' block')
                 # if {}.update(chans_tmp) != {}.update(chans):
@@ -166,7 +175,7 @@ class myHandler(BaseHTTPRequestHandler):
             #chans = ['EH1', 'EH2', 'EHN']
             if chans:
                 json_map['channels'] = ' '.join(chans)
-            logging.debug('json_map:' + str(json_map))
+            logging.info('json_map:' + str(json_map))
             self.wfile.write(json.dumps(json_map).encode())
         if self.path == '/apply':
             logger.debug('object:' + str(obj) + "\nPOST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n",

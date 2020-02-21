@@ -76,11 +76,12 @@ function myTimer() {
 	xhr.onreadystatechange = function () {
 		if (xhr.readyState === 4 && xhr.status === 200) {
 			var json = JSON.parse(xhr.responseText);
-			var jsonMap = getFromJson(json);
-			var triggers = jsonMap.triggers;
+			var jsonObj = getFromJson(json);
+			var triggers = jsonObj.triggers;
 			setTriggers(triggers);
-			if (jsonMap.has("channels"))    {
-                var channels = jsonMap.channels;
+			console.log()
+			if ("channels" in jsonObj)    {
+                var channels = jsonObj.channels;
                 console.log("page channels:" + pageMap.channels.toString() + "; channels:" + channels.toString());
                 if (channels.toString() != pageMap.channels.toString()) {
                     setChannelsList(channels);
@@ -104,10 +105,15 @@ function resumeCounter() {
 function getFromJson(json) {
 	var triggers_strs = json.triggers.split(" ");
 	var triggers = triggers_strs.map(Number);
-	var channels = json.channels.split(" ");
-	channels.sort();
-	console.log("triggers:" + triggers + " channels:" + channels);
-	return {triggers : triggers, channels : channels};
+	var jsonObj = {"triggers" : triggers}
+	if ("channels" in json) {
+		var channels = json.channels.split(" ");
+    	channels.sort();
+	    jsonObj["channels"] = channels;
+	    console.log("channels:" + channels);
+	}
+	console.log("triggers:" + triggers);
+	return jsonObj;
 }
 
 function getFromHtml()	{
