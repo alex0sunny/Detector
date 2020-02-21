@@ -1,4 +1,3 @@
-import cgi
 import inspect
 import json
 import logging
@@ -26,7 +25,7 @@ socket_backend.connect('tcp://localhost:' + str(Port.backend.value))
 
 socket_channels = context.socket(zmq.SUB)
 socket_channels.connect('tcp://localhost:' + str(Port.internal_resend.value))
-socket_channels.subscribe(b'chan')
+socket_channels.subscribe(b'head')
 
 conn_str = 'tcp://localhost:' + str(Port.proxy.value)
 
@@ -121,10 +120,10 @@ class myHandler(BaseHTTPRequestHandler):
         content_length = int(self.headers['Content-Length'])    # <--- Gets the size of data
         post_data = self.rfile.read(content_length)     # <--- Gets the data itself
         post_data_str = post_data.decode()
-        obj = json.loads(post_data_str)
+        if self.path != '/save':
+            obj = json.loads(post_data_str)
         print(self.path)
         if self.path == '/url':
-            counter = obj['counter']
             triggers = list(map(int, obj['triggers'].split(' ')))
             for i in range(len(triggers)):
                 if triggers[i]:
@@ -146,9 +145,12 @@ class myHandler(BaseHTTPRequestHandler):
             logging.debug('triggers:' + str(triggers))
             chans = []
             try:
-                bin_data = socket_channels.recv(zmq.NOBLOCK)
-                chans_bin = bin_data[4:]
-                chans = [(chans_bin[i:i + 4]).decode().strip() for i in range(0, len(chans_bin), 4)]
+                custom_header = socket_channels.recv(zmq.NOBLOCK)
+                if (len(custom_header) == 50):
+                    n_of_chs = int.from_bytes(custom_header[8:9], byteorder='big')
+                    chans = [(custom_header[i:i + 4]).decode().strip() for i in range(13, 13 + n_of_chs * 4, 4)]
+                else:
+                    logger.error('unexpected len ' + str(len(custom_header)) + ' for \'head\' block')
                 # if {}.update(chans_tmp) != {}.update(chans):
                 #     chans = chans_tmp
                 while True:
@@ -160,12 +162,10 @@ class myHandler(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             logger.debug('chans:' + str(chans) + '\ntriggers:' + str(triggers))
-            json_map = {'counter': str(int(counter) + 1), 'triggers': ' '.join([str(trigger) for trigger in triggers])}
+            json_map = {'triggers': ' '.join([str(trigger) for trigger in triggers])}
             #chans = ['EH1', 'EH2', 'EHN']
             if chans:
                 json_map['channels'] = ' '.join(chans)
-            else:
-                json_map['channels'] = ''
             logging.debug('json_map:' + str(json_map))
             self.wfile.write(json.dumps(json_map).encode())
         if self.path == '/apply':
@@ -180,15 +180,14 @@ class myHandler(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             self.wfile.write(json.dumps({'apply': 1}).encode())
+        if self.path == '/save':
+            print('save')
+            print('post data:\n' + post_data_str)
+            f = open(os.path.split(inspect.getfile(backend))[0] + '/index.html', 'w')
+            f.write(post_data_str)
+            f.close()
         if self.path == '/load':
             print('load')
-            f = open(os.path.split(inspect.getfile(backend))[0] + '/channels.json')
-            json_obj = json.load(f)
-            f.close()
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps({'selectedChannels': json_obj['channels']}).encode())
 
 
 try:

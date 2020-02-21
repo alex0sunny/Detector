@@ -11,7 +11,7 @@ def resend(conn_str, triggers, pem, pet):
 
     socket_sub = context.socket(zmq.SUB)
     socket_sub.connect('tcp://localhost:%d' % Port.internal_resend.value)
-    socket_sub.setsockopt(zmq.SUBSCRIBE, b'ND01')
+    socket_sub.setsockopt(zmq.SUBSCRIBE, b'')
 
     socket_server = TcpServer(conn_str, context)
 
@@ -47,30 +47,38 @@ def resend(conn_str, triggers, pem, pet):
         except zmq.ZMQError:
             pass
 
-        dt_bytes = socket_sub.recv()
+        # logger.debug('wait custom header')
+        custom_header = socket_sub.recv()
+        # logger.debug('custom header received:' + str(custom_header))
+        dt_bytes = custom_header[4:12]
         dt = UTCDateTime(int.from_bytes(dt_bytes, byteorder='big') / 10 ** 9)
+        # logger.debug('wait binary data')
         bdata = socket_sub.recv()
+        # logger.debug('binary data received')
         #logger.debug('dt:' + str(UTCDateTime(dt)) + ' bdata len:' + str(len(bdata)))
         if dt < pet_time or trigger:
             # if buf:
             #     logger.debug('clear buf, trigger:' + str(trigger))
             while buf:
-                if not test_send:
+                if test_send:
                     socket_server.send(buf[0][1])
                 # logger.debug('buf item dt:' + str(buf[0][0]))
                 buf = buf[1:]
             # logger.debug('send regular data, dt' + str(dt))
-            socket_server.send(bdata)
+            if test_send:
+                socket_server.send(bdata)
         else:
             if test_send and buf:
                 socket_server.send(buf[0][1])
-            #logger.debug('append to buf with dt:' + str(dt))
+            # logger.debug('append to buf with dt:' + str(dt))
             buf.append((dt, bdata))
-        #logger.debug('buf[0]:' + str(buf[0]) + '\nbuf[0][0]:' + str(buf[0][0]))
         if buf:
+            # logger.debug('buf[0]:' + str(buf[0]) + '\nbuf[0][0]:' + str(buf[0][0]))
             dt_begin = buf[0][0]
             while dt_begin < dt - pem and buf[3:]:
                 # logger.debug('delete from buf with dt:' + str(buf[0][0]) + '\ncurrent pem:' +
                 #              str(dt-pem) + '\ncurrent buf:' + str(buf[0][0]) + '-' + str(buf[-1][0]))
                 buf = buf[1:]
                 dt_begin = buf[0][0]
+        # else:
+        #     logger.debug('buf is empty')

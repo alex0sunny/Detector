@@ -6,20 +6,23 @@ function initPage() {
 	xhr.setRequestHeader("Content-Type", "application/json");
 	xhr.onreadystatechange = function () {
 		if (xhr.readyState === 4 && xhr.status === 200) {
-			var json = JSON.parse(xhr.responseText);
-			console.log(json);
-			selectedChannels = json.selectedChannels.split(" ");
-			setSelectedChannels(selectedChannels);
-			//document.getElementById("counter").value = json.counter;
-			//alert('Response arrived!');
+		    console.log("do nothing now")
 		}
 	};
 	var rows = document.getElementById("triggerTable").rows;
+	rows.forEach(function (row) {
+	    row.cells[2].innerHTML = 0 + "";
+	})
 	var data = JSON.stringify({"load": 1});
 	xhr.send(data);
 }
 
 function msg() {
+    apply();
+    sendHTML();
+}
+
+function apply() {
 	var xhr = new XMLHttpRequest();
 	var url = "apply";
 	xhr.open("POST", url, true);
@@ -47,12 +50,20 @@ function msg() {
 		channels.push(channel);
 	};
 	console.log('channels:' + channels.toString());
-	var data = JSON.stringify({"apply": 1,
-										  "channels":  channels.join(" ")});
+	setSelectedChannels(channels);
+	var data = JSON.stringify({"apply": 1, "channels":  channels.join(" ")});
 	xhr.send(data);
 }
 
-document.getElementById("counter").value = 1;
+function sendHTML() {
+	var xhr = new XMLHttpRequest();
+	var url = "save";
+	xhr.open("POST", url, true);
+	xhr.setRequestHeader("Content-Type", "application/html");
+	var pageHTML = "<html>\n" + document.documentElement.innerHTML + "\n</html>";
+	xhr.send(pageHTML);
+}
+
 var myVar = setInterval(myTimer, 1000);
 
 function myTimer() {
@@ -68,15 +79,17 @@ function myTimer() {
 			var jsonMap = getFromJson(json);
 			var triggers = jsonMap.triggers;
 			setTriggers(triggers);
-			var channels = jsonMap.channels;
-			console.log("page channels:" + pageMap.channels.toString() + "; channels:" + channels.toString());
-			if (channels.toString() != pageMap.channels.toString()) {
-				setChannelsList(channels);
-			}
+			if (jsonMap.has("channels"))    {
+                var channels = jsonMap.channels;
+                console.log("page channels:" + pageMap.channels.toString() + "; channels:" + channels.toString());
+                if (channels.toString() != pageMap.channels.toString()) {
+                    setChannelsList(channels);
+                }
+            }
 		}
 	};
 	var triggers_str = pageMap.triggers.join(" ");
-	var data = JSON.stringify({"triggers": triggers_str, "counter": document.getElementById("counter").value});
+	var data = JSON.stringify({"triggers": triggers_str});
 	xhr.send(data);
 }
 
@@ -135,7 +148,7 @@ function setTriggers(triggers) {
 	var rows = document.getElementById("triggerTable").rows;
 	if (rows.length > 1) {
 		for (var i = 1;  i < rows.length; i++) {
-			rows[i].cells[2] = triggers[i-1];
+			rows[i].cells[2].innerHTML = triggers[i-1];
 		}
 	}
 }
@@ -145,15 +158,16 @@ function setChannelsList(channels) {
 	if (rows.length > 1) {
 		for (var i = 1;  i < rows.length; i++) {
 			var channelCell = rows[i].cells[1];
-			var options = channelCell.children[0].children;
+			var options = channelCell.children[0].options;
 			var selectedIndex = options.selectedIndex;
+			console.log("selectedIndex:" + selectedIndex);
 			var selectedChannel = options[selectedIndex].text;
 			channelCell.children[0].innerHTML = "";
 			channels.forEach(function (channel) {
 				var optionNode = document.createElement("option");
 				optionNode.text = channel;
 				if (channel == selectedChannel) {
-					optionNode.setAttribute("selected", "true");
+					optionNode.setAttribute("selected", "selected");
 				}
 				channelCell.children[0].appendChild(optionNode);
 			});
@@ -165,13 +179,13 @@ function setSelectedChannels(selectedChannels) {
 	var rows = document.getElementById("triggerTable").rows;
 	if (rows.length > 1) {
 		for (var i = 1;  i < rows.length; i++) {
-			var options = rows[i].cells[1].children[0].children;
+			var options = rows[i].cells[1].children[0].options;
 			var selectedChannel = selectedChannels[i-1];
 			var present = false;
 			for (var j = 0; j < options.length; j++)	{
 				if (options[j].text == selectedChannel) {
 					options.selectedIndex = j;
-					options[j].selected = "true";
+					options[j].setAttribute("selected", "selected");
 					present = true;
 				} else {
 					options[j].removeAttribute("selected");
@@ -180,7 +194,7 @@ function setSelectedChannels(selectedChannels) {
 			if (present == false) {
 				var optionNode = document.createElement("option");
 				optionNode.text = selectedChannel;
-				optionNode.setAttribute("selected", "true");
+				optionNode.setAttribute("selected", "selected");
 				document.getElementById("triggerTable").rows[i].cells[1].children[0].appendChild(optionNode);
 				selectedIndex = options.length - 1;
 				options.selectedIndex = selectedIndex;

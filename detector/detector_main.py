@@ -4,7 +4,9 @@ from multiprocessing import Process
 from detector.filter_trigger.StaLtaTrigger import sta_lta_picker
 from detector.filter_trigger.trigger_resender import resend
 from detector.misc.globals import Port, CustomThread
+from detector.misc.html_util import getChannels
 from detector.send_receive.signal_receiver import signal_receiver
+
 
 import zmq
 import json, os
@@ -23,10 +25,7 @@ if __name__ == '__main__':
 
     while True:
 
-        f = open(os.path.split(inspect.getfile(backend))[0] + '/channels.json')
-        json_obj = json.load(f)
-        f.close()
-        channels = json_obj['channels'].split(' ')
+        channels = getChannels()
         print('channels:' + str(channels))
 
         kwargs_list = [{'target': signal_receiver,

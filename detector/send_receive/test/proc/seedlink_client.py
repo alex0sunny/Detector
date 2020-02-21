@@ -26,12 +26,16 @@ def handle_data(trace):
         pyplot.pause(.1)
 
 
-# client = create_client('rtserve.iris.washington.edu', on_data=handle_data)
-client = create_client('192.168.0.200', on_data=handle_data)
+#client = create_client('rtserve.iris.washington.edu', on_data=handle_data)
+#client = create_client('192.168.0.200', on_data=handle_data)
+client = create_client('81.26.81.45', on_data=handle_data)
 print(client.get_info('streams'))
+print()
+print(client.get_info('ALL'))
 
-# client.select_stream('IU', 'ANMO', 'BH?')
-client.select_stream('KS', 'SHAR', 'S2?')
+#client.select_stream('IU', 'ANMO', 'BH?')
+#client.select_stream('KS', 'SHAR', 'S2?')
+client.select_stream('KS', 'SHAZ', 'SH?')
 
 client.run()
 

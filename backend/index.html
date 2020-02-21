@@ -1,17 +1,10 @@
 <html>
 <head>
     <title>Python is awesome!</title>
-    <link rel="shortcut icon" href=""/>
 </head>
-<body onload="initPage()">
+<body>
 <h1>Afternerd</h1>
 <p>Congratulations! The HTTP Server is working again!</p>
-<form>
-    counter:<br/>
-    <input id="counter" type="number" name="counter" value="0" size="20" onfocus="pauseCounter()"
-           onfocusout="resumeCounter()"/>
-    <br/>
-</form>
 <table style="width:100%" id="triggerTable">
   <tbody><tr>
     <th>id</th>
@@ -22,9 +15,9 @@
     <td>0</td>
     <td>
         <select>
-            <option selected="selected">EHE</option>
+            <option>EHE</option>
             <option>EHN</option>
-            <option>EHZ</option>
+            <option selected="selected">EHZ</option>
         </select>
     </td>
     <td>0</td>
@@ -38,7 +31,7 @@
           <option>EHZ</option>
       </select>
     </td>
-    <td>0</td>
+    <td>1</td>
   </tr>
   <tr>
     <td>2</td>
@@ -49,16 +42,29 @@
           <option selected="selected">EHZ</option>
       </select>
     </td>
-    <td>0</td>
+    <td>1</td>
   </tr>
 </tbody></table>
 <button type="button" onclick="msg()">
     Try it
 </button>
-<button type="button" onclick="initPage()">
+<button type="button" onclick="location.reload(true)">
     initPage
 </button>
 <script src="message.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 </body>
