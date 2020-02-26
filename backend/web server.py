@@ -6,6 +6,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from os.path import curdir, sep
 import os
 import backend
+from detector.misc.html_util import save_pprint
 
 logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
                            '%(message)s',
@@ -60,6 +61,15 @@ for trigger_index in range(3):
 #     socket_detrigger.setsockopt(zmq.SUBSCRIBE, subscription_detrigger)
 #     sockets_trigger.append(socket_trigger)
 #     sockets_detrigger.append(socket_detrigger)
+
+
+def clear_triggers():
+    for socket_cur in sockets_trigger + sockets_detrigger:
+        try:
+            while True:
+                socket_cur.recv(zmq.NOBLOCK)
+        except zmq.ZMQError:
+            pass
 
 # This class will handles any incoming request from
 # the browser
@@ -178,10 +188,9 @@ class myHandler(BaseHTTPRequestHandler):
             logging.info('json_map:' + str(json_map))
             self.wfile.write(json.dumps(json_map).encode())
         if self.path == '/apply':
+            print('apply')
             logger.debug('object:' + str(obj) + "\nPOST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n",
                          str(self.path), str(self.headers), post_data.decode('utf-8'))
-            with open('channels.json', 'w') as f:
-                json.dump(obj, f)
 
             socket_backend.send(b'AP')
 
@@ -191,10 +200,8 @@ class myHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({'apply': 1}).encode())
         if self.path == '/save':
             print('save')
-            print('post data:\n' + post_data_str)
-            f = open(os.path.split(inspect.getfile(backend))[0] + '/index.html', 'w')
-            f.write(post_data_str)
-            f.close()
+            save_pprint(post_data_str, os.path.split(inspect.getfile(backend))[0] + '/index.html')
+            clear_triggers()
         if self.path == '/load':
             print('load')
 

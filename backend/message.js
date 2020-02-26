@@ -17,12 +17,13 @@ function initPage() {
 	xhr.send(data);
 }
 
-function msg() {
+function my_mes() {
     apply();
     sendHTML();
 }
 
 function apply() {
+    alert('apply');
 	var xhr = new XMLHttpRequest();
 	var url = "apply";
 	xhr.open("POST", url, true);
