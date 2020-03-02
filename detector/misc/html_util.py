@@ -8,16 +8,15 @@ from detector.misc.globals import logger
 def getTriggerParams():
     root = etree.parse(os.path.split(inspect.getfile(backend))[0] + '/index.html')
     header_els = root.xpath('/html/body/table/tbody/tr/th')
-    header_inds = {el.text: i for el, i in zip(header_els, range(100)) if el.text not in ['channel', 'val']}
+    header_inds = {el.text: i for el, i in zip(header_els, range(100))}
     rows = root.xpath('/html/body/table/tbody/tr')[1:]
     params_list = []
-    parser = etree.HTMLParser(remove_blank_text=True)
     for row in rows:
-        subroot_str = etree.tostring(row).decode()
-        subroot = etree.fromstring(subroot_str, parser).getroottree()
-        params_map = {'channel': subroot.xpath('//option[@selected]')[0].text}
+        [channel] = [el.text for el in row[header_inds['channel']].iter() if 'selected' in el.attrib]
+        params_map = {'channel': channel}
         for header in header_inds.keys():
-            params_map[header] = int(row[header_inds[header]].text)
+            if header not in ['channel', 'val']:
+                params_map[header] = int(row[header_inds[header]].text)
         params_list.append(params_map)
     return params_list
 
@@ -33,7 +32,7 @@ def save_pprint(xml, file):
 
 #print(getChannels())
 #save_pprint('<html><body>Hello<br/>World</body></html>', 'd:/temp/temp.xml')
-print(getTriggerParams())
+#print(getTriggerParams())
 
 # f = open('D:\\programming\\python\\Detector\\backend\\index.html', 'r')
 # xml = f.read()

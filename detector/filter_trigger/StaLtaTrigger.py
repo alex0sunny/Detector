@@ -73,8 +73,8 @@ class StaLtaTrigger:
         return ret_val
 
 
-def sta_lta_picker(trigger_index, station, channel, freqmin, freqmax, sta, lta, init_level, stop_level):
-    trigger_index_s = ('%02d' % trigger_index).encode()
+def sta_lta_picker(ind, station, channel, freqmin, freqmax, sta, lta, init_level, stop_level):
+    trigger_index_s = ('%02d' % ind).encode()
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
     socket.connect('tcp://localhost:%d' % Port.signal_route.value)

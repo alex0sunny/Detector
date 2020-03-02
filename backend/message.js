@@ -1,3 +1,16 @@
+var headersObj = new Object();
+{
+    var headerCells = document.getElementById("triggerTable").rows[0].children;
+    for (var i = 0; i < headerCells.length; i++)  {
+        var header = headerCells[i].innerHTML;
+        headersObj[header] = i;
+    }
+}
+console.log('headersObj:' + JSON.stringify(headersObj));
+var channelCol = headersObj["channel"];
+var triggerCol = headersObj["val"];
+alert('triggerCol:' + triggerCol);
+
 function initPage() {
 	alert("onLoad");
 	var xhr = new XMLHttpRequest();
@@ -11,13 +24,13 @@ function initPage() {
 	};
 	var rows = document.getElementById("triggerTable").rows;
 	rows.forEach(function (row) {
-	    row.cells[2].innerHTML = 0 + "";
+	    row.cells[triggerCol].innerHTML = 0 + "";
 	})
 	var data = JSON.stringify({"load": 1});
 	xhr.send(data);
 }
 
-function my_mes() {
+function apply_save() {
     apply();
     sendHTML();
 }
@@ -40,11 +53,11 @@ function apply() {
 	var channels = [];
 	for (var j = 1; j < rows.length; j++) {
 		var row = rows[j];
-		var channelCell = row.cells[1];
+		var channelCell = row.cells[channelCol];
 		console.log('inner html:' + channelCell.innerHTML);
 		console.log('channel cell child:' + channelCell.children[0].innerHTML);
 		console.log('option html:' + channelCell.children[0].options[0].innerHTML);
-		var options = rows[j].cells[1].children[0].options;
+		var options = channelCell.children[0].options;
 		var selectedIndex = options.selectedIndex;
 		console.log('selected index:' + options.selectedIndex);
 		var channel = options[selectedIndex].text;
@@ -122,12 +135,12 @@ function getFromHtml()	{
 	var triggers = [];
 	var channels = [];
 	var i;
-	var options;
 	if (rows.length > 1) {
 		for (i = 1; i < rows.length; i++)	{
-			triggers.push(rows[i].cells[2].innerHTML + "");
+		    console.log('triggerCol:' + triggerCol);
+			triggers.push(rows[i].cells[triggerCol].innerHTML + "");
 		}
-		options = rows[1].cells[1].children[0].children;
+		var options = rows[1].cells[channelCol].children[0].options;
 		for (i = 0; i < options.length; i++) {
 		    optionNode = options[i];
 		    channels.push(optionNode.text);
@@ -142,7 +155,7 @@ function getSelectedChannels () {
 	var selectedChannels = [];
 	if (rows.length > 1) {
 		for (var i = 1;  i < rows.length; i++) {
-			options = rows[i].cells[1].children[0].children;
+			options = rows[i].cells[channelCol].children[0].children;
 			var selectedIndex = options.selectedIndex;
 			var selectedChannel = options[selectedIndex].text;
 			selectedChannels.push(selectedChannel);
@@ -155,7 +168,7 @@ function setTriggers(triggers) {
 	var rows = document.getElementById("triggerTable").rows;
 	if (rows.length > 1) {
 		for (var i = 1;  i < rows.length; i++) {
-			rows[i].cells[2].innerHTML = triggers[i-1];
+			rows[i].cells[triggerCol].innerHTML = triggers[i-1];
 		}
 	}
 }
@@ -164,7 +177,7 @@ function setChannelsList(channels) {
 	var rows = document.getElementById("triggerTable").rows;
 	if (rows.length > 1) {
 		for (var i = 1;  i < rows.length; i++) {
-			var channelCell = rows[i].cells[1];
+			var channelCell = rows[i].cells[channelCol];
 			var options = channelCell.children[0].options;
 			var selectedIndex = options.selectedIndex;
 			console.log("selectedIndex:" + selectedIndex);
@@ -186,7 +199,7 @@ function setSelectedChannels(selectedChannels) {
 	var rows = document.getElementById("triggerTable").rows;
 	if (rows.length > 1) {
 		for (var i = 1;  i < rows.length; i++) {
-			var options = rows[i].cells[1].children[0].options;
+			var options = rows[i].cells[channelCol].children[0].options;
 			var selectedChannel = selectedChannels[i-1];
 			var present = false;
 			for (var j = 0; j < options.length; j++)	{
@@ -202,7 +215,7 @@ function setSelectedChannels(selectedChannels) {
 				var optionNode = document.createElement("option");
 				optionNode.text = selectedChannel;
 				optionNode.setAttribute("selected", "selected");
-				document.getElementById("triggerTable").rows[i].cells[1].children[0].appendChild(optionNode);
+				document.getElementById("triggerTable").rows[i].cells[channelCol].children[0].appendChild(optionNode);
 				selectedIndex = options.length - 1;
 				options.selectedIndex = selectedIndex;
 			}
@@ -215,8 +228,8 @@ function getDefaultChannels() {
 	var rows = document.getElementById("triggerTable").rows;
 	if (rows.length > 1) {
 		for (var i = 1;  i < rows.length; i++) {
-			var channelCell = rows[i].cells[1];
-			var options = channelCell.children[0].children;
+			var channelCell = rows[i].cells[channelCol];
+			var options = channelCell.children[0].options;
 			var channel;
 			for (var j = 0; j < options.length; j++)	{
 				optionNode = options[j];
