@@ -5,10 +5,14 @@ import backend
 from detector.misc.globals import logger
 
 
+def getHeaderMap(root):
+    header_els = root.xpath('/html/body/table/tbody/tr/th')
+    return {el.text: i for el, i in zip(header_els, range(100))}
+
+
 def getTriggerParams():
     root = etree.parse(os.path.split(inspect.getfile(backend))[0] + '/index.html')
-    header_els = root.xpath('/html/body/table/tbody/tr/th')
-    header_inds = {el.text: i for el, i in zip(header_els, range(100))}
+    header_inds = getHeaderMap(root)
     rows = root.xpath('/html/body/table/tbody/tr')[1:]
     params_list = []
     for row in rows:
@@ -24,9 +28,10 @@ def getTriggerParams():
 def save_pprint(xml, file):
     parser = etree.HTMLParser(remove_blank_text=True)
     tree = etree.fromstring(xml, parser).getroottree()
-    els = tree.xpath('/html/body/table/tbody/tr/td[3]')
-    for el in els:
-        el.text = '0'
+    header_inds = getHeaderMap(tree)
+    rows = tree.xpath('/html/body/table/tbody/tr')[1:]
+    for row in rows:
+        row[header_inds['val']].text = '0'
     tree.write(file)
 
 
