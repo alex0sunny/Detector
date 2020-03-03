@@ -153,11 +153,12 @@ class myHandler(BaseHTTPRequestHandler):
                         socket_target.recv(zmq.NOBLOCK)
                 except zmq.ZMQError:
                     pass
-                try:
-                    while True:
-                        socket_non_target.recv(zmq.NOBLOCK)
-                except zmq.ZMQError:
-                    pass
+                if triggers[i] == 0:    # clear previous triggerings
+                    try:
+                        while True:
+                            socket_non_target.recv(zmq.NOBLOCK)
+                    except zmq.ZMQError:
+                        pass
 
             logging.debug('triggers:' + str(triggers))
             chans = []

@@ -74,6 +74,7 @@ class StaLtaTrigger:
 
 
 def sta_lta_picker(ind, station, channel, freqmin, freqmax, sta, lta, init_level, stop_level):
+    print('sta:' + str(sta) + ' lta:' + str(lta))
     trigger_index_s = ('%02d' % ind).encode()
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
