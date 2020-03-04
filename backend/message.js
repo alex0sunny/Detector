@@ -6,10 +6,10 @@ var headersObj = new Object();
         headersObj[header] = i;
     }
 }
-console.log('headersObj:' + JSON.stringify(headersObj));
+//console.log('headersObj:' + JSON.stringify(headersObj));
 var channelCol = headersObj["channel"];
 var triggerCol = headersObj["val"];
-alert('triggerCol:' + triggerCol);
+var indexCol = headersObj["ind"];
 
 function initPage() {
 	alert("onLoad");
@@ -19,7 +19,7 @@ function initPage() {
 	xhr.setRequestHeader("Content-Type", "application/json");
 	xhr.onreadystatechange = function () {
 		if (xhr.readyState === 4 && xhr.status === 200) {
-		    console.log("do nothing now")
+		    //console.log("do nothing now")
 		}
 	};
 	var rows = document.getElementById("triggerTable").rows;
@@ -44,9 +44,9 @@ function apply() {
 	xhr.onreadystatechange = function () {
 		if (xhr.readyState === 4 && xhr.status === 200) {
 			var json = JSON.parse(xhr.responseText);
-			console.log(json);
+			//console.log(json);
 			//document.getElementById("counter").value = json.counter;
-			alert('Response arrived!');
+			//alert('Response arrived!');
 		}
 	};
 	var rows = document.getElementById("triggerTable").rows;
@@ -54,16 +54,16 @@ function apply() {
 	for (var j = 1; j < rows.length; j++) {
 		var row = rows[j];
 		var channelCell = row.cells[channelCol];
-		console.log('inner html:' + channelCell.innerHTML);
-		console.log('channel cell child:' + channelCell.children[0].innerHTML);
-		console.log('option html:' + channelCell.children[0].options[0].innerHTML);
+//		console.log('inner html:' + channelCell.innerHTML);
+//		console.log('channel cell child:' + channelCell.children[0].innerHTML);
+//		console.log('option html:' + channelCell.children[0].options[0].innerHTML);
 		var options = channelCell.children[0].options;
 		var selectedIndex = options.selectedIndex;
-		console.log('selected index:' + options.selectedIndex);
+//		console.log('selected index:' + options.selectedIndex);
 		var channel = options[selectedIndex].text;
 		channels.push(channel);
 	};
-	console.log('channels:' + channels.toString());
+//	console.log('channels:' + channels.toString());
 	setSelectedChannels(channels);
 	var data = JSON.stringify({"apply": 1, "channels":  channels.join(" ")});
 	xhr.send(data);
@@ -87,24 +87,28 @@ function myTimer() {
 	xhr.open("POST", url, true);
 	xhr.setRequestHeader("Content-Type", "application/json");
 	var pageMap = getFromHtml();
+//	console.log('key type:' + typeof(Object.keys(pageMap.triggers)[0]) + ' val type:' +
+//	            typeof(Object.values(pageMap.triggers)[0]));
 	xhr.onreadystatechange = function () {
 		if (xhr.readyState === 4 && xhr.status === 200) {
+		    //console.log('response:' + xhr.responseText);
 			var json = JSON.parse(xhr.responseText);
+//			console.log('json vals:' + Object.values(json));
+//			console.log('trigger keys:' + Object.keys(json.triggers));
+//			console.log('trigger vals:' + Object.values(json.triggers));
 			var jsonObj = getFromJson(json);
 			var triggers = jsonObj.triggers;
 			setTriggers(triggers);
-			console.log()
 			if ("channels" in jsonObj)    {
                 var channels = jsonObj.channels;
-                console.log("page channels:" + pageMap.channels.toString() + "; channels:" + channels.toString());
+//                console.log("page channels:" + pageMap.channels.toString() + "; channels:" + channels.toString());
                 if (channels.toString() != pageMap.channels.toString()) {
                     setChannelsList(channels);
                 }
             }
 		}
 	};
-	var triggers_str = pageMap.triggers.join(" ");
-	var data = JSON.stringify({"triggers": triggers_str});
+	var data = JSON.stringify(pageMap.triggers);
 	xhr.send(data);
 }
 
@@ -117,28 +121,29 @@ function resumeCounter() {
 }
 
 function getFromJson(json) {
-	var triggers_strs = json.triggers.split(" ");
-	var triggers = triggers_strs.map(Number);
-	var jsonObj = {"triggers" : triggers}
+	var jsonObj = {"triggers" : json.triggers};
 	if ("channels" in json) {
 		var channels = json.channels.split(" ");
     	channels.sort();
 	    jsonObj["channels"] = channels;
-	    console.log("channels:" + channels);
+//	    console.log("channels:" + channels);
 	}
-	console.log("triggers:" + triggers);
+//	console.log("triggers:" + jsonObj.triggers);
 	return jsonObj;
 }
 
 function getFromHtml()	{
 	var rows = document.getElementById("triggerTable").rows;
-	var triggers = [];
+	var triggers = {};
 	var channels = [];
 	var i;
 	if (rows.length > 1) {
 		for (i = 1; i < rows.length; i++)	{
-		    console.log('triggerCol:' + triggerCol);
-			triggers.push(rows[i].cells[triggerCol].innerHTML + "");
+		    row = rows[i];
+		    ind = parseInt(row.cells[indexCol].innerHTML);
+//		    console.log('ind type:' + typeof(ind));
+			triggers[ind] = parseInt(row.cells[triggerCol].innerHTML);
+//			console.log('trigger val type:' + typeof(triggers[ind]));
 		}
 		var options = rows[1].cells[channelCol].children[0].options;
 		for (i = 0; i < options.length; i++) {
@@ -168,7 +173,12 @@ function setTriggers(triggers) {
 	var rows = document.getElementById("triggerTable").rows;
 	if (rows.length > 1) {
 		for (var i = 1;  i < rows.length; i++) {
-			rows[i].cells[triggerCol].innerHTML = triggers[i-1];
+		    row = rows[i];
+		    ind = row.cells[indexCol].innerHTML;
+		    //console.log('ind:' + ind + ' triggers keys:' + Object.keys(triggers));
+		    if (ind in triggers) {
+			    row.cells[triggerCol].innerHTML = triggers[ind];
+			}
 		}
 	}
 }
@@ -180,7 +190,7 @@ function setChannelsList(channels) {
 			var channelCell = rows[i].cells[channelCol];
 			var options = channelCell.children[0].options;
 			var selectedIndex = options.selectedIndex;
-			console.log("selectedIndex:" + selectedIndex);
+//			console.log("selectedIndex:" + selectedIndex);
 			var selectedChannel = options[selectedIndex].text;
 			channelCell.children[0].innerHTML = "";
 			channels.forEach(function (channel) {
@@ -245,4 +255,14 @@ function getDefaultChannels() {
 		}
 	}
 	return channels;
+}
+
+function addTrigger() {
+    var table = document.getElementById("triggerTable");
+    var rows = table.rows;
+    var len = rows.length
+    var row = rows[len - 1].cloneNode(true);
+    var ind = parseInt(row.cells[indexCol].innerHTML) + 1;
+    row.cells[indexCol].innerHTML = ind;
+    table.appendChild(row);
 }

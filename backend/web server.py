@@ -6,7 +6,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from os.path import curdir, sep
 import os
 import backend
-from detector.misc.html_util import save_pprint
+from detector.misc.html_util import save_pprint, getTriggerParams
 
 logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
                            '%(message)s',
@@ -33,9 +33,11 @@ conn_str = 'tcp://localhost:' + str(Port.proxy.value)
 # socket_trigger = context.socket(zmq.SUB)
 # socket_trigger.connect(conn_str)
 # socket_trigger.setsockopt(zmq.SUBSCRIBE, b'ND01011')
-sockets_trigger = []
-sockets_detrigger = []
-for trigger_index in range(3):
+sockets_trigger = {}
+sockets_detrigger = {}
+
+
+def update_sockets(trigger_index):
     socket_trigger = context.socket(zmq.SUB)
     socket_detrigger = context.socket(zmq.SUB)
     socket_trigger.connect(conn_str)
@@ -43,24 +45,11 @@ for trigger_index in range(3):
     trigger_index_s = '%02d' % trigger_index
     socket_trigger.setsockopt(zmq.SUBSCRIBE, b'ND01' + trigger_index_s.encode() + b'1')
     socket_detrigger.setsockopt(zmq.SUBSCRIBE, b'ND01' + trigger_index_s.encode() + b'0')
-    sockets_trigger.append(socket_trigger)
-    sockets_detrigger.append(socket_detrigger)
+    sockets_trigger[trigger_index] = socket_trigger
+    sockets_detrigger[trigger_index] = socket_detrigger
 
-# for trigger_id in range(3):
-#     socket_trigger = context.socket(zmq.SUB)
-#     socket_detrigger = context.socket(zmq.SUB)
-#     socket_trigger.connect(conn_str)
-#     socket_detrigger.connect(conn_str)
-#     trigger_index_s = '%02d' % trigger_id
-#     subscription = b'ND01' + trigger_index_s.encode()
-#     subscription_trigger = subscription + b'1'
-#     subscription_detrigger = subscription + b'0'
-#     logger.debug('subscription trigger:' + str(subscription_trigger) +
-#                  '\nsubscription detrigger:' + str(subscription_detrigger))
-#     socket_trigger.setsockopt(zmq.SUBSCRIBE, subscription_trigger)
-#     socket_detrigger.setsockopt(zmq.SUBSCRIBE, subscription_detrigger)
-#     sockets_trigger.append(socket_trigger)
-#     sockets_detrigger.append(socket_detrigger)
+
+[update_sockets(trigger_param['ind']) for trigger_param in getTriggerParams()]
 
 
 def clear_triggers():
@@ -70,6 +59,7 @@ def clear_triggers():
                 socket_cur.recv(zmq.NOBLOCK)
         except zmq.ZMQError:
             pass
+
 
 # This class will handles any incoming request from
 # the browser
@@ -131,44 +121,51 @@ class myHandler(BaseHTTPRequestHandler):
         post_data = self.rfile.read(content_length)     # <--- Gets the data itself
         post_data_str = post_data.decode()
         if self.path != '/save':
-            obj = json.loads(post_data_str)
+            triggers = json.loads(post_data_str)
+            triggers = {int(k): v for k, v in triggers.items()}
         print(self.path)
         if self.path == '/url':
-            triggers = list(map(int, obj['triggers'].split(' ')))
-            for i in range(len(triggers)):
-                if triggers[i]:
-                    socket_target = sockets_detrigger[i]
-                    socket_non_target = sockets_trigger[i]
-                else:
-                    socket_target = sockets_trigger[i]
-                    socket_non_target = sockets_detrigger[i]
-                try:
-                    mes = socket_target.recv(zmq.NOBLOCK)
-                    logger.info('triggering detected, message:' + str(mes))
+            # logger.debug('post_data_str:' + post_data_str + '\ntriggers dic:' + str(triggers) + '\ntriggers keys:' +
+            #              str(triggers.keys()))
+            for i in triggers:
+                # logger.debug('i:' + str(i))
+                if i in sockets_trigger:
+                    # logger.debug('i in triggers')
                     if triggers[i]:
-                        triggers[i] = 0
+                        socket_target = sockets_detrigger[i]
+                        socket_non_target = sockets_trigger[i]
                     else:
-                        triggers[i] = 1
-                    while True:
-                        socket_target.recv(zmq.NOBLOCK)
-                except zmq.ZMQError:
-                    pass
-                if triggers[i] == 0:    # clear previous triggerings
+                        socket_target = sockets_trigger[i]
+                        socket_non_target = sockets_detrigger[i]
                     try:
+                        mes = socket_target.recv(zmq.NOBLOCK)
+                        logger.info('triggering detected, message:' + str(mes))
+                        if triggers[i]:
+                            triggers[i] = 0
+                        else:
+                            triggers[i] = 1
                         while True:
-                            socket_non_target.recv(zmq.NOBLOCK)
+                            socket_target.recv(zmq.NOBLOCK)
                     except zmq.ZMQError:
                         pass
+                    if triggers[i] == 0:    # clear previous triggerings
+                        try:
+                            while True:
+                                socket_non_target.recv(zmq.NOBLOCK)
+                        except zmq.ZMQError:
+                            pass
+                else:
+                    logger.warning('i not in triggers')
 
-            logging.debug('triggers:' + str(triggers))
+            # logging.debug('triggers:' + str(triggers))
             chans = []
             try:
                 custom_header = socket_channels.recv(zmq.NOBLOCK)
                 if (len(custom_header) == 50):
                     n_of_chs = int.from_bytes(custom_header[12:13], byteorder='big')
-                    logger.debug('n_of_chs:' + str(n_of_chs))
+                    # logger.debug('n_of_chs:' + str(n_of_chs))
                     chans = [(custom_header[i:i + 4]).decode().strip() for i in range(13, 13 + n_of_chs * 4, 4)]
-                    logger.debug('chans:' + str(chans))
+                    # logger.debug('chans:' + str(chans))
                 else:
                     logger.error('unexpected len ' + str(len(custom_header)) + ' for \'head\' block')
                 # if {}.update(chans_tmp) != {}.update(chans):
@@ -181,17 +178,17 @@ class myHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
-            logger.debug('chans:' + str(chans) + '\ntriggers:' + str(triggers))
-            json_map = {'triggers': ' '.join([str(trigger) for trigger in triggers])}
+            # logger.debug('chans:' + str(chans) + '\ntriggers:' + str(triggers))
+            json_map = {'triggers': triggers}
             #chans = ['EH1', 'EH2', 'EHN']
             if chans:
                 json_map['channels'] = ' '.join(chans)
-            logging.info('json_map:' + str(json_map))
+            # logging.info('json_map:' + str(json_map))
             self.wfile.write(json.dumps(json_map).encode())
         if self.path == '/apply':
-            print('apply')
-            logger.debug('object:' + str(obj) + "\nPOST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n",
-                         str(self.path), str(self.headers), post_data.decode('utf-8'))
+            # print('apply')
+            # logger.debug('object:' + str(triggers) + "\nPOST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n",
+            #              str(self.path), str(self.headers), post_data.decode('utf-8'))
 
             socket_backend.send(b'AP')
 
@@ -200,9 +197,13 @@ class myHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps({'apply': 1}).encode())
         if self.path == '/save':
-            print('save')
+            # print('save')
             save_pprint(post_data_str, os.path.split(inspect.getfile(backend))[0] + '/index.html')
             clear_triggers()
+            for trigger_param in getTriggerParams():
+                trigger_index = trigger_param['ind']
+                if trigger_index not in sockets_trigger:
+                    update_sockets(trigger_index)
         if self.path == '/load':
             print('load')
 

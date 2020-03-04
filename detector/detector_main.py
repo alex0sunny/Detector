@@ -26,17 +26,17 @@ if __name__ == '__main__':
     while True:
 
         paramsList = getTriggerParams()
-        for params in paramsList:
-            params.update({'station': 'ND01', 'freqmin': 100, 'freqmax': 300, 'init_level': 2, 'stop_level': 1})
 
         kwargs_list = [{'target': signal_receiver,
                         'kwargs': {'conn_str': 'tcp://192.168.0.189:' + str(Port.test_signal.value)}},
                        {'target': resend, 'kwargs': {'conn_str': 'tcp://*:' + str(Port.signal_resend.value),
                                                      'triggers': [1, 2], 'pem': 1, 'pet': 1}},
-                       {'target': triggers_proxy, 'kwargs': {}},
-                       {'target': sta_lta_picker, 'kwargs': paramsList[0]},
-                       {'target': sta_lta_picker, 'kwargs': paramsList[1]},
-                       {'target': sta_lta_picker, 'kwargs': paramsList[2]}]
+                       {'target': triggers_proxy, 'kwargs': {}}]
+
+        for params in paramsList:
+            params.update({'station': 'ND01', 'freqmin': 100, 'freqmax': 300, 'init_level': 2, 'stop_level': 1})
+            kwargs_list.append({'target': sta_lta_picker, 'kwargs': params})
+
 
         ps = []
         for kwargs in kwargs_list:
