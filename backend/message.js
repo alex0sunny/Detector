@@ -264,5 +264,5 @@ function addTrigger() {
     var row = rows[len - 1].cloneNode(true);
     var ind = parseInt(row.cells[indexCol].innerHTML) + 1;
     row.cells[indexCol].innerHTML = ind;
-    table.appendChild(row);
+    table.children[0].appendChild(row);
 }

@@ -1,35 +1,71 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
-<html><head><title>Python is awesome!</title></head><body>
+<html>
+	<head>
+		<title>Python is awesome!</title>
+	</head>
+	<body>
 		<h1>Afternerd</h1>
 		<p>Congratulations! The HTTP Server is working again!</p>
-		<table style="width:100%" id="triggerTable"><tbody><tr><th>ind</th>
+		<table style="width:100%" id="triggerTable">
+			<tbody>
+				<tr>
+					<th>ind</th>
 					<th>channel</th>
 					<th>sta</th>
 					<th>lta</th>
 					<th>val</th>
-				</tr><tr><td>0</td>
+				</tr>
+				<tr>
+					<td>0</td>
 					<td>
-						<select><option>EHE</option><option>EHN</option><option selected="selected">EHZ</option></select></td>
+						<select>
+							<option>EHE</option>
+							<option>EHN</option>
+							<option selected="selected">EHZ</option>
+						</select>
+					</td>
 					<td contenteditable="true">1</td>
 					<td contenteditable="true">4</td>
 					<td>0</td>
-				</tr><tr><td>1</td>
+				</tr>
+				<tr>
+					<td>1</td>
 					<td>
-						<select><option>EHE</option><option selected="selected">EHN</option><option>EHZ</option></select></td>
-					<td contenteditable="true">2</td>
-					<td contenteditable="true">6</td>
-					<td>0</td>
-				</tr><tr><td>2</td>
-					<td>
-						<select><option selected="selected">EHE</option><option>EHN</option><option>EHZ</option></select></td>
+						<select>
+							<option>EHE</option>
+							<option selected="selected">EHN</option>
+							<option>EHZ</option>
+						</select>
+					</td>
 					<td contenteditable="true">1</td>
 					<td contenteditable="true">4</td>
 					<td>0</td>
-				</tr></tbody></table><button type="button" onclick="apply_save()">
-    		apply
+				</tr>
+				<tr>
+					<td>2</td>
+					<td>
+						<select>
+							<option selected="selected">EHE</option>
+							<option>EHN</option>
+							<option>EHZ</option>
+						</select>
+					</td>
+					<td contenteditable="true">1</td>
+					<td contenteditable="true">4</td>
+					<td>0</td>
+				</tr>
+			</tbody>
+		</table>
+		<button type="button" onclick="apply_save()">
+			apply
 		</button>
 		<button type="button" onclick="location.reload(true)">
-    		init
+			init
+		</button>
+		<button type="add" onclick="addTrigger()">
+			add trigger
 		</button>
 		<script src="message.js">
-		</script></body></html>
+		</script>
+	</body>
+</html>

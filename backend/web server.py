@@ -38,6 +38,7 @@ sockets_detrigger = {}
 
 
 def update_sockets(trigger_index):
+    logger.info('update sockets with ' + str(trigger_index))
     socket_trigger = context.socket(zmq.SUB)
     socket_detrigger = context.socket(zmq.SUB)
     socket_trigger.connect(conn_str)
@@ -53,7 +54,7 @@ def update_sockets(trigger_index):
 
 
 def clear_triggers():
-    for socket_cur in sockets_trigger + sockets_detrigger:
+    for socket_cur in list(sockets_trigger.values()) + list(sockets_detrigger.values()):
         try:
             while True:
                 socket_cur.recv(zmq.NOBLOCK)
@@ -120,11 +121,9 @@ class myHandler(BaseHTTPRequestHandler):
         content_length = int(self.headers['Content-Length'])    # <--- Gets the size of data
         post_data = self.rfile.read(content_length)     # <--- Gets the data itself
         post_data_str = post_data.decode()
-        if self.path != '/save':
+        if self.path == '/url':
             triggers = json.loads(post_data_str)
             triggers = {int(k): v for k, v in triggers.items()}
-        print(self.path)
-        if self.path == '/url':
             # logger.debug('post_data_str:' + post_data_str + '\ntriggers dic:' + str(triggers) + '\ntriggers keys:' +
             #              str(triggers.keys()))
             for i in triggers:
@@ -155,7 +154,7 @@ class myHandler(BaseHTTPRequestHandler):
                         except zmq.ZMQError:
                             pass
                 else:
-                    logger.warning('i not in triggers')
+                    logger.warning('i ' + str(i) + ' not in triggers')
 
             # logging.debug('triggers:' + str(triggers))
             chans = []
