@@ -83,7 +83,7 @@ var myVar = setInterval(myTimer, 1000);
 function myTimer() {
 	//document.getElementById("counter").stepUp(1);
 	var xhr = new XMLHttpRequest();
-	var url = "url";
+	var url = "trigger";
 	xhr.open("POST", url, true);
 	xhr.setRequestHeader("Content-Type", "application/json");
 	var pageMap = getFromHtml();

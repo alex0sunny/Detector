@@ -6,7 +6,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from os.path import curdir, sep
 import os
 import backend
-from detector.misc.html_util import save_pprint, getTriggerParams
+from backend.trigger_html_util import save_pprint, getTriggerParams, save_triggers, update_sockets
 
 logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
                            '%(message)s',
@@ -36,31 +36,8 @@ conn_str = 'tcp://localhost:' + str(Port.proxy.value)
 sockets_trigger = {}
 sockets_detrigger = {}
 
-
-def update_sockets(trigger_index):
-    logger.info('update sockets with ' + str(trigger_index))
-    socket_trigger = context.socket(zmq.SUB)
-    socket_detrigger = context.socket(zmq.SUB)
-    socket_trigger.connect(conn_str)
-    socket_detrigger.connect(conn_str)
-    trigger_index_s = '%02d' % trigger_index
-    socket_trigger.setsockopt(zmq.SUBSCRIBE, b'ND01' + trigger_index_s.encode() + b'1')
-    socket_detrigger.setsockopt(zmq.SUBSCRIBE, b'ND01' + trigger_index_s.encode() + b'0')
-    sockets_trigger[trigger_index] = socket_trigger
-    sockets_detrigger[trigger_index] = socket_detrigger
-
-
-[update_sockets(trigger_param['ind']) for trigger_param in getTriggerParams()]
-
-
-def clear_triggers():
-    for socket_cur in list(sockets_trigger.values()) + list(sockets_detrigger.values()):
-        try:
-            while True:
-                socket_cur.recv(zmq.NOBLOCK)
-        except zmq.ZMQError:
-            pass
-
+for trigger_param in getTriggerParams():
+    update_sockets(trigger_param['ind'], conn_str, context, sockets_trigger, sockets_detrigger)
 
 # This class will handles any incoming request from
 # the browser
@@ -121,7 +98,7 @@ class myHandler(BaseHTTPRequestHandler):
         content_length = int(self.headers['Content-Length'])    # <--- Gets the size of data
         post_data = self.rfile.read(content_length)     # <--- Gets the data itself
         post_data_str = post_data.decode()
-        if self.path == '/url':
+        if self.path == '/trigger':
             triggers = json.loads(post_data_str)
             triggers = {int(k): v for k, v in triggers.items()}
             # logger.debug('post_data_str:' + post_data_str + '\ntriggers dic:' + str(triggers) + '\ntriggers keys:' +
@@ -197,12 +174,7 @@ class myHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({'apply': 1}).encode())
         if self.path == '/save':
             # print('save')
-            save_pprint(post_data_str, os.path.split(inspect.getfile(backend))[0] + '/index.html')
-            clear_triggers()
-            for trigger_param in getTriggerParams():
-                trigger_index = trigger_param['ind']
-                if trigger_index not in sockets_trigger:
-                    update_sockets(trigger_index)
+            save_triggers(post_data_str, conn_str, context, sockets_trigger, sockets_detrigger)
         if self.path == '/load':
             print('load')
 

@@ -1,17 +1,14 @@
-import inspect
 import time
 from multiprocessing import Process
 
 from detector.filter_trigger.StaLtaTrigger import sta_lta_picker
 from detector.filter_trigger.trigger_resender import resend
 from detector.misc.globals import Port, CustomThread
-from detector.misc.html_util import getTriggerParams
+from backend.trigger_html_util import getTriggerParams
 from detector.send_receive.signal_receiver import signal_receiver
 
 
 import zmq
-import json, os
-import backend
 
 from detector.send_receive.triggers_proxy import triggers_proxy
 
