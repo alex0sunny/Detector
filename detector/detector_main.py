@@ -1,4 +1,5 @@
 import inspect
+import time
 from multiprocessing import Process
 
 from detector.filter_trigger.StaLtaTrigger import sta_lta_picker
@@ -37,7 +38,6 @@ if __name__ == '__main__':
             params.update({'station': 'ND01', 'freqmin': 100, 'freqmax': 300, 'init_level': 2, 'stop_level': 1})
             kwargs_list.append({'target': sta_lta_picker, 'kwargs': params})
 
-
         ps = []
         for kwargs in kwargs_list:
             if use_thread:
@@ -49,6 +49,7 @@ if __name__ == '__main__':
             p.start()
 
         socket_backend.recv()
+        time.sleep(1)
 
         for p in ps:
             p.terminate()

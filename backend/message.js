@@ -36,7 +36,7 @@ function apply_save() {
 }
 
 function apply() {
-    alert('apply');
+    //alert('apply');
 	var xhr = new XMLHttpRequest();
 	var url = "apply";
 	xhr.open("POST", url, true);
