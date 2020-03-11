@@ -6,6 +6,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from os.path import curdir, sep
 import os
 import backend
+from backend.rule_html_util import post_rules
 from backend.trigger_html_util import save_pprint, getTriggerParams, save_triggers, update_sockets, post_triggers
 
 logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
@@ -105,19 +106,28 @@ class myHandler(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             self.wfile.write(json.dumps(json_map).encode())
+        if self.path == '/rule':
+            # logging.info('json_map:' + str(json_map))
+            json_map = post_rules(post_data_str, socket_channels, sockets_trigger, sockets_detrigger)
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps(json_map).encode())
         if self.path == '/apply':
-            # print('apply')
-            # logger.debug('object:' + str(triggers) + "\nPOST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n",
-            #              str(self.path), str(self.headers), post_data.decode('utf-8'))
-
             socket_backend.send(b'AP')
-
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({'apply': 1}).encode())
+        if self.path == '/applyRules':
+            socket_backend.send(b'AP')
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             self.wfile.write(json.dumps({'apply': 1}).encode())
         if self.path == '/save':
-            # print('save')
+            save_triggers(post_data_str, conn_str, context, sockets_trigger, sockets_detrigger)
+        if self.path == '/saveRules':
             save_triggers(post_data_str, conn_str, context, sockets_trigger, sockets_detrigger)
         if self.path == '/load':
             print('load')
