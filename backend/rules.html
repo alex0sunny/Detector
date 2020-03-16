@@ -16,14 +16,14 @@
 					<th align="left">rule_val</th>
 				</tr>
 				<tr>
-					<td onchange="alert(event.target.parentElement.parentElement.innerHTML)">
+					<td>
 						<select>
 							<option>-</option>
 							<option selected="selected">1</option>
 							<option>2</option>
 						</select>
 					</td>
-					<td>
+					<td onchange="updateTriggerData()">
 						<select>
 							<option selected="selected">1</option>
 							<option>2</option>
@@ -44,7 +44,7 @@
 							<option>2</option>
 						</select>
 					</td>
-					<td>
+					<td onchange="updateTriggerData()">
 						<select>
 							<option>1</option>
 							<option selected="selected">2</option>
@@ -52,8 +52,8 @@
 						</select>
 					</td>
 					<td>EHN</td>
-					<td>1</td>
-					<td>4</td>
+					<td>3</td>
+					<td>9</td>
 					<td>0</td>
 					<td>0</td>
 				</tr>
@@ -65,7 +65,7 @@
 							<option selected="selected">2</option>
 						</select>
 					</td>
-					<td>
+					<td onchange="updateTriggerData()">
 						<select>
 							<option>1</option>
 							<option>2</option>

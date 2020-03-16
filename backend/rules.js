@@ -12,14 +12,27 @@ var triggerValCol = headersObj["trigger_val"];
 var ruleIdCol = headersObj["rule_id"];
 var triggerIdCol = headersObj["trigger_id"];
 var triggersData = getCurrentTriggersData();
-//triggersData.map(function (triggerData) {
-//    console.log('triggerData keys:' + Object.keys(triggerData) + '\nvals:' + Object.values(triggerData));
-//});
-for (var trigger_id in triggersData)    {
-    console.log('trigger id:' + trigger_id);
-    var triggerData = triggersData[trigger_id];
-    console.log('triggerData keys:' + Object.keys(triggerData) + '\nvals:' + Object.values(triggerData));
+
+
+function initPage() {
+	alert("onLoad");
+	var xhr = new XMLHttpRequest();
+	var url = "load";
+	xhr.open("POST", url, true);
+	xhr.setRequestHeader("Content-Type", "application/json");
+	xhr.onreadystatechange = function () {
+		if (xhr.readyState === 4 && xhr.status === 200) {
+		    //console.log("do nothing now")
+		}
+	};
+	var rows = document.getElementById("triggerTable").rows;
+	rows.forEach(function (row) {
+	    row.cells[triggerCol].innerHTML = 0 + "";
+	})
+	var data = JSON.stringify({"load": 1});
+	xhr.send(data);
 }
+
 
 function getCurrentTriggersData()   {
    	var rows = document.getElementById("rulesTable").rows;
@@ -50,24 +63,24 @@ function getCurrentTriggersData()   {
 	return triggersData;
 }
 
-function initPage() {
-	alert("onLoad");
-	var xhr = new XMLHttpRequest();
-	var url = "load";
-	xhr.open("POST", url, true);
-	xhr.setRequestHeader("Content-Type", "application/json");
-	xhr.onreadystatechange = function () {
-		if (xhr.readyState === 4 && xhr.status === 200) {
-		    //console.log("do nothing now")
-		}
-	};
-	var rows = document.getElementById("triggerTable").rows;
-	rows.forEach(function (row) {
-	    row.cells[triggerCol].innerHTML = 0 + "";
-	})
-	var data = JSON.stringify({"load": 1});
-	xhr.send(data);
+
+function updateTriggerData() {
+    console.log('update trigger data');
+    var cell = event.target.parentElement;
+    var row = cell.parentElement;
+    var options = cell.children[0].options;
+    var selectedIndex = options.selectedIndex;
+    var trigger_id = options[selectedIndex].text;
+    var triggerData = triggersData[trigger_id];
+    console.log('trigger id:' + trigger_id + ' trigger data:' + triggerData);
+    for (colName in triggerData)   {
+        colNum = headersObj[colName];
+        console.log('colNum:' + colNum + ' colName:' + colName +
+                    '\nprevious val:' + row.cells[colNum].innerHTML + ' new val:' + triggerData[colName])
+        row.cells[colNum].innerHTML = triggerData[colName];
+    }
 }
+
 
 function apply_save() {
     apply();
