@@ -1,6 +1,6 @@
 var headersObj = new Object();
 {
-    var headerCells = document.getElementById("triggerTable").rows[0].children;
+    var headerCells = document.getElementById("rulesTable").rows[0].children;
     for (var i = 0; i < headerCells.length; i++)  {
         var header = headerCells[i].innerHTML;
         headersObj[header] = i;
@@ -8,8 +8,47 @@ var headersObj = new Object();
 }
 //console.log('headersObj:' + JSON.stringify(headersObj));
 var channelCol = headersObj["channel"];
-var triggerCol = headersObj["val"];
-var indexCol = headersObj["ind"];
+var triggerValCol = headersObj["trigger_val"];
+var ruleIdCol = headersObj["rule_id"];
+var triggerIdCol = headersObj["trigger_id"];
+var triggersData = getCurrentTriggersData();
+//triggersData.map(function (triggerData) {
+//    console.log('triggerData keys:' + Object.keys(triggerData) + '\nvals:' + Object.values(triggerData));
+//});
+for (var trigger_id in triggersData)    {
+    console.log('trigger id:' + trigger_id);
+    var triggerData = triggersData[trigger_id];
+    console.log('triggerData keys:' + Object.keys(triggerData) + '\nvals:' + Object.values(triggerData));
+}
+
+function getCurrentTriggersData()   {
+   	var rows = document.getElementById("rulesTable").rows;
+	var triggersData = {};
+	var triggerColNames = ['trigger_id', 'channel', 'sta', 'lta'];
+	for (var i = 1; i < rows.length; i++)	{
+	    var row = rows[i];
+	    var triggerData = {};
+	    var trigger_id;
+	    for (var j = 0; j < triggerColNames.length; j++)  {
+            var colName = triggerColNames[j];
+            var col = headersObj[colName];
+            var cell = row.cells[col];
+            var val;
+	        if (col == triggerIdCol)   {
+	            var triggerOptions = cell.children[0].options;
+	            for (var triggerOption of triggerOptions)   {
+	                if (triggerOption.hasAttribute('selected'))   {
+	                    trigger_id = triggerOption.text;
+	                }
+	            }
+            }   else    {
+                triggerData[colName] = cell.innerHTML;
+            }
+	    }
+	    triggersData[trigger_id] = triggerData;
+	}
+	return triggersData;
+}
 
 function initPage() {
 	alert("onLoad");
@@ -83,7 +122,7 @@ var myVar = setInterval(myTimer, 1000);
 function myTimer() {
 	//document.getElementById("counter").stepUp(1);
 	var xhr = new XMLHttpRequest();
-	var url = "trigger";
+	var url = "rule";
 	xhr.open("POST", url, true);
 	xhr.setRequestHeader("Content-Type", "application/json");
 	var pageMap = getFromHtml();
@@ -140,7 +179,7 @@ function getFromHtml()	{
 	if (rows.length > 1) {
 		for (i = 1; i < rows.length; i++)	{
 		    row = rows[i];
-		    ind = parseInt(row.cells[indexCol].innerHTML);
+		    ind = parseInt(row.cells[ruleIdCol].innerHTML);
 //		    console.log('ind type:' + typeof(ind));
 			triggers[ind] = parseInt(row.cells[triggerCol].innerHTML);
 //			console.log('trigger val type:' + typeof(triggers[ind]));

@@ -4,52 +4,78 @@
 		<title>rules</title>
 	</head>
 	<body>
-		<table style="width:100%" id="triggerTable">
+		<table style="width:100%" id="rulesTable">
 			<tbody>
 				<tr>
-					<th align="left">ind</th>
+					<th align="left">rule_id</th>
+					<th align="left">trigger_id</th>
 					<th align="left">channel</th>
 					<th align="left">sta</th>
 					<th align="left">lta</th>
-					<th align="left">val</th>
+					<th align="left">trigger_val</th>
+					<th align="left">rule_val</th>
 				</tr>
 				<tr>
+					<td onchange="alert(event.target.parentElement.parentElement.innerHTML)">
+						<select>
+							<option>-</option>
+							<option selected="selected">1</option>
+							<option>2</option>
+						</select>
+					</td>
+					<td>
+						<select>
+							<option selected="selected">1</option>
+							<option>2</option>
+							<option>3</option>
+						</select>
+					</td>
+					<td>EHZ</td>
 					<td>1</td>
-					<td>
-						<select>
-							<option>EHE</option>
-							<option>EHN</option>
-							<option selected="selected">EHZ</option>
-						</select>
-					</td>
-					<td contenteditable="true">1</td>
-					<td contenteditable="true">4</td>
+					<td>4</td>
+					<td>0</td>
 					<td>0</td>
 				</tr>
 				<tr>
-					<td>2</td>
 					<td>
 						<select>
-							<option>EHE</option>
-							<option selected="selected">EHN</option>
-							<option>EHZ</option>
+							<option>-</option>
+							<option selected="selected">1</option>
+							<option>2</option>
 						</select>
 					</td>
-					<td contenteditable="true">1</td>
-					<td contenteditable="true">4</td>
+					<td>
+						<select>
+							<option>1</option>
+							<option selected="selected">2</option>
+							<option>3</option>
+						</select>
+					</td>
+					<td>EHN</td>
+					<td>1</td>
+					<td>4</td>
+					<td>0</td>
 					<td>0</td>
 				</tr>
 				<tr>
-					<td>3</td>
 					<td>
 						<select>
-							<option selected="selected">EHE</option>
-							<option>EHN</option>
-							<option>EHZ</option>
+							<option>-</option>
+							<option>1</option>
+							<option selected="selected">2</option>
 						</select>
 					</td>
-					<td contenteditable="true">1</td>
-					<td contenteditable="true">4</td>
+					<td>
+						<select>
+							<option>1</option>
+							<option>2</option>
+							<option selected="selected">3</option>
+						</select>
+					</td>
+					<td>EHE</td>
+					<td>1</td>
+					<td>4</td>
+					<td>0</td>
 					<td>0</td>
 				</tr>
 			</tbody>
