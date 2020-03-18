@@ -22,6 +22,7 @@ class Port(Enum):
     trigger = 5562
     proxy = 5563
     backend = 5564
+    test_signal2 = 5565
 
 
 class CustomThread(Thread):

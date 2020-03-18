@@ -1,4 +1,6 @@
 import time
+from multiprocessing import Process
+
 import numpy as np
 
 from obspy import *
@@ -56,5 +58,16 @@ for tr in st:
 #st[0].stats.channel = 'CH1'
 # st[1].stats.channel = 'CHY'
 #st[2].stats.channel = 'EH1'
+st2 = st.copy()
+for tr in st2:
+    tr.stats.station = 'ND02'
+    tr.data = np.append(data[3000:], data[:3000])
 
-send_signal(st, 'tcp://*:%d' % Port.test_signal.value)
+kwargs_list = [{'target': send_signal,
+                'kwargs': {'st': st, 'conn_str': 'tcp://*:' + str(Port.test_signal.value)}},
+               {'target': send_signal,
+                'kwargs': {'st': st2, 'conn_str': 'tcp://*:' + str(Port.test_signal2.value)}}]
+if __name__ == '__main__':
+    for kwargs in kwargs_list:
+        Process(**kwargs).start()
+
