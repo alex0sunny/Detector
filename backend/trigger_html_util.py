@@ -5,7 +5,7 @@ import inspect
 import os
 import backend
 import zmq
-from detector.misc.globals import logger
+from detector.misc.globals import logger, sources_dic, Subscription, channelsUpdater
 
 
 def getHeaderMap(root):
@@ -54,8 +54,10 @@ def update_sockets(trigger_index, conn_str, context, sockets_trigger, sockets_de
     socket_trigger.connect(conn_str)
     socket_detrigger.connect(conn_str)
     trigger_index_s = '%02d' % trigger_index
-    socket_trigger.setsockopt(zmq.SUBSCRIBE, b'ND01' + trigger_index_s.encode() + b'1')
-    socket_detrigger.setsockopt(zmq.SUBSCRIBE, b'ND01' + trigger_index_s.encode() + b'0')
+    socket_trigger.setsockopt(zmq.SUBSCRIBE,
+                              Subscription.trigger.value + trigger_index_s.encode() + b'1')
+    socket_detrigger.setsockopt(zmq.SUBSCRIBE,
+                                Subscription.trigger.value + trigger_index_s.encode() + b'0')
     sockets_trigger[trigger_index] = socket_trigger
     sockets_detrigger[trigger_index] = socket_detrigger
 
@@ -69,7 +71,7 @@ def save_triggers(post_data_str, conn_str, context, sockets_trigger, sockets_det
             update_sockets(trigger_index, conn_str, context, sockets_trigger, sockets_detrigger)
 
 
-def post_triggers(post_data_str, socket_channels, sockets_trigger, sockets_detrigger):
+def post_triggers(post_data_str, sockets_trigger, sockets_detrigger):
     triggers = json.loads(post_data_str)
     triggers = {int(k): v for k, v in triggers.items()}
     # logger.debug('post_data_str:' + post_data_str + '\ntriggers dic:' + str(triggers) + '\ntriggers keys:' +
@@ -105,22 +107,7 @@ def post_triggers(post_data_str, socket_channels, sockets_trigger, sockets_detri
             logger.warning('i ' + str(i) + ' not in triggers')
 
     # logging.debug('triggers:' + str(triggers))
-    chans = []
-    try:
-        custom_header = socket_channels.recv(zmq.NOBLOCK)
-        if (len(custom_header) == 50):
-            n_of_chs = int.from_bytes(custom_header[12:13], byteorder='big')
-            # logger.debug('n_of_chs:' + str(n_of_chs))
-            chans = [(custom_header[i:i + 4]).decode().strip() for i in range(13, 13 + n_of_chs * 4, 4)]
-            # logger.debug('chans:' + str(chans))
-        else:
-            logger.error('unexpected len ' + str(len(custom_header)) + ' for \'head\' block')
-        # if {}.update(chans_tmp) != {}.update(chans):
-        #     chans = chans_tmp
-        while True:
-            socket_channels.recv(zmq.NOBLOCK)
-    except zmq.ZMQError:
-        pass
+    chans = channelsUpdater.get_channels()
 
     # logger.debug('chans:' + str(chans) + '\ntriggers:' + str(triggers))
     json_map = {'triggers': triggers}

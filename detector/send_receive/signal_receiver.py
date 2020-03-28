@@ -7,24 +7,26 @@
 # from detector.misc.header_util import pack_ch_header
 import base64
 import json
+from ctypes import cast, POINTER
 
 import zmq
 from obspy import UTCDateTime
 
 from detector.filter_trigger.StaLtaTrigger import logger
-from detector.misc.globals import Port
-from detector.misc.header_util import pack_ch_header, prep_name
+from detector.misc.globals import Port, Subscription, channelsUpdater
+from detector.misc.header_util import prep_ch, CustomHeader, ChName, ChHeader
 from detector.send_receive.tcp_client import TcpClient
 
 
-def signal_receiver(conn_str):
+def signal_receiver(conn_str, station_bin):
     context = zmq.Context()
     socket = TcpClient(conn_str, context)
 
     socket_pub = context.socket(zmq.PUB)
-    socket_pub.bind('tcp://*:%d' % Port.signal_route.value)
+    conn_str_pub = 'tcp://localhost:' + str(Port.multi.value)
+    socket_pub.connect(conn_str_pub)
     socket_buf = context.socket(zmq.PUB)
-    socket_buf.bind('tcp://*:%d' % Port.internal_resend.value)
+    socket_buf.connect(conn_str_pub)
 
     while True:
         size_bytes = socket.recv(4)
@@ -49,14 +51,20 @@ def signal_receiver(conn_str):
             starttime = UTCDateTime(json_data['signal']['timestmp'])
             chs = json_data['signal']['samples']
             for ch in chs:
-                bin_header = pack_ch_header('ND01', ch, sampling_rate, starttime._ns)
+                #bin_header = pack_ch_header(station_bin, ch, sampling_rate, starttime._ns)
+                bin_header = ChHeader(station_bin, ch, sampling_rate, starttime._ns)
                 bin_signal = (base64.decodebytes(json_data['signal']['samples'][ch].encode("ASCII")))
                 bin_data = bin_header + bin_signal
-                socket_pub.send(bin_data)
+                socket_pub.send(Subscription.intern.value + bin_data)
             ns_bin = int.to_bytes(starttime._ns, 8, byteorder='big')
-            chs_bin = len(chs).to_bytes(1, byteorder='big') + b''.join(list(map(prep_name, chs)))
-            custom_header = (b'head' + ns_bin + chs_bin).ljust(50)
+            #chs_bin = len(chs).to_bytes(1, byteorder='big') + b''.join(list(map(prep_ch, chs)))
+            #custom_header = (ns_bin + chs_bin).ljust(50)
+            custom_header = CustomHeader()
+            chs_blist = list(map(prep_ch, chs))
+            channelsUpdater.update(station_bin, chs_blist)
+            chs_bin = b''.join(chs_blist)
+            custom_header.channels = cast(chs_bin, POINTER(ChName * 20)).contents
+            custom_header.ns = ns_bin
             #logger.debug('chs_bin:' + str(chs_bin))
-            socket_buf.send(custom_header)
-            socket_buf.send(size_bytes + raw_data)
+            socket_buf.send(Subscription.signal.value + custom_header + size_bytes + raw_data)
 

@@ -1,3 +1,6 @@
+from _ctypes import Structure
+from ctypes import c_char, c_ushort, c_uint64, c_ulonglong
+
 from obspy import *
 import numpy as np
 import json
@@ -11,18 +14,52 @@ def prep_name(stch):
     return stch.encode()
 
 
-def pack_ch_header(station, channel, sampling_rate, stamp_ns):
-    bin_data = prep_name(station) + prep_name(channel)
-    bin_data += int(sampling_rate).to_bytes(2, byteorder='big')
-    bin_data += stamp_ns.to_bytes(8, byteorder='big')
-    return bin_data
+def prep_ch(ch):
+    return prep_name(ch)[-3:]
 
 
-def unpack_ch_header(bin_data):
-    sampling_rate = int.from_bytes(bin_data[:2], byteorder='big')
-    stamp_ns = int.from_bytes(bin_data[2:10], byteorder='big')
-    stamp = UTCDateTime(stamp_ns / 10 ** 9)
-    return sampling_rate, stamp
+class ChName(Structure):
+    _pack_ = 1
+    _fields_ = [('ch', c_char * 3)]
+
+
+class ChHeader(Structure):
+
+    def __init__(self, station, channel, sampling_rate, ns):
+        self.station = prep_name(station)
+        self.channel.ch = prep_ch(channel)
+        self.sampling_rate = sampling_rate
+        self.ns = ns
+
+    _pack_ = 1
+    _fields_ = [
+        ('station', c_char * 4),
+        ('channel', ChName),
+        ('sampling_rate', c_ushort),
+        ('ns', c_ulonglong)
+    ]
+
+
+class CustomHeader(Structure):
+    _pack_ = 1
+    _fields_ = [
+        ('ns', c_ulonglong),
+        ('channels', ChName * 20)
+    ]
+
+
+# def pack_ch_header(station, channel, sampling_rate, stamp_ns):
+#     bin_data = prep_name(station) + prep_ch(channel)
+#     bin_data += int(sampling_rate).to_bytes(2, byteorder='big')
+#     bin_data += stamp_ns.to_bytes(8, byteorder='big')
+#     return bin_data
+#
+#
+# def unpack_ch_header(bin_data):
+#     sampling_rate = int.from_bytes(bin_data[:2], byteorder='big')
+#     stamp_ns = int.from_bytes(bin_data[2:10], byteorder='big')
+#     stamp = UTCDateTime(stamp_ns / 10 ** 9)
+#     return sampling_rate, stamp
 
 
 def pack_header(station, sampling_rate, stamp_ns, mask_string):

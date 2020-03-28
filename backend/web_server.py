@@ -25,11 +25,7 @@ context = zmq.Context()
 socket_backend = context.socket(zmq.PUB)
 socket_backend.connect('tcp://localhost:' + str(Port.backend.value))
 
-socket_channels = context.socket(zmq.SUB)
-socket_channels.connect('tcp://localhost:' + str(Port.internal_resend.value))
-socket_channels.subscribe(b'head')
-
-conn_str = 'tcp://localhost:' + str(Port.proxy.value)
+conn_str_sub = 'tcp://localhost:' + str(Port.proxy.value)
 
 # socket_trigger = context.socket(zmq.SUB)
 # socket_trigger.connect(conn_str)
@@ -38,7 +34,7 @@ sockets_trigger = {}
 sockets_detrigger = {}
 
 for trigger_param in getTriggerParams():
-    update_sockets(trigger_param['ind'], conn_str, context, sockets_trigger, sockets_detrigger)
+    update_sockets(trigger_param['ind'], conn_str_sub, context, sockets_trigger, sockets_detrigger)
 
 # This class will handles any incoming request from
 # the browser
@@ -101,14 +97,14 @@ class myHandler(BaseHTTPRequestHandler):
         post_data_str = post_data.decode()
         if self.path == '/trigger':
             # logging.info('json_map:' + str(json_map))
-            json_map = post_triggers(post_data_str, socket_channels, sockets_trigger, sockets_detrigger)
+            json_map = post_triggers(post_data_str, sockets_trigger, sockets_detrigger)
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             self.wfile.write(json.dumps(json_map).encode())
         if self.path == '/rule':
             # logging.info('json_map:' + str(json_map))
-            json_map = post_rules(post_data_str, socket_channels, sockets_trigger, sockets_detrigger)
+            json_map = post_rules(post_data_str, sockets_trigger, sockets_detrigger)
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
@@ -126,9 +122,9 @@ class myHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps({'apply': 1}).encode())
         if self.path == '/save':
-            save_triggers(post_data_str, conn_str, context, sockets_trigger, sockets_detrigger)
+            save_triggers(post_data_str, conn_str_sub, context, sockets_trigger, sockets_detrigger)
         if self.path == '/saveRules':
-            save_triggers(post_data_str, conn_str, context, sockets_trigger, sockets_detrigger)
+            save_triggers(post_data_str, conn_str_sub, context, sockets_trigger, sockets_detrigger)
         if self.path == '/load':
             print('load')
 

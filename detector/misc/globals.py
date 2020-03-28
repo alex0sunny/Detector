@@ -7,6 +7,8 @@ from threading import Thread
 
 import logging
 
+from detector.misc.ChannelsUpdater import ChannelsUpdater
+
 logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
                            '%(message)s',
                     level=logging.DEBUG)
@@ -15,14 +17,25 @@ logger = logging.getLogger('globals')
 
 class Port(Enum):
     signal = 10003
-    test_signal = 5555
     signal_route = 5559
     internal_resend = 5560
     signal_resend = 5561
-    trigger = 5562
+    multi = 5562
     proxy = 5563
     backend = 5564
-    test_signal2 = 5565
+
+
+sources_dic = {b'ND01': {'address': 'localhost', 'port': 5555},
+               b'ND02': {'address': 'localhost', 'port': 5565}}
+
+
+channelsUpdater = ChannelsUpdater()
+
+
+class Subscription(Enum):
+    signal  = bytes([1])
+    intern  = bytes([2])
+    trigger = bytes([3])
 
 
 class CustomThread(Thread):

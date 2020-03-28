@@ -2,6 +2,8 @@ import base64
 import json
 import socket as sock
 # from matplotlib import pyplot
+from _ctypes import sizeof
+from io import BytesIO
 
 from obspy import *
 import numpy as np
@@ -9,12 +11,11 @@ import zmq
 
 import logging
 
-from detector.misc.globals import Port
-from detector.misc.header_util import unpack_ch_header, prep_name, pack_ch_header
+from detector.misc.globals import Port, Subscription
+from detector.misc.header_util import prep_name, ChHeader
 from detector.filter_trigger.filter_bandpass import Filter
 
-logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
-                           '%(message)s',
+logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d %(message)s',
                     level=logging.DEBUG)
 logger = logging.getLogger('detector')
 
@@ -78,24 +79,25 @@ def sta_lta_picker(ind, station, channel, freqmin, freqmax, sta, lta, init_level
     trigger_index_s = ('%02d' % ind).encode()
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
-    socket.connect('tcp://localhost:%d' % Port.signal_route.value)
-    topicfilter = prep_name(station).decode() + prep_name(channel).decode()
-    socket.setsockopt_string(zmq.SUBSCRIBE, topicfilter)
+    socket.connect('tcp://localhost:' + str(Port.proxy.value))
+    station_bin = prep_name(station)
+    socket.setsockopt(zmq.SUBSCRIBE, Subscription.intern.value + station_bin + prep_name(channel))
 
     socket_trigger = context.socket(zmq.PUB)
-    socket_trigger.connect('tcp://localhost:%d' % Port.trigger.value)
+    socket_trigger.connect('tcp://localhost:' + str(Port.multi.value))
     # events_list = []
 
     data_trigger = None
     trigger_on = False
     filter = None
     while True:
-        raw_data = socket.recv()
-        raw_header = raw_data[8:18]
-        #print('raw_header received:' + str(raw_header))
-        sampling_rate, starttime = unpack_ch_header(raw_header)
-        #print('sampling_rate:' + str(sampling_rate) + ' starttime:' + str(starttime))
-        data = np.frombuffer(raw_data[18:], dtype='int32')
+        raw_data = socket.recv()[1:]
+        header = ChHeader()
+        header_size = sizeof(ChHeader)
+        BytesIO(raw_data[:header_size]).readinto(header)
+        sampling_rate = header.sampling_rate
+        starttime = UTCDateTime(header.ns / 10 ** 9)
+        data = np.frombuffer(raw_data[header_size:], dtype='int32')
         if not filter:
             filter = Filter(sampling_rate, freqmin, freqmax)
         data = filter.bandpass(data)
@@ -108,16 +110,15 @@ def sta_lta_picker(ind, station, channel, freqmin, freqmax, sta, lta, init_level
         deactiv_data = trigger_data < stop_level
         date_time = starttime
         #events_list = []
+        message_start = Subscription.trigger.value + trigger_index_s
         for a, d in zip(activ_data, deactiv_data):
             if trigger_on and d:
-                socket_trigger.send(b'ND01' + trigger_index_s + b'0' +
-                                    date_time._ns.to_bytes(8, byteorder='big'))
+                socket_trigger.send(message_start + b'0' + date_time._ns.to_bytes(8, byteorder='big'))
                 logger.debug('detriggered, ch:' + channel)
                 # events_list.append({'channel': channel, 'dt': date_time, 'trigger': False})
                 trigger_on = False
             if not trigger_on and a:
-                socket_trigger.send(b'ND01' + trigger_index_s + b'1' +
-                                    date_time._ns.to_bytes(8, byteorder='big'))
+                socket_trigger.send(message_start + b'1' + date_time._ns.to_bytes(8, byteorder='big'))
                 logger.debug('triggered, ch:' + channel)
                 #events_list.append({'channel': channel, 'dt': date_time, 'trigger': True})
                 trigger_on = True

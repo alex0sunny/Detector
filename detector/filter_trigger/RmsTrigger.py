@@ -4,7 +4,7 @@ from obspy import *
 import numpy as np
 import zmq
 
-from detector.misc.header_util import unpack_ch_header, prep_name
+from detector.misc.header_util import unpack_ch_header, prep_name, prep_ch
 from detector.filter_trigger import bandpass_zi
 
 
@@ -47,18 +47,18 @@ def rms_picker(station, channel, freqmin, freqmax, len, init_level, stop_level):
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
     socket.connect('tcp://localhost:5559')
-    topicfilter = prep_name(station).decode() + prep_name(channel).decode()
-    socket.setsockopt_string(zmq.SUBSCRIBE, topicfilter)
+    topicfilter = prep_name(station) + prep_ch(channel)
+    socket.setsockopt(zmq.SUBSCRIBE, topicfilter)
     data_trigger = None
     trigger_on = False
     zi = None
     while True:
         raw_data = socket.expand()
-        raw_header = raw_data[8:18]
+        raw_header = raw_data[7:17]
         # print('raw_header received:' + str(raw_header))
         sampling_rate, starttime = unpack_ch_header(raw_header)
         # print('sampling_rate:' + str(sampling_rate) + ' starttime:' + str(starttime))
-        data = np.frombuffer(raw_data[18:], dtype='int32')
+        data = np.frombuffer(raw_data[17:], dtype='int32')
         data, zi = bandpass_zi(data, sampling_rate, freqmin, freqmax, zi)
         if not data_trigger:
             n = round(len * sampling_rate)

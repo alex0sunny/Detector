@@ -1,8 +1,13 @@
+from _ctypes import sizeof
+from ctypes import memmove, addressof
+from io import BytesIO
+
 import zmq
 from obspy import *
 
 from detector.filter_trigger.StaLtaTrigger import logger
-from detector.misc.globals import Port
+from detector.misc.globals import Port, sources_dic, Subscription
+from detector.misc.header_util import CustomHeader
 from detector.send_receive.tcp_server import TcpServer
 
 
@@ -10,16 +15,17 @@ def resend(conn_str, triggers, pem, pet):
     context = zmq.Context()
 
     socket_sub = context.socket(zmq.SUB)
-    socket_sub.connect('tcp://localhost:%d' % Port.internal_resend.value)
-    socket_sub.setsockopt(zmq.SUBSCRIBE, b'')
+    conn_str_sub = 'tcp://localhost:' + str(Port.proxy.value)
+    socket_sub.connect(conn_str_sub)
+    socket_sub.setsockopt(zmq.SUBSCRIBE, Subscription.signal.value)
 
     socket_server = TcpServer(conn_str, context)
 
     socket_trigger = context.socket(zmq.SUB)
-    socket_trigger.connect('tcp://localhost:' + str(Port.proxy.value))
+    socket_trigger.connect(conn_str_sub)
     for trigger_index in triggers:
         trigger_index_s = '%02d' % trigger_index
-        socket_trigger.setsockopt(zmq.SUBSCRIBE, b'ND01' + trigger_index_s.encode())
+        socket_trigger.setsockopt(zmq.SUBSCRIBE, Subscription.trigger.value + trigger_index_s.encode())
 
     test_send = False
     trigger = False
@@ -27,19 +33,19 @@ def resend(conn_str, triggers, pem, pet):
     pet_time = UTCDateTime(0)
     while True:
         try:
-            bin_data = socket_trigger.recv(zmq.NOBLOCK)
+            bin_data = socket_trigger.recv(zmq.NOBLOCK)[1:]
             logger.debug('trigger event')
-            trigger_data = bin_data[6:7]
+            trigger_data = bin_data[2:3]
             trigger_time = UTCDateTime(int.from_bytes(bin_data[-8:], byteorder='big') / 10**9)
             if trigger and trigger_data == b'0':
                 trigger = False
                 pet_time = trigger_time + pet
                 logger.info('detriggered\ndetrigger time:' + str(trigger_time) + '\npet time:' +
-                            str(trigger_time + pet) + '\ntrigger:' + str(bin_data[4:6]))
+                            str(trigger_time + pet) + '\ntrigger:' + str(bin_data[:2]))
             if not trigger and trigger_data == b'1':
                 trigger = True
                 logger.info('triggered\ntrigger time:' + str(trigger_time) + '\npem time:' +
-                            str(trigger_time - pem) + '\ntrigger:' + str(bin_data[4:6]))
+                            str(trigger_time - pem) + '\ntrigger:' + str(bin_data[:2]))
                 if buf:
                     logger.info('buf item dt:' + str(buf[0][0]))
             if not buf:
@@ -48,12 +54,15 @@ def resend(conn_str, triggers, pem, pet):
             pass
 
         # logger.debug('wait custom header')
-        custom_header = socket_sub.recv()
+        resent_data = socket_sub.recv()[1:]
+        custom_header = CustomHeader()
+        header_size = sizeof(CustomHeader)
+        BytesIO(resent_data[:header_size]).readinto(custom_header)
+        #memmove(addressof(custom_header), resent_data[:header_size], header_size)
         # logger.debug('custom header received:' + str(custom_header))
-        dt_bytes = custom_header[4:12]
-        dt = UTCDateTime(int.from_bytes(dt_bytes, byteorder='big') / 10 ** 9)
+        dt = UTCDateTime(custom_header.ns / 10 ** 9)
         # logger.debug('wait binary data')
-        bdata = socket_sub.recv()
+        bdata = resent_data[header_size:]
         # logger.debug('binary data received')
         #logger.debug('dt:' + str(UTCDateTime(dt)) + ' bdata len:' + str(len(bdata)))
         if dt < pet_time or trigger:
