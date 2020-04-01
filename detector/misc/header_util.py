@@ -15,7 +15,10 @@ def prep_name(stch):
 
 
 def prep_ch(ch):
-    return prep_name(ch)[-3:]
+    if type(ch) == bytes:
+        ch = ch.decode()
+    ch = ch.strip()[-3:].ljust(3)
+    return ch.encode()
 
 
 class ChName(Structure):

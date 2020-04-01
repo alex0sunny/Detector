@@ -1,3 +1,4 @@
+import json
 from time import sleep
 
 from obspy import UTCDateTime
@@ -26,8 +27,12 @@ class ChannelsUpdater:
 # print(str(channelsUpdater.get_channels_dic()))
 # channelsUpdater.update(b'nd01', [b'x', b'y', b'z'])
 # print(str(channelsUpdater.get_channels_dic()))
-# sleep(3)
-# channelsUpdater.update(b'nd01', [b'x'])
-# sleep(3)
+# # sleep(3)
+# channelsUpdater.update(b'nd02', [b'x'])
+# # sleep(3)
 # print(str(channelsUpdater.get_channels_dic()))
-
+# json_str = json.dumps(channelsUpdater.get_channels_dic())
+# print('json str:' + json_str)
+# print(type(json_str))
+# print(json.dumps(channelsUpdater.get_channels_dic()).encode())
+#

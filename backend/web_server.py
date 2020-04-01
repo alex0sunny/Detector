@@ -14,10 +14,9 @@ logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:
                     level=logging.INFO)
 logger = logging.getLogger('detector')
 
-
 # curdir = './backend'
 # print('list dir: ' + str(os.listdir()))
-from detector.misc.globals import Port
+from detector.misc.globals import Port, Subscription
 
 PORT_NUMBER = 8080
 
@@ -27,6 +26,12 @@ socket_backend.connect('tcp://localhost:' + str(Port.backend.value))
 
 conn_str_sub = 'tcp://localhost:' + str(Port.proxy.value)
 
+socket_channels = context.socket(zmq.SUB)
+socket_channels.connect(conn_str_sub)
+socket_channels.setsockopt(zmq.SUBSCRIBE, Subscription.channel.value)
+
+chans = []
+
 # socket_trigger = context.socket(zmq.SUB)
 # socket_trigger.connect(conn_str)
 # socket_trigger.setsockopt(zmq.SUBSCRIBE, b'ND01011')
@@ -35,6 +40,7 @@ sockets_detrigger = {}
 
 for trigger_param in getTriggerParams():
     update_sockets(trigger_param['ind'], conn_str_sub, context, sockets_trigger, sockets_detrigger)
+
 
 # This class will handles any incoming request from
 # the browser
@@ -95,12 +101,12 @@ class myHandler(BaseHTTPRequestHandler):
         # logger.debug('inside post')
         # logger.debug(self.path)
         # print(self.rfile.read())
-        content_length = int(self.headers['Content-Length'])    # <--- Gets the size of data
-        post_data = self.rfile.read(content_length)     # <--- Gets the data itself
+        content_length = int(self.headers['Content-Length'])  # <--- Gets the size of data
+        post_data = self.rfile.read(content_length)  # <--- Gets the data itself
         post_data_str = post_data.decode()
         if self.path == '/trigger':
             # logging.info('json_map:' + str(json_map))
-            json_map = post_triggers(post_data_str, sockets_trigger, sockets_detrigger)
+            json_map = post_triggers(post_data_str, chans, socket_channels, sockets_trigger, sockets_detrigger)
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()

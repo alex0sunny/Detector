@@ -5,7 +5,9 @@ import inspect
 import os
 import backend
 import zmq
-from detector.misc.globals import logger, sources_dic, Subscription, channelsUpdater
+
+
+from detector.misc.globals import logger, sources_dic, Subscription
 
 
 def getHeaderMap(root):
@@ -14,7 +16,7 @@ def getHeaderMap(root):
 
 
 def getTriggerParams():
-    root = etree.parse(os.path.split(inspect.getfile(backend))[0] + '/index.html')
+    root = etree.parse(os.path.split(inspect.getfile(backend))[0] + '/triggers.html')
     header_inds = getHeaderMap(root)
     rows = root.xpath('/html/body/table/tbody/tr')[1:]
     params_list = []
@@ -66,7 +68,7 @@ def update_sockets(trigger_index, conn_str, context, sockets_trigger, sockets_de
 
 
 def save_triggers(post_data_str, conn_str, context, sockets_trigger, sockets_detrigger):
-    save_pprint(post_data_str, os.path.split(inspect.getfile(backend))[0] + '/index.html')
+    save_pprint(post_data_str, os.path.split(inspect.getfile(backend))[0] + '/triggers.html')
     clear_triggers(sockets_trigger, sockets_detrigger)
     for trigger_param in getTriggerParams():
         trigger_index = trigger_param['ind']
@@ -74,7 +76,7 @@ def save_triggers(post_data_str, conn_str, context, sockets_trigger, sockets_det
             update_sockets(trigger_index, conn_str, context, sockets_trigger, sockets_detrigger)
 
 
-def post_triggers(post_data_str, sockets_trigger, sockets_detrigger):
+def post_triggers(post_data_str, chans, socket_channels, sockets_trigger, sockets_detrigger):
     triggers = json.loads(post_data_str)
     triggers = {int(k): v for k, v in triggers.items()}
     # logger.debug('post_data_str:' + post_data_str + '\ntriggers dic:' + str(triggers) + '\ntriggers keys:' +
@@ -110,11 +112,15 @@ def post_triggers(post_data_str, sockets_trigger, sockets_detrigger):
             logger.warning('i ' + str(i) + ' not in triggers')
 
     # logging.debug('triggers:' + str(triggers))
-    chans_dic = channelsUpdater.get_channels_dic()
-    chans = []
-    for station in chans_dic:
-        chans += chans_dic[station].values()
+    try:
+        while True:
+            chans_dic = json.loads(socket_channels.recv(zmq.NOBLOCK)[1:].decode())
+            for station in chans_dic:
+                chans += chans_dic[station]
+    except zmq.ZMQError:
+        pass
     chans = sorted(set(chans))
+    #logger.debug('chans:' + str(chans))
 
     # logger.debug('chans:' + str(chans) + '\ntriggers:' + str(triggers))
     json_map = {'triggers': triggers}

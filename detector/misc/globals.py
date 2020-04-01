@@ -29,13 +29,11 @@ sources_dic = {'ND01': {'address': 'localhost', 'port': 5555},
                'ND02': {'address': 'localhost', 'port': 5565}}
 
 
-channelsUpdater = ChannelsUpdater()
-
-
 class Subscription(Enum):
     signal  = bytes([1])
     intern  = bytes([2])
     trigger = bytes([3])
+    channel = bytes([4])
 
 
 class CustomThread(Thread):

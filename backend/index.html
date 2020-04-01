@@ -1,62 +1,21 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
-<html><head><title>triggers table</title></head><body>
-		<table style="width:100%" id="triggerTable"><tbody><tr><th align="left">ind</th>
-					<th align="left">station</th>
-					<th align="left">channel</th>
-					<th align="left">sta</th>
-					<th align="left">lta</th>
-					<th align="left">freqmin</th>
-					<th align="left">freqmax</th>
-					<th align="left">val</th>
-				</tr><tr><td>1</td>
-					<td contenteditable="true">ND01</td>
-					<td>
-						<select><option>CHE</option><option>CHN</option><option selected="selected">CHZ</option></select></td>
-					<td contenteditable="true">1</td>
-					<td contenteditable="true">4</td>
-					<td contenteditable="true">100</td>
-					<td contenteditable="true">300</td>
-					<td>0</td>
-				</tr><tr><td>2</td>
-					<td contenteditable="true">ND01</td>
-					<td>
-						<select><option>CHE</option><option selected="selected">CHN</option><option>CHZ</option></select></td>
-					<td contenteditable="true">1</td>
-					<td contenteditable="true">4</td>
-					<td contenteditable="true">100</td>
-					<td contenteditable="true">300</td>
-					<td>0</td>
-				</tr><tr><td>3</td>
-					<td contenteditable="true">ND02</td>
-					<td>
-						<select><option>CHE</option><option selected="selected">CHN</option><option>CHZ</option></select></td>
-					<td contenteditable="true">1</td>
-					<td contenteditable="true">4</td>
-					<td contenteditable="true">10</td>
-					<td contenteditable="true">30</td>
-					<td>0</td>
-				</tr><tr><td>4</td>
-					<td contenteditable="true">ND02</td>
-					<td>
-						<select><option selected="selected">CHE</option><option>CHN</option><option>CHZ</option></select></td>
-					<td contenteditable="true">1</td>
-					<td contenteditable="true">4</td>
-					<td contenteditable="true">10</td>
-					<td contenteditable="true">30</td>
-					<td>0</td>
-				</tr></tbody></table><p style="text-align:left;">
-			<a href="rules.html">rules</a>
-			<span style="float:right;">
-				<button type="button" onclick="apply_save()">
-					apply
-				</button>
-				<button type="button" onclick="location.reload(true)">
-					init
-				</button>
-				<button type="add" onclick="addTrigger()">
-					add trigger
-				</button>
-			</span>
-		</p>
-		<script src="triggers.js">
-		</script></body></html>
+<!DOCTYPE html>
+<html>
+	<body>
+		<center>
+			<br/>
+			<button type="button" align="right" onclick="alert('Hello world!')">
+				sources
+			</button>
+			<br/>
+			<br/>
+			<button type="button" align="right" onclick="document.location = 'triggers.html'">
+				triggers
+			</button>
+			<br/>
+			<br/>
+			<button type="button" align="right" onclick="document.location = 'rules.html'">
+				rules
+			</button>
+		</center>
+	</body>
+</html>
