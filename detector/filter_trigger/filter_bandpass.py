@@ -5,6 +5,7 @@ from scipy.signal import iirfilter, zpk2sos, sosfilt, sosfilt_zi
 
 
 # from butterworth import Butter
+from detector.misc.globals import logger
 
 
 class Filter:
@@ -27,6 +28,7 @@ class Filter:
             msg = ("Selected high corner frequency ({}) of bandpass is at or "
                    "above Nyquist ({}). Applying a high-pass instead.").format(
                 self.freqmax, self.fe)
+            logger.warning(msg)
             warnings.warn(msg)
             return highpass(data, freq=self.freqmin, df=self.sampling_rate, corners=self.corners,
                             zerophase=self.zerophase)

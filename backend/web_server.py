@@ -40,6 +40,9 @@ for trigger_param in getTriggerParams():
 # the browser
 class myHandler(BaseHTTPRequestHandler):
 
+    def log_message(self, format, *args):
+        return
+
     # Handler for the GET requests
     def do_GET(self):
         if self.path == "/":

@@ -96,11 +96,10 @@ function myTimer() {
 //			console.log('json vals:' + Object.values(json));
 //			console.log('trigger keys:' + Object.keys(json.triggers));
 //			console.log('trigger vals:' + Object.values(json.triggers));
-			var jsonObj = getFromJson(json);
-			var triggers = jsonObj.triggers;
+			var triggers = json.triggers;
 			setTriggers(triggers);
-			if ("channels" in jsonObj)    {
-                var channels = jsonObj.channels;
+			if ("channels" in json)    {
+                var channels = json.channels;
 //                console.log("page channels:" + pageMap.channels.toString() + "; channels:" + channels.toString());
                 if (channels.toString() != pageMap.channels.toString()) {
                     setChannelsList(channels);
@@ -118,18 +117,6 @@ function pauseCounter() {
 
 function resumeCounter() {
     myVar = setInterval(myTimer, 1000);
-}
-
-function getFromJson(json) {
-	var jsonObj = {"triggers" : json.triggers};
-	if ("channels" in json) {
-		var channels = json.channels.split(" ");
-    	channels.sort();
-	    jsonObj["channels"] = channels;
-//	    console.log("channels:" + channels);
-	}
-//	console.log("triggers:" + jsonObj.triggers);
-	return jsonObj;
 }
 
 function getFromHtml()	{
@@ -150,7 +137,7 @@ function getFromHtml()	{
 		    optionNode = options[i];
 		    channels.push(optionNode.text);
 		}
-		channels.sort();
+		channels = [...(new Set(channels))].sort();
 	}
 	return {triggers : triggers, channels : channels};
 }

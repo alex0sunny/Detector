@@ -22,6 +22,9 @@ def getTriggerParams():
         [channel] = [el.text for el in row[header_inds['channel']].iter() if 'selected' in el.attrib]
         params_map = {'channel': channel}
         for header in header_inds.keys():
+            if header == 'station':
+                params_map[header] = row[header_inds[header]].text
+                continue
             if header not in ['channel', 'val']:
                 params_map[header] = int(row[header_inds[header]].text)
         params_list.append(params_map)
@@ -107,13 +110,17 @@ def post_triggers(post_data_str, sockets_trigger, sockets_detrigger):
             logger.warning('i ' + str(i) + ' not in triggers')
 
     # logging.debug('triggers:' + str(triggers))
-    chans = channelsUpdater.get_channels()
+    chans_dic = channelsUpdater.get_channels_dic()
+    chans = []
+    for station in chans_dic:
+        chans += chans_dic[station].values()
+    chans = sorted(set(chans))
 
     # logger.debug('chans:' + str(chans) + '\ntriggers:' + str(triggers))
     json_map = {'triggers': triggers}
     # chans = ['EH1', 'EH2', 'EHN']
     if chans:
-        json_map['channels'] = ' '.join(chans)
+        json_map['channels'] = chans
     return json_map
 
 #print(getChannels())

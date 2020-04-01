@@ -25,8 +25,8 @@ class Port(Enum):
     backend = 5564
 
 
-sources_dic = {b'ND01': {'address': 'localhost', 'port': 5555},
-               b'ND02': {'address': 'localhost', 'port': 5565}}
+sources_dic = {'ND01': {'address': 'localhost', 'port': 5555},
+               'ND02': {'address': 'localhost', 'port': 5565}}
 
 
 channelsUpdater = ChannelsUpdater()

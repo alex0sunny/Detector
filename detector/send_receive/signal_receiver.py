@@ -8,6 +8,7 @@
 import base64
 import json
 from ctypes import cast, POINTER
+from io import BytesIO
 
 import zmq
 from obspy import UTCDateTime
@@ -52,11 +53,10 @@ def signal_receiver(conn_str, station_bin):
             chs = json_data['signal']['samples']
             for ch in chs:
                 #bin_header = pack_ch_header(station_bin, ch, sampling_rate, starttime._ns)
-                bin_header = ChHeader(station_bin, ch, sampling_rate, starttime._ns)
+                bin_header = ChHeader(station_bin, ch, int(sampling_rate), starttime._ns)
                 bin_signal = (base64.decodebytes(json_data['signal']['samples'][ch].encode("ASCII")))
-                bin_data = bin_header + bin_signal
+                bin_data = BytesIO(bin_header).read() + bin_signal
                 socket_pub.send(Subscription.intern.value + bin_data)
-            ns_bin = int.to_bytes(starttime._ns, 8, byteorder='big')
             #chs_bin = len(chs).to_bytes(1, byteorder='big') + b''.join(list(map(prep_ch, chs)))
             #custom_header = (ns_bin + chs_bin).ljust(50)
             custom_header = CustomHeader()
@@ -64,7 +64,7 @@ def signal_receiver(conn_str, station_bin):
             channelsUpdater.update(station_bin, chs_blist)
             chs_bin = b''.join(chs_blist)
             custom_header.channels = cast(chs_bin, POINTER(ChName * 20)).contents
-            custom_header.ns = ns_bin
+            custom_header.ns = starttime._ns
             #logger.debug('chs_bin:' + str(chs_bin))
             socket_buf.send(Subscription.signal.value + custom_header + size_bytes + raw_data)
 

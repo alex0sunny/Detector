@@ -25,7 +25,7 @@ class ChName(Structure):
 
 class ChHeader(Structure):
 
-    def __init__(self, station, channel, sampling_rate, ns):
+    def __init__(self, station=b'', channel=b'', sampling_rate=0, ns=0):
         self.station = prep_name(station)
         self.channel.ch = prep_ch(channel)
         self.sampling_rate = sampling_rate
@@ -151,6 +151,7 @@ def bin_to_stream(bin_data):
         tr.stats.station = station
         st += tr
     return st
+
 
 # print(stream_to_json(read()))
 

@@ -12,7 +12,7 @@ import zmq
 import logging
 
 from detector.misc.globals import Port, Subscription
-from detector.misc.header_util import prep_name, ChHeader
+from detector.misc.header_util import prep_name, ChHeader, prep_ch
 from detector.filter_trigger.filter_bandpass import Filter
 
 logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d %(message)s',
@@ -81,7 +81,7 @@ def sta_lta_picker(ind, station, channel, freqmin, freqmax, sta, lta, init_level
     socket = context.socket(zmq.SUB)
     socket.connect('tcp://localhost:' + str(Port.proxy.value))
     station_bin = prep_name(station)
-    socket.setsockopt(zmq.SUBSCRIBE, Subscription.intern.value + station_bin + prep_name(channel))
+    socket.setsockopt(zmq.SUBSCRIBE, Subscription.intern.value + station_bin + prep_ch(channel))
 
     socket_trigger = context.socket(zmq.PUB)
     socket_trigger.connect('tcp://localhost:' + str(Port.multi.value))

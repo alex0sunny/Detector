@@ -50,27 +50,18 @@ def send_signal(st, conn_str):
         time.sleep(.1)
 
 
-st = read(os.path.split(inspect.getfile(misc))[0] + '/onem.mseed')
+base_path = os.path.split(inspect.getfile(misc))[0] + '/'
+st = read(base_path + 'st1000.mseed')
+st100 = read(base_path + 'st100.mseed')
 data = st[-1].data
 st[-1].data = np.append(data[2000:], data[:2000])
-for tr in st:
-    tr.stats.station = 'ND01'
-#st[0].stats.channel = 'CH1'
-# st[1].stats.channel = 'CHY'
-#st[2].stats.channel = 'EH1'
-st2 = st.copy()
-for tr in st2:
-    tr.stats.station = 'ND02'
-    tr.data = np.append(data[3000:], data[:3000])
 
 kwargs_list = [{'target': send_signal,
                 'kwargs': {'st': st,
-                           'conn_str': 'tcp://*:' +
-                                       sources_dic['ND01']['address'] + str(sources_dic['ND01']['port'])}},
+                           'conn_str': 'tcp://*:' + str(sources_dic['ND01']['port'])}},
                {'target': send_signal,
-                'kwargs': {'st': st2,
-                           'conn_str': 'tcp://*:' +
-                                       sources_dic['ND02']['address'] + str(sources_dic['ND02']['port'])}}]
+                'kwargs': {'st': st100,
+                           'conn_str': 'tcp://*:' + str(sources_dic['ND02']['port'])}}]
 if __name__ == '__main__':
     for kwargs in kwargs_list:
         Process(**kwargs).start()

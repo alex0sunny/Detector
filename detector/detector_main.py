@@ -29,7 +29,7 @@ if __name__ == '__main__':
         for station, conn_data in sources_dic.items():
             kwargs = {'target': signal_receiver,
                       'kwargs': {'conn_str': 'tcp://' + conn_data['address'] + ':' + str(conn_data['port']),
-                                 'station_bin': station}}
+                                 'station_bin': station.encode()}}
             kwargs_list.append(kwargs)
 
         kwargs_list += [{'target': resend, 'kwargs': {'conn_str': 'tcp://*:' + str(Port.signal_resend.value),
@@ -37,8 +37,11 @@ if __name__ == '__main__':
                         {'target': triggers_proxy, 'kwargs': {}}]
 
         for params in paramsList:
-            params.update({'station': 'ND01', 'freqmin': 100, 'freqmax': 300, 'init_level': 2, 'stop_level': 1})
+            params.update({'init_level': 2, 'stop_level': 1})
             kwargs_list.append({'target': sta_lta_picker, 'kwargs': params})
+        # for kwargs in kwargs_list:
+        #     print('\nkwargs:\n' + str(kwargs))
+        # exit(1)
 
         ps = []
         for kwargs in kwargs_list:
