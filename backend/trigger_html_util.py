@@ -6,7 +6,7 @@ import os
 import backend
 import zmq
 
-
+from detector.filter_trigger.trigger_types import TriggerType
 from detector.misc.globals import logger, sources_dic, Subscription
 
 
@@ -22,12 +22,14 @@ def getTriggerParams():
     params_list = []
     for row in rows:
         [channel] = [el.text for el in row[header_inds['channel']].iter() if 'selected' in el.attrib]
-        params_map = {'channel': channel}
+        [type_str] = [el.text for el in row[header_inds['trigger']].iter() if 'selected' in el.attrib]
+        trigger_type = TriggerType[type_str]
+        params_map = {'channel': channel, 'trigger_type': trigger_type}
         for header in header_inds.keys():
             if header == 'station':
                 params_map[header] = row[header_inds[header]].text
                 continue
-            if header not in ['channel', 'val']:
+            if header not in ['channel', 'val', 'trigger']:
                 params_map[header] = int(row[header_inds[header]].text)
         params_list.append(params_map)
     return params_list

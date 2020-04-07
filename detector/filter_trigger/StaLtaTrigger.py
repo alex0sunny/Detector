@@ -11,6 +11,8 @@ import zmq
 
 import logging
 
+from detector.filter_trigger.RmsTrigger import RmsTrigger
+from detector.filter_trigger.trigger_types import TriggerType
 from detector.misc.globals import Port, Subscription
 from detector.misc.header_util import prep_name, ChHeader, prep_ch
 from detector.filter_trigger.filter_bandpass import Filter
@@ -74,7 +76,7 @@ class StaLtaTrigger:
         return ret_val
 
 
-def sta_lta_picker(ind, station, channel, freqmin, freqmax, sta, lta, init_level, stop_level):
+def trigger_picker(ind, station, channel, trigger_type, freqmin, freqmax, init_level, stop_level, sta, lta=0):
     #print('sta:' + str(sta) + ' lta:' + str(lta) + ' ind:' + str(ind))
     trigger_index_s = ('%02d' % ind).encode()
     context = zmq.Context()
@@ -104,8 +106,11 @@ def sta_lta_picker(ind, station, channel, freqmin, freqmax, sta, lta, init_level
         data = filter.bandpass(data)
         if not data_trigger:
             nsta = round(sta * sampling_rate)
-            nlta = round(lta * sampling_rate)
-            data_trigger = StaLtaTrigger(nsta, nlta)
+            if trigger_type == TriggerType.sta_lta:
+                nlta = round(lta * sampling_rate)
+                data_trigger = StaLtaTrigger(nsta, nlta)
+            if trigger_type == TriggerType.RMS:
+                data_trigger = RmsTrigger(nsta)
         trigger_data = data_trigger.trigger(data)
         activ_data = trigger_data > init_level
         deactiv_data = trigger_data < stop_level

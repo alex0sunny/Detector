@@ -1,7 +1,7 @@
 import time
 from multiprocessing import Process
 
-from detector.filter_trigger.StaLtaTrigger import sta_lta_picker
+from detector.filter_trigger.StaLtaTrigger import trigger_picker
 from detector.filter_trigger.trigger_resender import resend
 from detector.misc.globals import Port, CustomThread, sources_dic
 from backend.trigger_html_util import getTriggerParams
@@ -37,8 +37,8 @@ if __name__ == '__main__':
                         {'target': triggers_proxy, 'kwargs': {}}]
 
         for params in paramsList:
-            params.update({'init_level': 2, 'stop_level': 1})
-            kwargs_list.append({'target': sta_lta_picker, 'kwargs': params})
+            #params.update({'init_level': 2, 'stop_level': 1})
+            kwargs_list.append({'target': trigger_picker, 'kwargs': params})
         # for kwargs in kwargs_list:
         #     print('\nkwargs:\n' + str(kwargs))
         # exit(1)

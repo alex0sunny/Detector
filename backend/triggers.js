@@ -8,8 +8,9 @@ var headersObj = new Object();
 }
 //console.log('headersObj:' + JSON.stringify(headersObj));
 var channelCol = headersObj["channel"];
-var triggerCol = headersObj["val"];
+var valCol = headersObj["val"];
 var indexCol = headersObj["ind"];
+var triggerCol = headersObj["trigger"];
 
 function initPage() {
 	alert("onLoad");
@@ -24,7 +25,7 @@ function initPage() {
 	};
 	var rows = document.getElementById("triggerTable").rows;
 	rows.forEach(function (row) {
-	    row.cells[triggerCol].innerHTML = 0 + "";
+	    row.cells[valCol].innerHTML = 0 + "";
 	})
 	var data = JSON.stringify({"load": 1});
 	xhr.send(data);
@@ -65,6 +66,7 @@ function apply() {
 	};
 //	console.log('channels:' + channels.toString());
 	setSelectedChannels(channels);
+	setSelectedTriggers();
 	var data = JSON.stringify({"apply": 1, "channels":  channels.join(" ")});
 	xhr.send(data);
 }
@@ -97,7 +99,7 @@ function myTimer() {
 //			console.log('trigger keys:' + Object.keys(json.triggers));
 //			console.log('trigger vals:' + Object.values(json.triggers));
 			var triggers = json.triggers;
-			setTriggers(triggers);
+			setTriggerVals(triggers);
 			if ("channels" in json)    {
                 var channels = json.channels;
 //                console.log("page channels:" + pageMap.channels.toString() + "; channels:" + channels.toString());
@@ -129,7 +131,7 @@ function getFromHtml()	{
 		    row = rows[i];
 		    ind = parseInt(row.cells[indexCol].innerHTML);
 //		    console.log('ind type:' + typeof(ind));
-			triggers[ind] = parseInt(row.cells[triggerCol].innerHTML);
+			triggers[ind] = parseInt(row.cells[valCol].innerHTML);
 //			console.log('trigger val type:' + typeof(triggers[ind]));
 		}
 		var options = rows[1].cells[channelCol].children[0].options;
@@ -156,7 +158,7 @@ function getSelectedChannels () {
 	return selectedChannels;
 }
 
-function setTriggers(triggers) {
+function setTriggerVals(triggers) {
 	var rows = document.getElementById("triggerTable").rows;
 	if (rows.length > 1) {
 		for (var i = 1;  i < rows.length; i++) {
@@ -164,7 +166,7 @@ function setTriggers(triggers) {
 		    ind = row.cells[indexCol].innerHTML;
 		    //console.log('ind:' + ind + ' triggers keys:' + Object.keys(triggers));
 		    if (ind in triggers) {
-			    row.cells[triggerCol].innerHTML = triggers[ind];
+			    row.cells[valCol].innerHTML = triggers[ind];
 			}
 		}
 	}
@@ -215,6 +217,24 @@ function setSelectedChannels(selectedChannels) {
 				document.getElementById("triggerTable").rows[i].cells[channelCol].children[0].appendChild(optionNode);
 				selectedIndex = options.length - 1;
 				options.selectedIndex = selectedIndex;
+			}
+		}
+	}
+}
+
+function setSelectedTriggers() {
+	var rows = document.getElementById("triggerTable").rows;
+	if (rows.length > 1) {
+		for (var i = 1;  i < rows.length; i++) {
+			var options = rows[i].cells[triggerCol].children[0].options;
+			for (var j = 0; j < options.length; j++)	{
+				var option = options[j];
+				if (j == options.selectedIndex) {
+					option.setAttribute("selected", "selected");
+				} 
+				else {
+					option.removeAttribute("selected");
+				}
 			}
 		}
 	}

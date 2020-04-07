@@ -1,50 +1,152 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
-<html><head><title>triggers table</title></head><body>
-		<table style="width:100%" id="triggerTable"><tbody><tr><th align="left">ind</th>
+<html>
+	<head>
+		<title>triggers table</title>
+	</head>
+	<body>
+		<table style="width:100%" id="triggerTable">
+			<tbody>
+				<tr>
+					<th align="left">ind</th>
 					<th align="left">station</th>
 					<th align="left">channel</th>
+					<th align="left">trigger</th>
 					<th align="left">sta</th>
 					<th align="left">lta</th>
+					<th align="left">init_level</th>
+					<th align="left">stop_level</th>
 					<th align="left">freqmin</th>
 					<th align="left">freqmax</th>
 					<th align="left">val</th>
-				</tr><tr><td>1</td>
+				</tr>
+				<tr>
+					<td>1</td>
 					<td contenteditable="true">ND01</td>
 					<td>
-						<select><option>CHE</option><option>CHN</option><option>CHX</option><option selected="selected">CHZ</option></select></td>
+						<select>
+							<option>CHE</option>
+							<option>CHN</option>
+							<option>CHX</option>
+							<option selected="selected">CHZ</option>
+						</select>
+					</td>
+					<td>
+						<select>
+							<option selected="selected">sta_lta</option>
+							<option>RMS</option>
+						</select>
+					</td>
 					<td contenteditable="true">1</td>
 					<td contenteditable="true">4</td>
+					<td contenteditable="true">3</td>
+					<td contenteditable="true">1</td>
 					<td contenteditable="true">100</td>
 					<td contenteditable="true">300</td>
 					<td>0</td>
-				</tr><tr><td>2</td>
+				</tr>
+				<tr>
+					<td>2</td>
 					<td contenteditable="true">ND01</td>
 					<td>
-						<select><option>CHE</option><option selected="selected">CHN</option><option>CHX</option><option>CHZ</option></select></td>
+						<select>
+							<option>CHE</option>
+							<option>CHN</option>
+							<option>CHX</option>
+							<option selected="selected">CHZ</option>
+						</select>
+					</td>
+					<td>
+						<select>
+							<option selected="selected">sta_lta</option>
+							<option>RMS</option>
+						</select>
+					</td>
 					<td contenteditable="true">1</td>
 					<td contenteditable="true">4</td>
+					<td contenteditable="true">2</td>
+					<td contenteditable="true">1</td>
 					<td contenteditable="true">100</td>
 					<td contenteditable="true">300</td>
 					<td>0</td>
-				</tr><tr><td>3</td>
+				</tr>
+				<tr>
+					<td>3</td>
 					<td contenteditable="true">ND02</td>
 					<td>
-						<select><option>CHE</option><option selected="selected">CHN</option><option>CHX</option><option>CHZ</option></select></td>
+						<select>
+							<option>CHE</option>
+							<option selected="selected">CHN</option>
+							<option>CHX</option>
+							<option>CHZ</option>
+						</select>
+					</td>
+					<td>
+						<select>
+							<option selected="selected">sta_lta</option>
+							<option>RMS</option>
+						</select>
+					</td>
 					<td contenteditable="true">1</td>
 					<td contenteditable="true">4</td>
+					<td contenteditable="true">2</td>
+					<td contenteditable="true">1</td>
 					<td contenteditable="true">10</td>
 					<td contenteditable="true">30</td>
 					<td>0</td>
-				</tr><tr><td>4</td>
+				</tr>
+				<tr>
+					<td>4</td>
 					<td contenteditable="true">ND02</td>
 					<td>
-						<select><option>CHE</option><option>CHN</option><option selected="selected">CHX</option><option>CHZ</option></select></td>
+						<select>
+							<option>CHE</option>
+							<option>CHN</option>
+							<option selected="selected">CHX</option>
+							<option>CHZ</option>
+						</select>
+					</td>
+					<td>
+						<select>
+							<option selected="selected">sta_lta</option>
+							<option>RMS</option>
+						</select>
+					</td>
 					<td contenteditable="true">1</td>
 					<td contenteditable="true">4</td>
+					<td contenteditable="true">2</td>
+					<td contenteditable="true">1</td>
 					<td contenteditable="true">10</td>
 					<td contenteditable="true">30</td>
 					<td>0</td>
-				</tr></tbody></table><p style="text-align:left;">
+				</tr>
+				<tr>
+					<td>5</td>
+					<td contenteditable="true">ND01</td>
+					<td>
+						<select>
+							<option>CHE</option>
+							<option>CHN</option>
+							<option>CHX</option>
+							<option selected="selected">CHZ</option>
+						</select>
+					</td>
+					<td>
+						<select>
+							<option>sta_lta</option>
+							<option selected="selected">RMS</option>
+						</select>
+					</td>
+					<td contenteditable="true">1</td>
+					<td contenteditable="true">0</td>
+					<td contenteditable="true">30</td>
+					<td contenteditable="true">30</td>
+					<td contenteditable="true">100</td>
+					<td contenteditable="true">300</td>
+					<td>0</td>
+				</tr>
+			</tbody>
+		</table>
+		<p style="text-align:left;">
 			<a href="rules.html">rules</a>
 			<span style="float:right;">
 				<button type="button" onclick="apply_save()">
@@ -59,4 +161,6 @@
 			</span>
 		</p>
 		<script src="triggers.js">
-		</script></body></html>
+		</script>
+	</body>
+</html>
