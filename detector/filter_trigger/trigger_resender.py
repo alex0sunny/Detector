@@ -6,7 +6,7 @@ import zmq
 from obspy import *
 
 from detector.filter_trigger.StaLtaTrigger import logger
-from detector.misc.globals import Port, sources_dic, Subscription
+from detector.misc.globals import Port, Subscription
 from detector.misc.header_util import CustomHeader
 from detector.send_receive.tcp_server import TcpServer
 

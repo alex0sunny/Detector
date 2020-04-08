@@ -3,8 +3,8 @@ from multiprocessing import Process
 
 from detector.filter_trigger.StaLtaTrigger import trigger_picker
 from detector.filter_trigger.trigger_resender import resend
-from detector.misc.globals import Port, CustomThread, sources_dic
-from backend.trigger_html_util import getTriggerParams
+from detector.misc.globals import Port, CustomThread
+from backend.trigger_html_util import getTriggerParams, getSources
 from detector.send_receive.signal_receiver import signal_receiver
 
 
@@ -26,9 +26,9 @@ if __name__ == '__main__':
         paramsList = getTriggerParams()
 
         kwargs_list = []
-        for station, conn_data in sources_dic.items():
+        for station, conn_data in getSources().items():
             kwargs = {'target': signal_receiver,
-                      'kwargs': {'conn_str': 'tcp://' + conn_data['address'] + ':' + str(conn_data['port']),
+                      'kwargs': {'conn_str': 'tcp://' + conn_data['host'] + ':' + str(conn_data['port']),
                                  'station_bin': station.encode()}}
             kwargs_list.append(kwargs)
 

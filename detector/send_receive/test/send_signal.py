@@ -7,7 +7,7 @@ from obspy import *
 from matplotlib import pyplot
 
 #from detector.misc.globals import ports_map
-from detector.misc.globals import Port, sources_dic
+from backend.trigger_html_util import getSources
 from detector.misc.header_util import chunk_stream, stream_to_json
 from detector.test.signal_generator import SignalGenerator
 from detector.send_receive.tcp_server import TcpServer
@@ -55,13 +55,15 @@ st = read(base_path + 'st1000.mseed')
 st100 = read(base_path + 'st100.mseed')
 data = st[-1].data
 st[-1].data = np.append(data[2000:], data[:2000])
-
+sources_dic = getSources()
+print(sources_dic)
+stations = list(sources_dic.keys())
 kwargs_list = [{'target': send_signal,
                 'kwargs': {'st': st,
-                           'conn_str': 'tcp://*:' + str(sources_dic['ND01']['port'])}},
+                           'conn_str': 'tcp://*:' + str(sources_dic[stations[0]]['port'])}},
                {'target': send_signal,
                 'kwargs': {'st': st100,
-                           'conn_str': 'tcp://*:' + str(sources_dic['ND02']['port'])}}]
+                           'conn_str': 'tcp://*:' + str(sources_dic[stations[1]]['port'])}}]
 if __name__ == '__main__':
     for kwargs in kwargs_list:
         Process(**kwargs).start()

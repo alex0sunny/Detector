@@ -7,7 +7,8 @@ from os.path import curdir, sep
 import os
 import backend
 from backend.rule_html_util import post_rules
-from backend.trigger_html_util import save_pprint, getTriggerParams, save_triggers, update_sockets, post_triggers
+from backend.trigger_html_util import save_pprint_trig, getTriggerParams, save_triggers, update_sockets, post_triggers, \
+    save_sources
 
 logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
                            '%(message)s',
@@ -134,6 +135,9 @@ class myHandler(BaseHTTPRequestHandler):
             save_triggers(post_data_str, conn_str_sub, context, sockets_trigger, sockets_detrigger)
         if self.path == '/saveRules':
             save_triggers(post_data_str, conn_str_sub, context, sockets_trigger, sockets_detrigger)
+        if self.path == '/saveSources':
+            save_sources(post_data_str)
+            socket_backend.send(b'AP')
         if self.path == '/load':
             print('load')
 

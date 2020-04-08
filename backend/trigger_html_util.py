@@ -7,17 +7,17 @@ import backend
 import zmq
 
 from detector.filter_trigger.trigger_types import TriggerType
-from detector.misc.globals import logger, sources_dic, Subscription
+from detector.misc.globals import logger, Subscription
 
 
-def getHeaderMap(root):
+def getHeaderDic(root):
     header_els = root.xpath('/html/body/table/tbody/tr/th')
     return {el.text: i for el, i in zip(header_els, range(100))}
 
 
 def getTriggerParams():
     root = etree.parse(os.path.split(inspect.getfile(backend))[0] + '/triggers.html')
-    header_inds = getHeaderMap(root)
+    header_inds = getHeaderDic(root)
     rows = root.xpath('/html/body/table/tbody/tr')[1:]
     params_list = []
     for row in rows:
@@ -35,13 +35,31 @@ def getTriggerParams():
     return params_list
 
 
-def save_pprint(xml, file):
+def getSources():
+    root = etree.parse(os.path.split(inspect.getfile(backend))[0] + '/sources.html')
+    rows = root.xpath('/html/body/table/tbody/tr')[1:]
+    src_dic = {}
+    for row in rows:
+        station = row[0].text.strip()
+        src_dic[station] = {}
+        src_dic[station]['host'] = row[1].text.strip()
+        src_dic[station]['port'] = int(row[2].text.strip())
+    return src_dic
+
+
+def save_pprint_trig(xml, file):
     parser = etree.HTMLParser(remove_blank_text=True)
     tree = etree.fromstring(xml, parser).getroottree()
-    header_inds = getHeaderMap(tree)
+    header_inds = getHeaderDic(tree)
     rows = tree.xpath('/html/body/table/tbody/tr')[1:]
     for row in rows:
         row[header_inds['val']].text = '0'
+    tree.write(file)
+
+
+def save_pprint(xml, file):
+    parser = etree.HTMLParser(remove_blank_text=True)
+    tree = etree.fromstring(xml, parser).getroottree()
     tree.write(file)
 
 
@@ -70,12 +88,16 @@ def update_sockets(trigger_index, conn_str, context, sockets_trigger, sockets_de
 
 
 def save_triggers(post_data_str, conn_str, context, sockets_trigger, sockets_detrigger):
-    save_pprint(post_data_str, os.path.split(inspect.getfile(backend))[0] + '/triggers.html')
+    save_pprint_trig(post_data_str, os.path.split(inspect.getfile(backend))[0] + '/triggers.html')
     clear_triggers(sockets_trigger, sockets_detrigger)
     for trigger_param in getTriggerParams():
         trigger_index = trigger_param['ind']
         if trigger_index not in sockets_trigger:
             update_sockets(trigger_index, conn_str, context, sockets_trigger, sockets_detrigger)
+
+
+def save_sources(post_data_str):
+    save_pprint(post_data_str, os.path.split(inspect.getfile(backend))[0] + '/sources.html')
 
 
 def post_triggers(post_data_str, chans, socket_channels, sockets_trigger, sockets_detrigger):
