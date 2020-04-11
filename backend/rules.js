@@ -1,320 +1,66 @@
-var headersObj = new Object();
-{
-    var headerCells = document.getElementById("rulesTable").rows[0].children;
-    for (var i = 0; i < headerCells.length; i++)  {
-        var header = headerCells[i].innerHTML;
-        headersObj[header] = i;
-    }
-}
-//console.log('headersObj:' + JSON.stringify(headersObj));
-var channelCol = headersObj["channel"];
-var triggerValCol = headersObj["trigger_val"];
-var ruleIdCol = headersObj["rule_id"];
-var triggerIdCol = headersObj["trigger_id"];
-var triggersData = getCurrentTriggersData();
+var ruleIdCol = 0;
+var formulaCol = 1;
+var ruleValCol = 2;
 
+var timerVar = setInterval(updateFunc, 1000);
 
-function initPage() {
-	alert("onLoad");
-	var xhr = new XMLHttpRequest();
-	var url = "load";
-	xhr.open("POST", url, true);
-	xhr.setRequestHeader("Content-Type", "application/json");
-	xhr.onreadystatechange = function () {
-		if (xhr.readyState === 4 && xhr.status === 200) {
-		    //console.log("do nothing now")
-		}
-	};
-	var rows = document.getElementById("triggerTable").rows;
-	rows.forEach(function (row) {
-	    row.cells[triggerCol].innerHTML = 0 + "";
-	})
-	var data = JSON.stringify({"load": 1});
-	xhr.send(data);
-}
+var triggersObj = {"1": 1, "2": 0, "4": 0};
 
+initFunc();
 
-function getCurrentTriggersData()   {
-   	var rows = document.getElementById("rulesTable").rows;
-	var triggersData = {};
-	var triggerColNames = ['trigger_id', 'channel', 'sta', 'lta'];
-	for (var i = 1; i < rows.length; i++)	{
-	    var row = rows[i];
-	    var triggerData = {};
-	    var trigger_id;
-	    for (var j = 0; j < triggerColNames.length; j++)  {
-            var colName = triggerColNames[j];
-            var col = headersObj[colName];
-            var cell = row.cells[col];
-            var val;
-	        if (col == triggerIdCol)   {
-	            var triggerOptions = cell.children[0].options;
-	            for (var triggerOption of triggerOptions)   {
-	                if (triggerOption.hasAttribute('selected'))   {
-	                    trigger_id = triggerOption.text;
-	                }
-	            }
-            }   else    {
-                triggerData[colName] = cell.innerHTML;
-            }
-	    }
-	    triggersData[trigger_id] = triggerData;
+function updateTriggers (triggersObj, ruleCell) {
+	var children = ruleCell.children;
+	for (var i = 0; i < children.length; i++)	{
+		var node = children[i];
+		//console.log('nodeName:' + node.nodeName);
+		if (node.nodeName == "OUTPUT") 	{
+			var triggerNode = children[i - 1];
+			var options = triggerNode.options;
+			var selectedIndex = options.selectedIndex;
+			var triggerIdStr = options[selectedIndex].text;
+			//console.log('triggerIdStr:' + triggerIdStr);
+			var triggerVal = triggersObj[triggerIdStr];
+			if (triggerVal == undefined)	{
+				triggerVal = "-";
+			} 
+			//console.log('triggerVal:' + triggerVal);
+			node.value = triggerVal;
+		} 
 	}
-	return triggersData;
 }
 
-
-function updateTriggerData() {
-    console.log('update trigger data');
-    var cell = event.target.parentElement;
-    var row = cell.parentElement;
-    var options = cell.children[0].options;
-    var selectedIndex = options.selectedIndex;
-    var trigger_id = options[selectedIndex].text;
-    var triggerData = triggersData[trigger_id];
-    console.log('trigger id:' + trigger_id + ' trigger data:' + triggerData);
-    for (colName in triggerData)   {
-        colNum = headersObj[colName];
-        console.log('colNum:' + colNum + ' colName:' + colName +
-                    '\nprevious val:' + row.cells[colNum].innerHTML + ' new val:' + triggerData[colName])
-        row.cells[colNum].innerHTML = triggerData[colName];
-    }
-}
-
-
-function apply_save() {
-    apply();
-    sendHTML();
-}
-
-function apply() {
-    //alert('apply');
+function updateFunc () {
 	var xhr = new XMLHttpRequest();
-	var url = "applyRules";
-	xhr.open("POST", url, true);
+	xhr.open("POST", "rule", true);
 	xhr.setRequestHeader("Content-Type", "application/json");
-	xhr.onreadystatechange = function () {
-		if (xhr.readyState === 4 && xhr.status === 200) {
-			var json = JSON.parse(xhr.responseText);
-			//console.log(json);
-			//document.getElementById("counter").value = json.counter;
-			//alert('Response arrived!');
-		}
-	};
-	var rows = document.getElementById("triggerTable").rows;
-	var channels = [];
-	for (var j = 1; j < rows.length; j++) {
-		var row = rows[j];
-		var channelCell = row.cells[channelCol];
-//		console.log('inner html:' + channelCell.innerHTML);
-//		console.log('channel cell child:' + channelCell.children[0].innerHTML);
-//		console.log('option html:' + channelCell.children[0].options[0].innerHTML);
-		var options = channelCell.children[0].options;
-		var selectedIndex = options.selectedIndex;
-//		console.log('selected index:' + options.selectedIndex);
-		var channel = options[selectedIndex].text;
-		channels.push(channel);
-	};
-//	console.log('channels:' + channels.toString());
-	setSelectedChannels(channels);
-	var data = JSON.stringify({"apply": 1, "channels":  channels.join(" ")});
-	xhr.send(data);
-}
-
-function sendHTML() {
-	var xhr = new XMLHttpRequest();
-	var url = "saveRules";
-	xhr.open("POST", url, true);
-	xhr.setRequestHeader("Content-Type", "application/html");
-	var pageHTML = "<html>\n" + document.documentElement.innerHTML + "\n</html>";
-	xhr.send(pageHTML);
-}
-
-var myVar = setInterval(myTimer, 1000);
-
-function myTimer() {
-	//document.getElementById("counter").stepUp(1);
-	var xhr = new XMLHttpRequest();
-	var url = "rule";
-	xhr.open("POST", url, true);
-	xhr.setRequestHeader("Content-Type", "application/json");
-	var pageMap = getFromHtml();
-//	console.log('key type:' + typeof(Object.keys(pageMap.triggers)[0]) + ' val type:' +
-//	            typeof(Object.values(pageMap.triggers)[0]));
 	xhr.onreadystatechange = function () {
 		if (xhr.readyState === 4 && xhr.status === 200) {
 		    //console.log('response:' + xhr.responseText);
-			var json = JSON.parse(xhr.responseText);
-//			console.log('json vals:' + Object.values(json));
-//			console.log('trigger keys:' + Object.keys(json.triggers));
-//			console.log('trigger vals:' + Object.values(json.triggers));
-			var jsonObj = getFromJson(json);
-			var triggers = jsonObj.triggers;
-			setTriggers(triggers);
-			if ("channels" in jsonObj)    {
-                var channels = jsonObj.channels;
-//                console.log("page channels:" + pageMap.channels.toString() + "; channels:" + channels.toString());
-                if (channels.toString() != pageMap.channels.toString()) {
-                    setChannelsList(channels);
-                }
-            }
+			triggersObj = JSON.parse(xhr.responseText);
+			var rows = document.getElementById("rulesTable").rows;
+			for (var i = 0; i < rows.length; i = i + 1)	{
+				var row = rows[i];
+				var ruleCell = row.cells[1];
+				updateTriggers(triggersObj, ruleCell);
+			}
 		}
 	};
-	var data = JSON.stringify(pageMap.triggers);
-	xhr.send(data);
+	xhr.send(JSON.stringify(triggersObj));
 }
 
-function pauseCounter() {
-    clearInterval(myVar);
-}
-
-function resumeCounter() {
-    myVar = setInterval(myTimer, 1000);
-}
-
-function getFromJson(json) {
-	var jsonObj = {"triggers" : json.triggers};
-	if ("channels" in json) {
-		var channels = json.channels.split(" ");
-    	channels.sort();
-	    jsonObj["channels"] = channels;
-//	    console.log("channels:" + channels);
-	}
-//	console.log("triggers:" + jsonObj.triggers);
-	return jsonObj;
-}
-
-function getFromHtml()	{
-	var rows = document.getElementById("triggerTable").rows;
-	var triggers = {};
-	var channels = [];
-	var i;
-	if (rows.length > 1) {
-		for (i = 1; i < rows.length; i++)	{
-		    row = rows[i];
-		    ind = parseInt(row.cells[ruleIdCol].innerHTML);
-//		    console.log('ind type:' + typeof(ind));
-			triggers[ind] = parseInt(row.cells[triggerCol].innerHTML);
-//			console.log('trigger val type:' + typeof(triggers[ind]));
-		}
-		var options = rows[1].cells[channelCol].children[0].options;
-		for (i = 0; i < options.length; i++) {
-		    optionNode = options[i];
-		    channels.push(optionNode.text);
-		}
-		channels.sort();
-	}
-	return {triggers : triggers, channels : channels};
-}
-
-function getSelectedChannels () {
-	var rows = document.getElementById("triggerTable").rows;
-	var selectedChannels = [];
-	if (rows.length > 1) {
-		for (var i = 1;  i < rows.length; i++) {
-			options = rows[i].cells[channelCol].children[0].children;
-			var selectedIndex = options.selectedIndex;
-			var selectedChannel = options[selectedIndex].text;
-			selectedChannels.push(selectedChannel);
-		}
-	}
-	return selectedChannels;
-}
-
-function setTriggers(triggers) {
-	var rows = document.getElementById("triggerTable").rows;
-	if (rows.length > 1) {
-		for (var i = 1;  i < rows.length; i++) {
-		    row = rows[i];
-		    ind = row.cells[indexCol].innerHTML;
-		    //console.log('ind:' + ind + ' triggers keys:' + Object.keys(triggers));
-		    if (ind in triggers) {
-			    row.cells[triggerCol].innerHTML = triggers[ind];
+function initFunc () {
+	var xhr = new XMLHttpRequest();
+	xhr.open("POST", "initRule", true);
+	xhr.setRequestHeader("Content-Type", "application/json");
+	xhr.onreadystatechange = function () {
+		if (xhr.readyState === 4 && xhr.status === 200) {
+		    //console.log('response:' + xhr.responseText);
+			var triggersIds = JSON.parse(xhr.responseText);
+			var triggerId;
+			for (triggerId of triggersIds)	{
+				triggersObj[triggerId] = 0;
 			}
 		}
 	}
-}
-
-function setChannelsList(channels) {
-	var rows = document.getElementById("triggerTable").rows;
-	if (rows.length > 1) {
-		for (var i = 1;  i < rows.length; i++) {
-			var channelCell = rows[i].cells[channelCol];
-			var options = channelCell.children[0].options;
-			var selectedIndex = options.selectedIndex;
-//			console.log("selectedIndex:" + selectedIndex);
-			var selectedChannel = options[selectedIndex].text;
-			channelCell.children[0].innerHTML = "";
-			channels.forEach(function (channel) {
-				var optionNode = document.createElement("option");
-				optionNode.text = channel;
-				if (channel == selectedChannel) {
-					optionNode.setAttribute("selected", "selected");
-				}
-				channelCell.children[0].appendChild(optionNode);
-			});
-		}
-	}
-}
-
-function setSelectedChannels(selectedChannels) {
-	var rows = document.getElementById("triggerTable").rows;
-	if (rows.length > 1) {
-		for (var i = 1;  i < rows.length; i++) {
-			var options = rows[i].cells[channelCol].children[0].options;
-			var selectedChannel = selectedChannels[i-1];
-			var present = false;
-			for (var j = 0; j < options.length; j++)	{
-				if (options[j].text == selectedChannel) {
-					options.selectedIndex = j;
-					options[j].setAttribute("selected", "selected");
-					present = true;
-				} else {
-					options[j].removeAttribute("selected");
-				}
-			}
-			if (present == false) {
-				var optionNode = document.createElement("option");
-				optionNode.text = selectedChannel;
-				optionNode.setAttribute("selected", "selected");
-				document.getElementById("triggerTable").rows[i].cells[channelCol].children[0].appendChild(optionNode);
-				selectedIndex = options.length - 1;
-				options.selectedIndex = selectedIndex;
-			}
-		}
-	}
-}
-
-function getDefaultChannels() {
-	var channels = [];
-	var rows = document.getElementById("triggerTable").rows;
-	if (rows.length > 1) {
-		for (var i = 1;  i < rows.length; i++) {
-			var channelCell = rows[i].cells[channelCol];
-			var options = channelCell.children[0].options;
-			var channel;
-			for (var j = 0; j < options.length; j++)	{
-				optionNode = options[j];
-				if (optionNode.hasAttribute("selected"))	{
-					channel = optionNode.text;
-				}
-			}
-			if (channel == undefined)	{
-				selectedIndex = options.selectedIndex;
-				channel = options[selectedIndex].text;
-			}
-			channels.push(channel);
-		}
-	}
-	return channels;
-}
-
-function addTrigger() {
-    var table = document.getElementById("triggerTable");
-    var rows = table.rows;
-    var len = rows.length
-    var row = rows[len - 1].cloneNode(true);
-    var ind = parseInt(row.cells[indexCol].innerHTML) + 1;
-    row.cells[indexCol].innerHTML = ind;
-    table.children[0].appendChild(row);
+	xhr.send();
 }

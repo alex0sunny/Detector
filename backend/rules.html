@@ -1,97 +1,250 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
 <html>
 	<head>
-		<title>rules</title>
+		<title>rules table</title>
 	</head>
 	<body>
-		<table style="width:100%" id="rulesTable">
+		<table style="width: 100%" id="rulesTable">
 			<tbody>
 				<tr>
 					<th align="left">rule_id</th>
-					<th align="left">trigger_id</th>
-					<th align="left">channel</th>
-					<th align="left">sta</th>
-					<th align="left">lta</th>
-					<th align="left">trigger_val</th>
-					<th align="left">rule_val</th>
+					<th align="left">formula</th>
+					<th align="left">val</th>
 				</tr>
 				<tr>
+					<td>1</td>
 					<td>
-						<select>
+						<select class="trigger">
 							<option>-</option>
-							<option selected="selected">1</option>
-							<option>2</option>
-						</select>
-					</td>
-					<td onchange="updateTriggerData()">
-						<select>
 							<option selected="selected">1</option>
 							<option>2</option>
 							<option>3</option>
+							<option>4</option>
 						</select>
-					</td>
-					<td>EHZ</td>
-					<td>1</td>
-					<td>4</td>
-					<td>0</td>
-					<td>0</td>
-				</tr>
-				<tr>
-					<td>
-						<select>
+						<output>1</output>
+						<select class="operation">
+							<option>and</option>
+							<option>and not</option>
+							<option selected="selected">or</option>
+							<option>or not</option>
+						</select>
+						<select class="trigger">
 							<option>-</option>
-							<option selected="selected">1</option>
-							<option>2</option>
-						</select>
-					</td>
-					<td onchange="updateTriggerData()">
-						<select>
 							<option>1</option>
 							<option selected="selected">2</option>
 							<option>3</option>
+							<option>4</option>
 						</select>
-					</td>
-					<td>EHN</td>
-					<td>3</td>
-					<td>9</td>
-					<td>0</td>
-					<td>0</td>
-				</tr>
-				<tr>
-					<td>
-						<select>
+						<output>0</output>
+						<select class="operation">
+							<option selected="selected">and</option>
+							<option>and not</option>
+							<option>or</option>
+							<option>or not</option>
+						</select>
+						<select class="trigger">
+							<option selected="selected">-</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+						</select>
+						<output>-</output>
+						<select class="operation">
+							<option>and</option>
+							<option>and not</option>
+							<option selected="selected">or</option>
+							<option>or not</option>
+						</select>
+						<select class="trigger">
 							<option>-</option>
 							<option>1</option>
 							<option selected="selected">2</option>
+							<option>3</option>
+							<option>4</option>
 						</select>
-					</td>
-					<td onchange="updateTriggerData()">
-						<select>
+						<output>0</output>
+						<select class="operation">
+							<option selected="selected">and</option>
+							<option>and not</option>
+							<option>or</option>
+							<option>or not</option>
+						</select>
+						<br/>
+						<select class="trigger">
+							<option>-</option>
+							<option selected="selected">1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+						</select>
+						<output>1</output>
+						<select class="operation">
+							<option>and</option>
+							<option>and not</option>
+							<option selected="selected">or</option>
+							<option>or not</option>
+						</select>
+						<select class="trigger">
+							<option>-</option>
+							<option>1</option>
+							<option selected="selected">2</option>
+							<option>3</option>
+							<option>4</option>
+						</select>
+						<output>0</output>
+						<select class="operation">
+							<option selected="selected">and</option>
+							<option>and not</option>
+							<option>or</option>
+							<option>or not</option>
+						</select>
+						<select class="trigger">
+							<option selected="selected">-</option>
 							<option>1</option>
 							<option>2</option>
-							<option selected="selected">3</option>
+							<option>3</option>
+							<option>4</option>
 						</select>
+						<output>-</output>
+						<select class="operation">
+							<option>and</option>
+							<option>and not</option>
+							<option selected="selected">or</option>
+							<option>or not</option>
+						</select>
+						<select class="trigger">
+							<option>-</option>
+							<option>1</option>
+							<option selected="selected">2</option>
+							<option>3</option>
+							<option>4</option>
+						</select>
+						<output>0</output>
 					</td>
-					<td>EHE</td>
-					<td>1</td>
-					<td>4</td>
 					<td>0</td>
+				</tr>
+				<tr>
+					<td>2</td>
+					<td>
+						<select class="trigger">
+							<option>-</option>
+							<option selected="selected">1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+						</select>
+						<output>1</output>
+						<select class="operation">
+							<option>and</option>
+							<option>and not</option>
+							<option selected="selected">or</option>
+							<option>or not</option>
+						</select>
+						<select class="trigger">
+							<option>-</option>
+							<option selected="selected">1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+						</select>
+						<output>0</output>
+						<select class="operation">
+							<option selected="selected">and</option>
+							<option>and not</option>
+							<option>or</option>
+							<option>or not</option>
+						</select>
+						<select class="trigger">
+							<option selected="selected">-</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+						</select>
+						<output>-</output>
+						<select class="operation">
+							<option>and</option>
+							<option>and not</option>
+							<option selected="selected">or</option>
+							<option>or not</option>
+						</select>
+						<select class="trigger">
+							<option>-</option>
+							<option>1</option>
+							<option selected="selected">2</option>
+							<option>3</option>
+							<option>4</option>
+						</select>
+						<output>0</output>
+						<select class="operation">
+							<option selected="selected">and</option>
+							<option>and not</option>
+							<option>or</option>
+							<option>or not</option>
+						</select>
+						<br/>
+						<select class="trigger">
+							<option>-</option>
+							<option selected="selected">1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+						</select>
+						<output>1</output>
+						<select class="operation">
+							<option>and</option>
+							<option>and not</option>
+							<option selected="selected">or</option>
+							<option>or not</option>
+						</select>
+						<select class="trigger">
+							<option>-</option>
+							<option>1</option>
+							<option selected="selected">2</option>
+							<option>3</option>
+							<option>4</option>
+						</select>
+						<output>0</output>
+						<select class="operation">
+							<option selected="selected">and</option>
+							<option>and not</option>
+							<option>or</option>
+							<option>or not</option>
+						</select>
+						<select class="trigger">
+							<option selected="selected">-</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+						</select>
+						<output>-</output>
+						<select class="operation">
+							<option>and</option>
+							<option>and not</option>
+							<option selected="selected">or</option>
+							<option>or not</option>
+						</select>
+						<select class="trigger">
+							<option>-</option>
+							<option>1</option>
+							<option selected="selected">2</option>
+							<option>3</option>
+							<option>4</option>
+						</select>
+						<output>0</output>
+					</td>
 					<td>0</td>
 				</tr>
 			</tbody>
 		</table>
-		<p style="text-align:left;">
-			<a href="triggers.html">triggers</a>
-			<span style="float:right;">
-				<button type="button" onclick="apply_save()">
-					apply
-				</button>
-				<button type="button" onclick="location.reload(true)">
-					init
-				</button>
-				<button type="add" onclick="addTrigger()">
-					add link
-				</button>
+		<p style="text-align: left;">
+			<a href="rules.html">rules</a>
+			<span style="float: right;">
+				<button type="button" onclick="apply_save()">apply</button>
+				<button type="button" onclick="location.reload(true)">init</button>
+				<button type="add" onclick="addTrigger()">add trigger</button>
 			</span>
 		</p>
 		<script src="rules.js">

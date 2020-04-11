@@ -35,6 +35,19 @@ def getTriggerParams():
     return params_list
 
 
+def getRuleFormulasDic():
+    root = etree.parse(os.path.split(inspect.getfile(backend))[0] + '/rules.html')
+    rows = root.xpath('/html/body/table/tbody/tr')[1:]
+    formulas_dic = {}
+    for row in rows:
+        rule_id = int(row[0].text)
+        formula_list = [el.text for el in row[1].iter() if 'selected' in el.attrib]
+        while formula_list[-1] == '-' and len(formula_list) > 2:
+            formula_list = formula_list[:-2]
+        formulas_dic[rule_id] = formula_list
+    return formulas_dic
+
+
 def getSources():
     root = etree.parse(os.path.split(inspect.getfile(backend))[0] + '/sources.html')
     rows = root.xpath('/html/body/table/tbody/tr')[1:]
@@ -152,6 +165,9 @@ def post_triggers(post_data_str, chans, socket_channels, sockets_trigger, socket
     if chans:
         json_map['channels'] = chans
     return json_map
+
+
+#print(getRuleFormulasDic())
 
 #print(getChannels())
 #save_pprint('<html><body>Hello<br/>World</body></html>', 'd:/temp/temp.xml')

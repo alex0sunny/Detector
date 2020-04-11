@@ -61,7 +61,7 @@ class myHandler(BaseHTTPRequestHandler):
 
             sendReply = False
             if self.path.endswith(".html"):
-                logger.debug('do get, html')
+                logger.debug('do get, html, self.path:' + self.path)
                 mimetype = 'text/html'
                 sendReply = True
             if self.path.endswith(".jpg"):
@@ -114,11 +114,18 @@ class myHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(json_map).encode())
         if self.path == '/rule':
             # logging.info('json_map:' + str(json_map))
-            json_map = post_rules(post_data_str, sockets_trigger, sockets_detrigger)
+            json_map = post_triggers(post_data_str, chans, socket_channels, sockets_trigger, sockets_detrigger)
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
-            self.wfile.write(json.dumps(json_map).encode())
+            self.wfile.write(json.dumps(json_map['triggers']).encode())
+        if self.path == '/initRule':
+            params_list = getTriggerParams()
+            trigger_ids = [params['ind'] for params in params_list]
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps(trigger_ids).encode())
         if self.path == '/apply':
             socket_backend.send(b'AP')
             self.send_response(200)
