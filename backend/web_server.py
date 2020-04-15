@@ -8,7 +8,7 @@ import os
 import backend
 from backend.rule_html_util import post_rules
 from backend.trigger_html_util import save_pprint_trig, getTriggerParams, save_triggers, update_sockets, post_triggers, \
-    save_sources
+    save_sources, save_rules
 
 logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
                            '%(message)s',
@@ -36,11 +36,25 @@ chans = []
 # socket_trigger = context.socket(zmq.SUB)
 # socket_trigger.connect(conn_str)
 # socket_trigger.setsockopt(zmq.SUBSCRIBE, b'ND01011')
-sockets_trigger = {}
-sockets_detrigger = {}
 
-for trigger_param in getTriggerParams():
-    update_sockets(trigger_param['ind'], conn_str_sub, context, sockets_trigger, sockets_detrigger)
+trigger_params = getTriggerParams()
+
+sockets_data_dic = {}
+
+
+
+def create_sockets_data():
+    sockets_trigger = {}
+    sockets_detrigger = {}
+    for trigger_param in trigger_params:
+        update_sockets(trigger_param['ind'], conn_str_sub, context, sockets_trigger, sockets_detrigger)
+    return sockets_trigger, sockets_detrigger
+
+
+def get_sockets_data(session_id):
+    if session_id not in sockets_data_dic:
+        sockets_data_dic[session_id] = create_sockets_data()
+    return sockets_data_dic[session_id]
 
 
 # This class will handles any incoming request from
@@ -107,14 +121,24 @@ class myHandler(BaseHTTPRequestHandler):
         post_data_str = post_data.decode()
         if self.path == '/trigger':
             # logging.info('json_map:' + str(json_map))
-            json_map = post_triggers(post_data_str, chans, socket_channels, sockets_trigger, sockets_detrigger)
+            json_dic = json.loads(post_data_str)
+            session_id = json_dic['sessionId']
+            #logger.debug('session id:' + str(session_id))
+            json_triggers = json_dic['triggers']
+            sockets_trigger, sockets_detrigger = get_sockets_data(session_id)
+            json_map = post_triggers(json_triggers, chans, socket_channels, sockets_trigger, sockets_detrigger)
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             self.wfile.write(json.dumps(json_map).encode())
         if self.path == '/rule':
             # logging.info('json_map:' + str(json_map))
-            json_map = post_triggers(post_data_str, chans, socket_channels, sockets_trigger, sockets_detrigger)
+            json_dic = json.loads(post_data_str)
+            session_id = json_dic['sessionId']
+            #logger.debug('session id:' + str(session_id))
+            json_triggers = json_dic['triggers']
+            sockets_trigger, sockets_detrigger = get_sockets_data(session_id)
+            json_map = post_triggers(json_triggers, chans, socket_channels, sockets_trigger, sockets_detrigger)
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
@@ -125,6 +149,7 @@ class myHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
+            print('trigger ids' + str(trigger_ids))
             self.wfile.write(json.dumps(trigger_ids).encode())
         if self.path == '/apply':
             socket_backend.send(b'AP')
@@ -133,14 +158,11 @@ class myHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps({'apply': 1}).encode())
         if self.path == '/applyRules':
+            save_rules(post_data_str)
             socket_backend.send(b'AP')
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps({'apply': 1}).encode())
         if self.path == '/save':
-            save_triggers(post_data_str, conn_str_sub, context, sockets_trigger, sockets_detrigger)
-        if self.path == '/saveRules':
+            session_id = list(sockets_data_dic.keys())[0]
+            sockets_trigger, sockets_detrigger = get_sockets_data(session_id)
             save_triggers(post_data_str, conn_str_sub, context, sockets_trigger, sockets_detrigger)
         if self.path == '/saveSources':
             save_sources(post_data_str)
@@ -163,5 +185,4 @@ except KeyboardInterrupt:
     print
     '^C received, shutting down the web server'
     server.socket.close()
-    for socket in sockets_trigger + sockets_detrigger:
-        socket.close()
+

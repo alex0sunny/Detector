@@ -120,10 +120,12 @@ def trigger_picker(ind, station, channel, trigger_type, freqmin, freqmax, init_l
         for a, d in zip(activ_data, deactiv_data):
             if trigger_on and d:
                 socket_trigger.send(message_start + b'0' + date_time._ns.to_bytes(8, byteorder='big'))
+                socket_trigger.send(message_start + b'0' + date_time._ns.to_bytes(8, byteorder='big'))
                 logger.debug('detriggered, ch:' + channel + ' trigger id:' + str(trigger_index_s))
                 # events_list.append({'channel': channel, 'dt': date_time, 'trigger': False})
                 trigger_on = False
             if not trigger_on and a:
+                socket_trigger.send(message_start + b'1' + date_time._ns.to_bytes(8, byteorder='big'))
                 socket_trigger.send(message_start + b'1' + date_time._ns.to_bytes(8, byteorder='big'))
                 logger.debug('triggered, ch:' + channel + ' trigger id:' + str(trigger_index_s))
                 #events_list.append({'channel': channel, 'dt': date_time, 'trigger': True})

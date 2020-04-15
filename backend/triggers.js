@@ -11,6 +11,7 @@ var channelCol = headersObj["channel"];
 var valCol = headersObj["val"];
 var indexCol = headersObj["ind"];
 var triggerCol = headersObj["trigger"];
+var sessionId = Math.floor(Math.random() * 1000000) + 1;
 
 function initPage() {
 	alert("onLoad");
@@ -109,7 +110,8 @@ function myTimer() {
             }
 		}
 	};
-	var data = JSON.stringify(pageMap.triggers);
+	pageMap["sessionId"] = sessionId;
+	var data = JSON.stringify(pageMap);
 	xhr.send(data);
 }
 

@@ -113,9 +113,12 @@ def save_sources(post_data_str):
     save_pprint(post_data_str, os.path.split(inspect.getfile(backend))[0] + '/sources.html')
 
 
-def post_triggers(post_data_str, chans, socket_channels, sockets_trigger, sockets_detrigger):
-    triggers = json.loads(post_data_str)
-    triggers = {int(k): v for k, v in triggers.items()}
+def save_rules(post_data_str):
+    save_pprint(post_data_str, os.path.split(inspect.getfile(backend))[0] + '/rules.html')
+
+
+def post_triggers(json_triggers, chans, socket_channels, sockets_trigger, sockets_detrigger):
+    triggers = {int(k): v for k, v in json_triggers.items()}
     # logger.debug('post_data_str:' + post_data_str + '\ntriggers dic:' + str(triggers) + '\ntriggers keys:' +
     #              str(triggers.keys()))
     for i in triggers:
