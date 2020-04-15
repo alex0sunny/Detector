@@ -49,10 +49,10 @@
 					<td contenteditable="true">ND01</td>
 					<td>
 						<select>
-							<option>CHE</option>
+							<option selected="selected">CHE</option>
 							<option>CHN</option>
 							<option>CHX</option>
-							<option selected="selected">CHZ</option>
+							<option>CHZ</option>
 						</select>
 					</td>
 					<td>
@@ -149,14 +149,14 @@
 		<p style="text-align:left;">
 			<a href="rules.html">rules</a>
 			<span style="float:right;">
-				<button type="button" onclick="apply_save()">
-					apply
-				</button>
-				<button type="button" onclick="location.reload(true)">
-					init
-				</button>
 				<button type="add" onclick="addTrigger()">
 					add trigger
+				</button>
+				<button type="button" onclick="location.reload(true)">
+					discard
+				</button>
+				<button type="button" onclick="apply_save()">
+					apply
 				</button>
 			</span>
 		</p>
