@@ -37,11 +37,14 @@ def getTriggerParams():
 
 def getRuleFormulasDic():
     root = etree.parse(os.path.split(inspect.getfile(backend))[0] + '/rules.html')
+    headers_dic = getHeaderDic(root)
+    id_col = headers_dic['rule_id']
+    formula_col = headers_dic['formula']
     rows = root.xpath('/html/body/table/tbody/tr')[1:]
     formulas_dic = {}
     for row in rows:
-        rule_id = int(row[0].text)
-        formula_list = [el.text for el in row[1].iter() if 'selected' in el.attrib]
+        rule_id = int(row[id_col].text)
+        formula_list = [el.text for el in row[formula_col].iter() if 'selected' in el.attrib]
         while formula_list[-1] == '-' and len(formula_list) > 2:
             formula_list = formula_list[:-2]
         formulas_dic[rule_id] = formula_list
@@ -85,7 +88,8 @@ def clear_triggers(sockets_trigger, sockets_detrigger):
             pass
 
 
-def update_sockets(trigger_index, conn_str, context, sockets_trigger, sockets_detrigger):
+def update_sockets(trigger_index, conn_str, context, sockets_trigger, sockets_detrigger,
+                   subscription=Subscription.trigger.value):
     logger.info('update sockets with ' + str(trigger_index))
     socket_trigger = context.socket(zmq.SUB)
     socket_detrigger = context.socket(zmq.SUB)
@@ -93,11 +97,14 @@ def update_sockets(trigger_index, conn_str, context, sockets_trigger, sockets_de
     socket_detrigger.connect(conn_str)
     trigger_index_s = '%02d' % trigger_index
     socket_trigger.setsockopt(zmq.SUBSCRIBE,
-                              Subscription.trigger.value + trigger_index_s.encode() + b'1')
+                              subscription + trigger_index_s.encode() + b'1')
     socket_detrigger.setsockopt(zmq.SUBSCRIBE,
-                                Subscription.trigger.value + trigger_index_s.encode() + b'0')
+                                subscription + trigger_index_s.encode() + b'0')
     sockets_trigger[trigger_index] = socket_trigger
     sockets_detrigger[trigger_index] = socket_detrigger
+    if subscription != Subscription.trigger.value:
+        logger.info('created sockets:' + str(socket_trigger) + ', ' + str(socket_detrigger))
+
 
 
 def save_triggers(post_data_str, conn_str, context, sockets_trigger, sockets_detrigger):
@@ -133,7 +140,7 @@ def post_triggers(json_triggers, chans, socket_channels, sockets_trigger, socket
                 socket_non_target = sockets_detrigger[i]
             try:
                 mes = socket_target.recv(zmq.NOBLOCK)
-                logger.info('triggering detected, message:' + str(mes))
+                #logger.info('triggering detected, message:' + str(mes))
                 if triggers[i]:
                     triggers[i] = 0
                 else:
@@ -168,6 +175,44 @@ def post_triggers(json_triggers, chans, socket_channels, sockets_trigger, socket
     if chans:
         json_map['channels'] = chans
     return json_map
+
+
+def update_rules(json_rules, sockets_rule, sockets_rule_off):
+    rules = {int(k): v for k, v in json_rules.items()}
+    # logger.debug('post_data_str:' + post_data_str + '\ntriggers dic:' + str(triggers) + '\ntriggers keys:' +
+    #              str(triggers.keys()))
+    #logger.debug('rules:' + str(rules) + ' n of rule sockets:' + str(len(sockets_rule)))
+    for i in rules:
+        if i in sockets_rule:
+            #logger.debug('rule id:' + str(i))
+            # logger.debug('i in triggers')
+            if rules[i]:
+                socket_target = sockets_rule_off[i]
+                socket_non_target = sockets_rule[i]
+            else:
+                socket_target = sockets_rule[i]
+                socket_non_target = sockets_rule_off[i]
+            try:
+                mes = socket_target.recv(zmq.NOBLOCK)
+                logger.info('triggering detected, message:' + str(mes))
+                if rules[i]:
+                    rules[i] = 0
+                else:
+                    rules[i] = 1
+                while True:
+                    socket_target.recv(zmq.NOBLOCK)
+            except zmq.ZMQError:
+                pass
+            if rules[i] == 0:  # clear previous triggerings
+                try:
+                    while True:
+                        socket_non_target.recv(zmq.NOBLOCK)
+                except zmq.ZMQError:
+                    pass
+        else:
+            logger.warning('i ' + str(i) + ' not in rules')
+
+    return rules
 
 
 #print(getRuleFormulasDic())

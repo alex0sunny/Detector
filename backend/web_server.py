@@ -8,7 +8,7 @@ import os
 import backend
 from backend.rule_html_util import post_rules
 from backend.trigger_html_util import save_pprint_trig, getTriggerParams, save_triggers, update_sockets, post_triggers, \
-    save_sources, save_rules
+    save_sources, save_rules, update_rules, getRuleFormulasDic
 
 logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
                            '%(message)s',
@@ -42,7 +42,6 @@ trigger_params = getTriggerParams()
 sockets_data_dic = {}
 
 
-
 def create_sockets_data():
     sockets_trigger = {}
     sockets_detrigger = {}
@@ -55,6 +54,24 @@ def get_sockets_data(session_id):
     if session_id not in sockets_data_dic:
         sockets_data_dic[session_id] = create_sockets_data()
     return sockets_data_dic[session_id]
+
+
+rule_sockets_dic = {}
+
+
+def create_rule_sockets():
+    rule_sockets = {}
+    rule_sockets_off = {}
+    for rule_id in sorted(getRuleFormulasDic().keys()):
+        update_sockets(rule_id, conn_str_sub, context, rule_sockets, rule_sockets_off,
+                       subscription=Subscription.rule.value)
+    return rule_sockets, rule_sockets_off
+
+
+def get_rule_sockets(session_id):
+    if session_id not in rule_sockets_dic:
+        rule_sockets_dic[session_id] = create_rule_sockets()
+    return rule_sockets_dic[session_id]
 
 
 # This class will handles any incoming request from
@@ -132,17 +149,20 @@ class myHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps(json_map).encode())
         if self.path == '/rule':
-            # logging.info('json_map:' + str(json_map))
             json_dic = json.loads(post_data_str)
             session_id = json_dic['sessionId']
             #logger.debug('session id:' + str(session_id))
             json_triggers = json_dic['triggers']
             sockets_trigger, sockets_detrigger = get_sockets_data(session_id)
             json_map = post_triggers(json_triggers, chans, socket_channels, sockets_trigger, sockets_detrigger)
+            sockets_rule, sockets_rule_off = get_rule_sockets(session_id)
+            rules_dic = json_dic['rules']
+            rules_dic = update_rules(rules_dic, sockets_rule, sockets_rule_off)
+            json_map['rules'] = rules_dic
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
-            self.wfile.write(json.dumps(json_map['triggers']).encode())
+            self.wfile.write(json.dumps(json_map).encode())
         if self.path == '/initRule':
             params_list = getTriggerParams()
             trigger_ids = [params['ind'] for params in params_list]

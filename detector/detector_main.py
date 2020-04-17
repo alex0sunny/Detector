@@ -1,10 +1,11 @@
 import time
 from multiprocessing import Process
 
+from detector.filter_trigger.rule import rule_picker
 from detector.filter_trigger.StaLtaTrigger import trigger_picker
 from detector.filter_trigger.trigger_resender import resend
 from detector.misc.globals import Port, CustomThread
-from backend.trigger_html_util import getTriggerParams, getSources
+from backend.trigger_html_util import getTriggerParams, getSources, getRuleFormulasDic
 from detector.send_receive.signal_receiver import signal_receiver
 
 
@@ -42,6 +43,11 @@ if __name__ == '__main__':
         # for kwargs in kwargs_list:
         #     print('\nkwargs:\n' + str(kwargs))
         # exit(1)
+
+        formulas_dic = getRuleFormulasDic()
+        for rule_id in sorted(formulas_dic.keys()):
+            formula_list = formulas_dic[rule_id]
+            kwargs_list.append({'target': rule_picker, 'kwargs': {'rule_id': rule_id, 'formula_list': formula_list}})
 
         ps = []
         for kwargs in kwargs_list:
