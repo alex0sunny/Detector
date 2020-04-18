@@ -124,6 +124,14 @@ def save_rules(post_data_str):
     save_pprint(post_data_str, os.path.split(inspect.getfile(backend))[0] + '/rules.html')
 
 
+def apply_sockets_rule(conn_str, context, sockets_rule, sockets_rule_off):
+    clear_triggers(sockets_rule, sockets_rule_off)
+    for rule_id in getRuleFormulasDic().keys():
+        if rule_id not in sockets_rule:
+            update_sockets(rule_id, conn_str, context, sockets_rule, sockets_rule_off)
+
+
+
 def post_triggers(json_triggers, chans, socket_channels, sockets_trigger, sockets_detrigger):
     triggers = {int(k): v for k, v in json_triggers.items()}
     # logger.debug('post_data_str:' + post_data_str + '\ntriggers dic:' + str(triggers) + '\ntriggers keys:' +
