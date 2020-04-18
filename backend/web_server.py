@@ -8,7 +8,7 @@ import os
 import backend
 from backend.rule_html_util import post_rules
 from backend.trigger_html_util import save_pprint_trig, getTriggerParams, save_triggers, update_sockets, post_triggers, \
-    save_sources, save_rules, update_rules, getRuleFormulasDic
+    save_sources, save_rules, update_rules, getRuleFormulasDic, apply_sockets_rule
 
 logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
                            '%(message)s',
@@ -179,6 +179,7 @@ class myHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({'apply': 1}).encode())
         if self.path == '/applyRules':
             save_rules(post_data_str)
+            apply_sockets_rule(conn_str_sub, context, sockets_rule, sockets_rule_off)
             socket_backend.send(b'AP')
         if self.path == '/save':
             session_id = list(sockets_data_dic.keys())[0]
