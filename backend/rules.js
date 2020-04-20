@@ -20,7 +20,7 @@ function updateTriggers (triggersObj, ruleCell) {
 		if (node.nodeName == "OUTPUT") 	{
 			var triggerNode = children[i - 1];
 			var options = triggerNode.options;
-			var selectedIndex = options.selectedIndex;
+			var selectedIndex = triggerNode.selectedIndex;
 			var triggerIdStr = options[selectedIndex].text;
 			//console.log('triggerIdStr:' + triggerIdStr);
 			var triggerVal = triggersObj[triggerIdStr];
@@ -39,7 +39,7 @@ function updateRules(rulesObj)	{
     for (var i = 1; i < rows.length; i++)	{
     	var row = rows[i];
       	var ruleId = row.cells[ruleIdCol].innerHTML;
-       	console.log('ruleId:' + ruleId + ' ruleVal:' + rulesObj[ruleId]);
+       	//console.log('ruleId:' + ruleId + ' ruleVal:' + rulesObj[ruleId]);
        	row.cells[ruleValCol].innerHTML = rulesObj[ruleId];
     }	
 }
@@ -54,7 +54,7 @@ function updateFunc () {
 			respObj = JSON.parse(xhr.responseText);
 			triggersObj = respObj['triggers'];
 			rulesObj = respObj['rules'];
-			console.log('rulesObj from server:' + JSON.stringify(rulesObj));
+			//console.log('rulesObj from server:' + JSON.stringify(rulesObj));
 			updateRules(rulesObj);
 			var rows = document.getElementById("rulesTable").rows;
 			for (var i = 1; i < rows.length; i = i + 1)	{
@@ -65,7 +65,7 @@ function updateFunc () {
 		}
 	};
 	var rulesObj = getRulesObj();
-	console.log('rulesObj:' + JSON.stringify(rulesObj));
+	//console.log('rulesObj:' + JSON.stringify(rulesObj));
 	var data = {triggers: triggersObj, sessionId: sessionId, rules: rulesObj};
 	xhr.send(JSON.stringify(data));
 }
@@ -78,7 +78,7 @@ function initFunc () {
 		if (xhr.readyState === 4 && xhr.status === 200) {
 		    //console.log('response:' + xhr.responseText);
 			var triggersIds = JSON.parse(xhr.responseText);
-			console.log('triggersIds:' + triggersIds);
+			//console.log('triggersIds:' + triggersIds);
 			for (var triggerId of triggersIds)	{
 				triggersObj[triggerId] = 0;
 			}
@@ -101,7 +101,7 @@ function fillTriggers (triggersIds, ruleCell)	{
 		if (node.nodeName == "OUTPUT") 	{
 			var triggerNode = children[i - 1];
 			var options = triggerNode.options;
-			var selectedIndex = options.selectedIndex;
+			var selectedIndex = triggerNode.selectedIndex;
 			var selectedTrigger = options[selectedIndex].text;
 			var option = options[0];
 			if (selectedIndex == 0)	{
@@ -134,16 +134,42 @@ function addRule() {
 }
 
 function setSelected(node) 	{
-	if (node.nodeName == "select")	{
-		var options = node.options;
-		var selectedIndex = options.selectedIndex;
-		for (var i = 0; i < options.lengh; i++)	{
+	if (node.nodeName == "SELECT")	{
+		var html1 = node.innerHTML;
+		console.log('original html:\n' + html1);
+		var options = node.children;
+		var len = options.length;
+		console.log('options length:' + len);
+		var selectedIndex = node.selectedIndex;
+		console.log('selected index:' + selectedIndex);
+		for (var i = 0; i < options.length; i++)	{
+			console.log("i:" + i);
 			var option = options[i];
 			if (i == selectedIndex)	{
+				console.log('set selected');
 				option.setAttribute("selected", "selected");
 			} else	{
+				console.log('remove selected');
 				option.removeAttribute("selected");
 			}
+
+		}
+//		for (var i = 0; i < options.lengh; i++)	{
+//			console.log('i:' + i);
+//			var option = options[i];
+//			if (i == selectedIndex)	{
+//				console.log('set selected');
+//				option.setAttribute("selected", "selected");
+//			} else	{
+//				console.log('remove selected');
+//				option.removeAttribute("selected");
+//			}
+//		}
+		var html2 = node.innerHTML;
+		//console.log('modified html:\n' + html2);
+		if (html1 != html2)	{
+			console.log('original html:\n' + html1);
+			console.log('modified html:\n' + html2);
 		}
 	}	
 }
@@ -157,7 +183,7 @@ function apply()	{
     	var children = ruleCell.children;
     	for (var j = 0; j < children.length; j++)	{
     		var node = children[j];
-    		setSelected(node);
+       		setSelected(node);
     	}
     }
 	var xhr = new XMLHttpRequest();
