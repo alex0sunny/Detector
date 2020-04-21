@@ -136,40 +136,17 @@ function addRule() {
 function setSelected(node) 	{
 	if (node.nodeName == "SELECT")	{
 		var html1 = node.innerHTML;
-		console.log('original html:\n' + html1);
 		var options = node.children;
 		var len = options.length;
-		console.log('options length:' + len);
 		var selectedIndex = node.selectedIndex;
 		console.log('selected index:' + selectedIndex);
 		for (var i = 0; i < options.length; i++)	{
-			console.log("i:" + i);
 			var option = options[i];
 			if (i == selectedIndex)	{
-				console.log('set selected');
 				option.setAttribute("selected", "selected");
 			} else	{
-				console.log('remove selected');
 				option.removeAttribute("selected");
 			}
-
-		}
-//		for (var i = 0; i < options.lengh; i++)	{
-//			console.log('i:' + i);
-//			var option = options[i];
-//			if (i == selectedIndex)	{
-//				console.log('set selected');
-//				option.setAttribute("selected", "selected");
-//			} else	{
-//				console.log('remove selected');
-//				option.removeAttribute("selected");
-//			}
-//		}
-		var html2 = node.innerHTML;
-		//console.log('modified html:\n' + html2);
-		if (html1 != html2)	{
-			console.log('original html:\n' + html1);
-			console.log('modified html:\n' + html2);
 		}
 	}	
 }

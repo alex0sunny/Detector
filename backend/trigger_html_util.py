@@ -124,6 +124,10 @@ def save_rules(post_data_str):
     save_pprint(post_data_str, os.path.split(inspect.getfile(backend))[0] + '/rules.html')
 
 
+def save_actions(post_data_str):
+    save_pprint(post_data_str, os.path.split(inspect.getfile(backend))[0] + '/actions.html')
+
+
 def apply_sockets_rule(conn_str, context, sockets_rule, sockets_rule_off):
     clear_triggers(sockets_rule, sockets_rule_off)
     for rule_id in getRuleFormulasDic().keys():
