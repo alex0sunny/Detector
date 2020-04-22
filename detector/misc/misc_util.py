@@ -1,3 +1,9 @@
+from time import sleep
+
+import zmq
+from obspy import UTCDateTime
+
+from detector.misc.globals import Port, Subscription
 
 
 def get_expr(formula_list, triggers_dic):
@@ -19,6 +25,25 @@ def get_formula_triggers(formula_list):
             triggers.append(trigger_id)
     return triggers
 
+
+# def get_channels(context, stations_set):
+#     socket_sub = context.socket(zmq.SUB)
+#     socket_sub.connect('tcp://localhost:' + str(Port.proxy.value))
+#     socket_sub.setsockopt(zmq.SUBSCRIBE, Subscription.intern.value)
+#
+#     local_set = {}
+#     chs_set = {}
+#
+#     cur_time = UTCDateTime()
+#     check_time = cur_time + 2
+#     while cur_time < check_time:
+#         sleep(.1)
+#         try:
+#             bdata = socket_sub.recv(zmq.NOBLOCK)
+#         except zmq.ZMQError:
+#             pass
+#
+#     socket_sub.close()
 
 #print(get_formula_triggers(['1', 'or', '2', 'and', '3']))
 #print(get_expr(['2', 'and not', '3', 'and', '1'], {1: True, 2: True}))

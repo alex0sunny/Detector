@@ -78,7 +78,8 @@ function sendHTML() {
 	xhr.open("POST", url, true);
 	xhr.setRequestHeader("Content-Type", "application/html");
 	var pageHTML = "<html>\n" + document.documentElement.innerHTML + "\n</html>";
-	xhr.send(pageHTML);
+	var data = JSON.stringify({"html": pageHTML, "sessionId":  sessionId});
+	xhr.send(data);
 }
 
 var myVar = setInterval(myTimer, 1000);

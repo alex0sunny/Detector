@@ -7,7 +7,8 @@ from os.path import curdir, sep
 import os
 import backend
 from backend.trigger_html_util import save_pprint_trig, getTriggerParams, save_triggers, update_sockets, post_triggers, \
-    save_sources, save_rules, update_rules, getRuleFormulasDic, apply_sockets_rule, save_actions
+    save_sources, save_rules, update_rules, getRuleFormulasDic, apply_sockets_rule, save_actions, \
+    update_triggers_sockets
 
 logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
                            '%(message)s',
@@ -36,7 +37,7 @@ chans = []
 # socket_trigger.connect(conn_str)
 # socket_trigger.setsockopt(zmq.SUBSCRIBE, b'ND01011')
 
-trigger_params = getTriggerParams()
+#trigger_params = getTriggerParams()
 
 sockets_data_dic = {}
 
@@ -44,7 +45,7 @@ sockets_data_dic = {}
 def create_sockets_data():
     sockets_trigger = {}
     sockets_detrigger = {}
-    for trigger_param in trigger_params:
+    for trigger_param in getTriggerParams():
         update_sockets(trigger_param['ind'], conn_str_sub, context, sockets_trigger, sockets_detrigger)
     return sockets_trigger, sockets_detrigger
 
@@ -177,15 +178,20 @@ class myHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps({'apply': 1}).encode())
         if self.path == '/applyRules':
-            save_rules(post_data_str)
-            session_id = list(sockets_data_dic.keys())[0]
+            json_dic = json.loads(post_data_str)
+            session_id = json_dic['sessionId']
+            html = json_dic['html']
+            save_rules(html)
             sockets_rule, sockets_rule_off = get_rule_sockets(session_id)
             apply_sockets_rule(conn_str_sub, context, sockets_rule, sockets_rule_off)
             socket_backend.send(b'AP')
         if self.path == '/save':
-            session_id = list(sockets_data_dic.keys())[0]
+            json_dic = json.loads(post_data_str)
+            session_id = json_dic['sessionId']
+            html = json_dic['html']
+            save_triggers(html)
             sockets_trigger, sockets_detrigger = get_sockets_data(session_id)
-            save_triggers(post_data_str, conn_str_sub, context, sockets_trigger, sockets_detrigger)
+            update_triggers_sockets(conn_str_sub, context, sockets_trigger, sockets_detrigger)
         if self.path == '/saveSources':
             save_sources(post_data_str)
             socket_backend.send(b'AP')

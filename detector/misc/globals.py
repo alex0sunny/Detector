@@ -7,8 +7,6 @@ from threading import Thread
 
 import logging
 
-from detector.misc.ChannelsUpdater import ChannelsUpdater
-
 logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
                            '%(message)s',
                     level=logging.DEBUG)

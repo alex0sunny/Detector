@@ -101,14 +101,17 @@ def update_sockets(trigger_index, conn_str, context, sockets_trigger, sockets_de
     socket_detrigger.setsockopt(zmq.SUBSCRIBE,
                                 subscription + trigger_index_s.encode() + b'0')
     sockets_trigger[trigger_index] = socket_trigger
+    #logger.debug('sockets inds:' + str(list(sockets_trigger.keys())))
     sockets_detrigger[trigger_index] = socket_detrigger
-    if subscription != Subscription.trigger.value:
-        logger.info('created sockets:' + str(socket_trigger) + ', ' + str(socket_detrigger))
+    # if subscription != Subscription.trigger.value:
+    #     logger.info('created sockets:' + str(socket_trigger) + ', ' + str(socket_detrigger))
 
 
-
-def save_triggers(post_data_str, conn_str, context, sockets_trigger, sockets_detrigger):
+def save_triggers(post_data_str):
     save_pprint_trig(post_data_str, os.path.split(inspect.getfile(backend))[0] + '/triggers.html')
+
+
+def update_triggers_sockets(conn_str, context, sockets_trigger, sockets_detrigger):
     clear_triggers(sockets_trigger, sockets_detrigger)
     for trigger_param in getTriggerParams():
         trigger_index = trigger_param['ind']
