@@ -25,6 +25,9 @@ context = zmq.Context()
 socket_backend = context.socket(zmq.PUB)
 socket_backend.connect('tcp://localhost:' + str(Port.backend.value))
 
+socket_test = context.socket(zmq.PUB)
+socket_test.connect('tcp://localhost:' + str(Port.multi.value))
+
 conn_str_sub = 'tcp://localhost:' + str(Port.proxy.value)
 
 socket_channels = context.socket(zmq.SUB)
@@ -199,7 +202,17 @@ class myHandler(BaseHTTPRequestHandler):
             save_actions(post_data_str)
             socket_backend.send(b'AP')
         if self.path == '/testActions':
-            ids = json.loads(post_data_str)
+            test_dic = json.loads(post_data_str)
+            ids = test_dic['ids']
+            for action_id in ids:
+                action_id_s = '%02d' % action_id
+                bin_message = Subscription.test.value + action_id_s.encode()
+                if action_id in [1, 2]:
+                    if test_dic['relay' + str(action_id)]:
+                        bin_message += b'1'
+                    else:
+                        bin_message += b'0'
+                socket_test.send(bin_message)
             print('actions test:' + str(ids))
         if self.path == '/load':
             print('load')

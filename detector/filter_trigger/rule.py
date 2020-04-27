@@ -60,6 +60,6 @@ def rule_picker(rule_id, formula_list):
                     else:
                         bin_message += b'0'
                     bin_message += trigger_time._ns.to_bytes(8, byteorder='big')
-                    print('bin_message:' + str(bin_message))
+                    logger.debug('bin_message:' + str(bin_message))
                     socket_rule.send(bin_message)
 

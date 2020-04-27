@@ -24,6 +24,7 @@ var actionIdCol = headersObj["action_id"];
 var typeCol = headersObj["type"];
 var addressCol = headersObj["address"];
 var messageCol = headersObj["message"];
+var additionalCol = headersObj["additional"];
 
 function cycleFunc(f)	{
 	var retVal = [];
@@ -62,6 +63,12 @@ function setSelected(node) 	{
 	}	
 }
 
+function setValue(elementId)	{
+	var node = document.getElementById(elementId);
+	var value = node.value;
+	node.setAttribute("value", value);
+}
+
 function prepareRow(row)	{
 	var cells = row.cells;
 	var typeCell = cells[typeCol];
@@ -75,6 +82,8 @@ function prepareRow(row)	{
 
 function apply()	{
 	cycleFunc(prepareRow);
+	setValue("PEM");
+	setValue("PET");
 	var xhr = new XMLHttpRequest();
 	var url = "applyActions";
 	xhr.open("POST", url, true);
@@ -103,5 +112,26 @@ function test()	{
 	var url = "testActions";
 	xhr.open("POST", url, true);
 	xhr.setRequestHeader("Content-Type", "application/html");
-	xhr.send(JSON.stringify(ids));
+	var person = {firstName:"John", lastName:"Doe", age:50, eyeColor:"blue"};
+	var sendObj = {ids: ids};
+	if (ids.includes(1))	{
+		var relay1Cell = getRows()[1].cells[additionalCol];
+		var relayNode = relay1Cell.children[1];
+		if (relayNode.checked)	{
+			sendObj["relay1"] = 1;
+		} else	{
+			sendObj["relay1"] = 0;
+		}
+	}
+	if (ids.includes(2))	{
+		var relay2Cell = getRows()[2].cells[additionalCol];
+		var relayNode = relay2Cell.children[1];
+		if (relayNode.checked)	{
+			sendObj["relay2"] = 1;
+		} else	{
+			sendObj["relay2"] = 0;
+		}
+	}
+	console.log(JSON.stringify(sendObj));
+	xhr.send(JSON.stringify(sendObj));
 }

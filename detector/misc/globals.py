@@ -33,6 +33,7 @@ class Subscription(Enum):
     trigger = bytes([3])
     channel = bytes([4])
     rule    = bytes([5])
+    test    = bytes([6])
 
 
 class CustomThread(Thread):

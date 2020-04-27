@@ -63,6 +63,34 @@ def getSources():
     return src_dic
 
 
+def get_action_data(action_type, root, id_col, address_col, message_col):
+    rows = root.xpath("//tr[./td/select/option[@selected]='" + action_type + "']")
+    return {int(row[id_col].text): {'address': row[address_col].text, 'message': row[message_col].text}
+            for row in rows}
+
+
+def getActions():
+    actions_dic = {}
+    root = etree.parse(os.path.split(inspect.getfile(backend))[0] + '/actions.html')
+    headers_dic = getHeaderDic(root)
+    id_col = headers_dic['action_id']
+    address_col = headers_dic['address']
+    message_col = headers_dic['message']
+    for action_type in ['SMS', 'email']:
+        dic = get_action_data(action_type, root, id_col, address_col, message_col)
+        if dic:
+            actions_dic[action_type.lower()] = dic
+    pem = int(root.xpath("//input[@id='PEM']/@value")[0])
+    pet = int(root.xpath("//input[@id='PET']/@value")[0])
+    actions_dic['send_signal'] = {'pem': pem, 'pet': pet}
+    # relay1cell = root.xpath("//*[@id='relay1']")[0]
+    # relay2cell = root.xpath("//*[@id='relay2']")[0]
+    # relays = ['checked' in releCell.attrib for releCell in [relay1cell, relay2cell]]
+    # actions_dic['relay1'] = int(relays[0])
+    # actions_dic['relay2'] = int(relays[1])
+    return actions_dic
+
+
 def save_pprint_trig(xml, file):
     parser = etree.HTMLParser(remove_blank_text=True)
     tree = etree.fromstring(xml, parser).getroottree()
@@ -136,7 +164,6 @@ def apply_sockets_rule(conn_str, context, sockets_rule, sockets_rule_off):
     for rule_id in getRuleFormulasDic().keys():
         if rule_id not in sockets_rule:
             update_sockets(rule_id, conn_str, context, sockets_rule, sockets_rule_off)
-
 
 
 def post_triggers(json_triggers, chans, socket_channels, sockets_trigger, sockets_detrigger):
@@ -229,6 +256,8 @@ def update_rules(json_rules, sockets_rule, sockets_rule_off):
 
     return rules
 
+
+#print(str(getActions()))
 
 #print(getRuleFormulasDic())
 

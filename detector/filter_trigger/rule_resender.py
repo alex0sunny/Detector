@@ -11,7 +11,7 @@ from detector.misc.header_util import CustomHeader
 from detector.send_receive.tcp_server import TcpServer
 
 
-def resend(conn_str, triggers, pem, pet):
+def resend(conn_str, rules, pem, pet):
     context = zmq.Context()
 
     socket_sub = context.socket(zmq.SUB)
@@ -21,11 +21,12 @@ def resend(conn_str, triggers, pem, pet):
 
     socket_server = TcpServer(conn_str, context)
 
-    socket_trigger = context.socket(zmq.SUB)
-    socket_trigger.connect(conn_str_sub)
-    for trigger_index in triggers:
-        trigger_index_s = '%02d' % trigger_index
-        socket_trigger.setsockopt(zmq.SUBSCRIBE, Subscription.trigger.value + trigger_index_s.encode())
+    socket_rule = context.socket(zmq.SUB)
+    socket_rule.connect(conn_str_sub)
+    socket_rule.setsockopt(zmq.SUBSCRIBE, Subscription.test.value + '03'.encode())
+    for rule_index in rules:
+        rule_index_s = '%02d' % rule_index
+        socket_rule.setsockopt(zmq.SUBSCRIBE, Subscription.rule.value + rule_index_s.encode())
 
     test_send = False
     trigger = False
@@ -33,19 +34,25 @@ def resend(conn_str, triggers, pem, pet):
     pet_time = UTCDateTime(0)
     while True:
         try:
-            bin_data = socket_trigger.recv(zmq.NOBLOCK)[1:]
-            logger.debug('trigger event')
-            trigger_data = bin_data[2:3]
-            trigger_time = UTCDateTime(int.from_bytes(bin_data[-8:], byteorder='big') / 10**9)
-            if trigger and trigger_data == b'0':
+            bin_data = socket_rule.recv(zmq.NOBLOCK)
+            test = bin_data[:1] == Subscription.test.value
+            if test:
+                logger.debug('test rule event')
+                trigger_data = b'0'
+                trigger_time = UTCDateTime()
+            else:
+                logger.debug('rule event')
+                trigger_data = bin_data[3:4]
+                trigger_time = UTCDateTime(int.from_bytes(bin_data[-8:], byteorder='big') / 10**9)
+            if trigger and trigger_data == b'0' or test:
                 trigger = False
                 pet_time = trigger_time + pet
                 logger.info('detriggered\ndetrigger time:' + str(trigger_time) + '\npet time:' +
-                            str(trigger_time + pet) + '\ntrigger:' + str(bin_data[:2]))
+                            str(trigger_time + pet) + '\ntrigger:' + str(bin_data[1:3]))
             if not trigger and trigger_data == b'1':
                 trigger = True
                 logger.info('triggered\ntrigger time:' + str(trigger_time) + '\npem time:' +
-                            str(trigger_time - pem) + '\ntrigger:' + str(bin_data[:2]))
+                            str(trigger_time - pem) + '\ntrigger:' + str(bin_data[1:3]))
                 if buf:
                     logger.info('buf item dt:' + str(buf[0][0]))
             if not buf:
