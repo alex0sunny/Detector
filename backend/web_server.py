@@ -9,6 +9,7 @@ import backend
 from backend.trigger_html_util import save_pprint_trig, getTriggerParams, save_triggers, update_sockets, post_triggers, \
     save_sources, save_rules, update_rules, getRuleFormulasDic, apply_sockets_rule, save_actions, \
     update_triggers_sockets
+from detector.action.relay_actions import get_val
 
 logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
                            '%(message)s',
@@ -198,6 +199,13 @@ class myHandler(BaseHTTPRequestHandler):
         if self.path == '/saveSources':
             save_sources(post_data_str)
             socket_backend.send(b'AP')
+        if self.path == '/initAction':
+            relay_dic = {relay_n: get_val(relay_n) for relay_n in [1, 2]}
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            logger.debug('relay_dic:' + str(relay_dic))
+            self.wfile.write(json.dumps(relay_dic).encode())
         if self.path == '/applyActions':
             save_actions(post_data_str)
             socket_backend.send(b'AP')

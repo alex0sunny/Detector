@@ -26,6 +26,25 @@ var addressCol = headersObj["address"];
 var messageCol = headersObj["message"];
 var additionalCol = headersObj["additional"];
 
+{
+	var xhr = new XMLHttpRequest();
+	xhr.open("POST", "initAction", true);
+	xhr.setRequestHeader("Content-Type", "application/json");
+	xhr.onreadystatechange = function () {
+		if (xhr.readyState === 4 && xhr.status === 200) {
+			var relaysObj = JSON.parse(xhr.responseText);
+			console.log(relaysObj);
+			var rows = getRows();
+			var relay1node = rows[1].cells[additionalCol].children[1];
+			var relay2node = rows[2].cells[additionalCol].children[1];
+			relay1node.checked = relaysObj['1'] == 1;
+			relay2node.checked = relaysObj['2'] == 1;
+		}
+	}
+	xhr.send();
+}
+
+
 function cycleFunc(f)	{
 	var retVal = [];
 	var rows = getRows();
