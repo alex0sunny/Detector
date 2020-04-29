@@ -12,6 +12,8 @@ logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:
                     level=logging.DEBUG)
 logger = logging.getLogger('globals')
 
+logging.getLogger("matplotlib").setLevel(logging.WARNING)
+
 
 class Port(Enum):
     signal = 10003

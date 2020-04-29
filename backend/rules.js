@@ -1,6 +1,7 @@
 var ruleIdCol = 0;
 var formulaCol = 1;
 var ruleValCol = 2;
+var actionCol = 3
 
 var timerVar = setInterval(updateFunc, 1000);
 
@@ -77,8 +78,10 @@ function initFunc () {
 	xhr.onreadystatechange = function () {
 		if (xhr.readyState === 4 && xhr.status === 200) {
 		    //console.log('response:' + xhr.responseText);
-			var triggersIds = JSON.parse(xhr.responseText);
-			//console.log('triggersIds:' + triggersIds);
+			var responseObj = JSON.parse(xhr.responseText);
+			var triggersIds = responseObj['ids'];
+			var actionIds = responseObj['actions'];
+			//console.log('triggersIds:' + triggersIds + ' actionIds:' + actionIds);
 			for (var triggerId of triggersIds)	{
 				triggersObj[triggerId] = 0;
 			}
@@ -87,6 +90,8 @@ function initFunc () {
 				var row = rows[i];
 				var ruleCell = row.cells[formulaCol];
 				fillTriggers(triggersIds, ruleCell);
+				var actionCell = row.cells[actionCol];
+				fillActions(actionIds, actionCell);
 			}
 		}
 	}
@@ -104,7 +109,7 @@ function fillTriggers (triggersIds, ruleCell)	{
 			var selectedIndex = triggerNode.selectedIndex;
 			var selectedTrigger = options[selectedIndex].text;
 			var option = options[0];
-			if (selectedIndex == 0)	{
+			if (selectedIndex == 0 || !triggersIds.includes(selectedTrigger))	{
 				option.setAttribute("selected", "selected");
 			} else	{
 				option.removeAttribute("selected");
@@ -120,6 +125,30 @@ function fillTriggers (triggersIds, ruleCell)	{
 				triggerNode.appendChild(option);
 			});
 		} 
+	}	
+}
+
+function fillActions (actionIds, actionCell)	{
+	for (var actionNode of actionCell.children)	{
+		var options = actionNode.options;
+		var selectedIndex = actionNode.selectedIndex;
+		var selectedAction = options[selectedIndex].text;
+		var option = options[0];
+		if (selectedIndex == 0 || !actionIds.includes(selectedAction))	{
+			option.setAttribute("selected", "selected");
+		} else	{
+			option.removeAttribute("selected");
+		}
+		actionNode.innerHTML = "";
+		actionNode.appendChild(option);
+		for (var action of actionIds)	{
+			option = document.createElement("option");
+			option.text = action;
+			if (action == selectedAction) {
+				option.setAttribute("selected", "selected");
+			}
+			actionNode.appendChild(option);
+		};
 	}	
 }
 
@@ -161,6 +190,11 @@ function apply()	{
     	for (var j = 0; j < children.length; j++)	{
     		var node = children[j];
        		setSelected(node);
+    	}
+    	var actionCell = row.cells[actionCol];
+    	children = actionCell.children;
+    	for (var actionNode of children)	{
+    		setSelected(actionNode);
     	}
     }
 	var xhr = new XMLHttpRequest();

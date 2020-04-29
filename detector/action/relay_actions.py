@@ -9,6 +9,7 @@ from detector.misc.globals import logger
 
 
 def turn(relay_n, on_off):
+    print('inside turn, on_off:' + str(on_off))
     if relay_n == 2:
         sleep(.5)
     fname = os.path.split(inspect.getfile(backend))[0] + '/actions.html'
@@ -27,10 +28,10 @@ def turn(relay_n, on_off):
     else:
         logger.info('turn the relay ' + str(relay_n) + ' off')
         relay_cell.attrib.pop('checked', None)
-    logger.debug('test_value after:' + str(relay_on) + ' relay_n:' + str(relay_n))
     fo = open(fname, 'w')
     fo.write(etree.tostring(root, pretty_print=True).decode())
     fo.close()
+    logger.debug('test_value after:' + str(get_val(relay_n)) + ' relay_n:' + str(relay_n))
 
 
 def get_val(relay_n):

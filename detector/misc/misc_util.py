@@ -26,6 +26,16 @@ def get_formula_triggers(formula_list):
     return triggers
 
 
+def to_action_rules(rule_actions):
+    action_rules = {}
+    for rule, actions in rule_actions.items():
+        for action in actions:
+            if action not in action_rules:
+                action_rules[action] = []
+            action_rules[action].append(rule)
+    return action_rules
+
+
 # def get_channels(context, stations_set):
 #     socket_sub = context.socket(zmq.SUB)
 #     socket_sub.connect('tcp://localhost:' + str(Port.proxy.value))

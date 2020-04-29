@@ -35,20 +35,25 @@ def getTriggerParams():
     return params_list
 
 
-def getRuleFormulasDic():
+def getRuleDic():
     root = etree.parse(os.path.split(inspect.getfile(backend))[0] + '/rules.html')
     headers_dic = getHeaderDic(root)
     id_col = headers_dic['rule_id']
     formula_col = headers_dic['formula']
+    actions_col = headers_dic['actions']
     rows = root.xpath('/html/body/table/tbody/tr')[1:]
-    formulas_dic = {}
+    rule_dic = {}
     for row in rows:
         rule_id = int(row[id_col].text)
+        rule_dic[rule_id] = {}
         formula_list = [el.text for el in row[formula_col].iter() if 'selected' in el.attrib]
         while formula_list[-1] == '-' and len(formula_list) > 2:
             formula_list = formula_list[:-2]
-        formulas_dic[rule_id] = formula_list
-    return formulas_dic
+        rule_dic[rule_id]['formula'] = formula_list
+        actions_list = [int(el.text) for el in row[actions_col].iter()
+                        if 'selected' in el.attrib and el.text != '-']
+        rule_dic[rule_id]['actions'] = actions_list
+    return rule_dic
 
 
 def getSources():
@@ -161,7 +166,7 @@ def save_actions(post_data_str):
 
 def apply_sockets_rule(conn_str, context, sockets_rule, sockets_rule_off):
     clear_triggers(sockets_rule, sockets_rule_off)
-    for rule_id in getRuleFormulasDic().keys():
+    for rule_id in getRuleDic().keys():
         if rule_id not in sockets_rule:
             update_sockets(rule_id, conn_str, context, sockets_rule, sockets_rule_off)
 

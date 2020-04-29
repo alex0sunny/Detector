@@ -9,7 +9,8 @@ from detector.filter_trigger.rule import rule_picker
 from detector.filter_trigger.StaLtaTrigger import trigger_picker
 from detector.filter_trigger.rule_resender import resend
 from detector.misc.globals import Port, CustomThread
-from backend.trigger_html_util import getTriggerParams, getSources, getRuleFormulasDic, getActions
+from backend.trigger_html_util import getTriggerParams, getSources, getActions, getRuleDic
+from detector.misc.misc_util import to_action_rules
 from detector.send_receive.signal_receiver import signal_receiver
 
 
@@ -38,19 +39,33 @@ if __name__ == '__main__':
             kwargs_list.append(kwargs)
 
         action_params = getActions()
+        rule_dic = getRuleDic()
+        rule_actions = {rule: rule_dic[rule]['actions'] for rule in rule_dic}
+        action_rules = to_action_rules(rule_actions)
         send_signal_params = action_params['send_signal']
         pem = send_signal_params['pem']
         pet = send_signal_params['pet']
+        rules = []
+        if 3 in action_rules:
+            rules = action_rules[3]
         kwargs_list += [{'target': resend, 'kwargs': {'conn_str': 'tcp://*:' + str(Port.signal_resend.value),
-                                                      'rules': [], 'pem': pem, 'pet': pet}},
+                                                      'rules': rules, 'pem': pem, 'pet': pet}},
                         {'target': triggers_proxy, 'kwargs': {}}]
         for action_type, send_func in {'email': send_email, 'sms': send_sms}.items():
             send_params_dic = action_params[action_type]
             for action_id in send_params_dic:
-                kwargs = {'action_id': action_id, 'send_func': send_func, 'args': send_params_dic[action_id]}
+                rules = []
+                if action_id in action_rules:
+                    rules = action_rules[action_id]
+                kwargs = {'action_id': action_id, 'rules': rules, 'send_func': send_func,
+                          'args': send_params_dic[action_id]}
                 kwargs_list.append({'target': action_process, 'kwargs': kwargs})
         for action_id in [1, 2]:
-            kwargs_list.append({'target': action_process, 'kwargs': {'action_id': action_id, 'send_func': turn}})
+            rules = []
+            if action_id in action_rules:
+                rules = action_rules[action_id]
+            kwargs_list.append({'target': action_process,
+                                'kwargs': {'action_id': action_id, 'rules': rules, 'send_func': turn}})
 
         for params in paramsList:
             #params.update({'init_level': 2, 'stop_level': 1})
@@ -59,9 +74,8 @@ if __name__ == '__main__':
         #     print('\nkwargs:\n' + str(kwargs))
         # exit(1)
 
-        formulas_dic = getRuleFormulasDic()
-        for rule_id in sorted(formulas_dic.keys()):
-            formula_list = formulas_dic[rule_id]
+        for rule_id in sorted(rule_dic.keys()):
+            formula_list = rule_dic[rule_id]['formula']
             kwargs_list.append({'target': rule_picker, 'kwargs': {'rule_id': rule_id, 'formula_list': formula_list}})
 
         ps = []

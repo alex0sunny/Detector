@@ -1,7 +1,8 @@
-from detector.filter_trigger.StaLtaTrigger import logger
+from detector.misc.globals import logger
 
 
-def send_email(address, message):
-    logger.info('send to address:' + address + '\nmessage:' + message)
+def send_email(address, message, on_off):
+    if on_off:
+        logger.info('send to address:' + address + '\nmessage:' + message)
 
 

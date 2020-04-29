@@ -7,8 +7,8 @@ from os.path import curdir, sep
 import os
 import backend
 from backend.trigger_html_util import save_pprint_trig, getTriggerParams, save_triggers, update_sockets, post_triggers, \
-    save_sources, save_rules, update_rules, getRuleFormulasDic, apply_sockets_rule, save_actions, \
-    update_triggers_sockets
+    save_sources, save_rules, update_rules, apply_sockets_rule, save_actions, \
+    update_triggers_sockets, getActions, getRuleDic
 from detector.action.relay_actions import get_val
 
 logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
@@ -66,7 +66,7 @@ rule_sockets_dic = {}
 def create_rule_sockets():
     rule_sockets = {}
     rule_sockets_off = {}
-    for rule_id in sorted(getRuleFormulasDic().keys()):
+    for rule_id in sorted(getRuleDic().keys()):
         update_sockets(rule_id, conn_str_sub, context, rule_sockets, rule_sockets_off,
                        subscription=Subscription.rule.value)
     return rule_sockets, rule_sockets_off
@@ -173,8 +173,11 @@ class myHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
-            print('trigger ids' + str(trigger_ids))
-            self.wfile.write(json.dumps(trigger_ids).encode())
+            #print('trigger ids' + str(trigger_ids))
+            json_dic = {'ids': trigger_ids, 'actions': [1, 2, 3]}
+            actions_dic = getActions()
+            json_dic['actions'] += list(actions_dic['sms'].keys()) + list(actions_dic['email'].keys())
+            self.wfile.write(json.dumps(json_dic).encode())
         if self.path == '/apply':
             socket_backend.send(b'AP')
             self.send_response(200)
@@ -204,7 +207,7 @@ class myHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
-            logger.debug('relay_dic:' + str(relay_dic))
+            #logger.debug('relay_dic:' + str(relay_dic))
             self.wfile.write(json.dumps(relay_dic).encode())
         if self.path == '/applyActions':
             save_actions(post_data_str)
@@ -220,6 +223,8 @@ class myHandler(BaseHTTPRequestHandler):
                         bin_message += b'1'
                     else:
                         bin_message += b'0'
+                else:
+                    bin_message += b'1'
                 socket_test.send(bin_message)
             print('actions test:' + str(ids))
         if self.path == '/load':
