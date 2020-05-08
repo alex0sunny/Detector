@@ -35,6 +35,8 @@ function initPage() {
 function apply_save() {
     apply();
     sendHTML();
+    setTimeout(nullifyVals, 3000);
+    //console.log('timer started');
 }
 
 function apply() {
@@ -64,6 +66,8 @@ function apply() {
 //		console.log('selected index:' + options.selectedIndex);
 		var channel = options[selectedIndex].text;
 		channels.push(channel);
+		var valCell = row.cells[valCol];
+		//valCell.innerHTML = 0;
 	};
 //	console.log('channels:' + channels.toString());
 	setSelectedChannels(channels);
@@ -80,6 +84,15 @@ function sendHTML() {
 	var pageHTML = "<html>\n" + document.documentElement.innerHTML + "\n</html>";
 	var data = JSON.stringify({"html": pageHTML, "sessionId":  sessionId});
 	xhr.send(data);
+}
+
+function nullifyVals()	{
+	//console.log('time out');
+	var rows = document.getElementById("triggerTable").rows;
+	for (var j = 1; j < rows.length; j++) {
+		var valCell = rows[j].cells[valCol];
+		valCell.innerHTML = 0;
+	}
 }
 
 var myVar = setInterval(myTimer, 1000);

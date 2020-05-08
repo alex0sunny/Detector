@@ -48,10 +48,9 @@ sockets_data_dic = {}
 
 def create_sockets_data():
     sockets_trigger = {}
-    sockets_detrigger = {}
     for trigger_param in getTriggerParams():
-        update_sockets(trigger_param['ind'], conn_str_sub, context, sockets_trigger, sockets_detrigger)
-    return sockets_trigger, sockets_detrigger
+        update_sockets(trigger_param['ind'], conn_str_sub, context, sockets_trigger)
+    return sockets_trigger
 
 
 def get_sockets_data(session_id):
@@ -65,11 +64,9 @@ rule_sockets_dic = {}
 
 def create_rule_sockets():
     rule_sockets = {}
-    rule_sockets_off = {}
     for rule_id in sorted(getRuleDic().keys()):
-        update_sockets(rule_id, conn_str_sub, context, rule_sockets, rule_sockets_off,
-                       subscription=Subscription.rule.value)
-    return rule_sockets, rule_sockets_off
+        update_sockets(rule_id, conn_str_sub, context, rule_sockets, subscription=Subscription.rule.value)
+    return rule_sockets
 
 
 def get_rule_sockets(session_id):
@@ -146,8 +143,8 @@ class myHandler(BaseHTTPRequestHandler):
             session_id = json_dic['sessionId']
             #logger.debug('session id:' + str(session_id))
             json_triggers = json_dic['triggers']
-            sockets_trigger, sockets_detrigger = get_sockets_data(session_id)
-            json_map = post_triggers(json_triggers, chans, socket_channels, sockets_trigger, sockets_detrigger)
+            sockets_trigger = get_sockets_data(session_id)
+            json_map = post_triggers(json_triggers, chans, socket_channels, sockets_trigger)
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
@@ -157,11 +154,11 @@ class myHandler(BaseHTTPRequestHandler):
             session_id = json_dic['sessionId']
             #logger.debug('session id:' + str(session_id))
             json_triggers = json_dic['triggers']
-            sockets_trigger, sockets_detrigger = get_sockets_data(session_id)
-            json_map = post_triggers(json_triggers, chans, socket_channels, sockets_trigger, sockets_detrigger)
-            sockets_rule, sockets_rule_off = get_rule_sockets(session_id)
+            sockets_trigger = get_sockets_data(session_id)
+            json_map = post_triggers(json_triggers, chans, socket_channels, sockets_trigger)
+            sockets_rule = get_rule_sockets(session_id)
             rules_dic = json_dic['rules']
-            rules_dic = update_rules(rules_dic, sockets_rule, sockets_rule_off)
+            rules_dic = update_rules(rules_dic, sockets_rule)
             json_map['rules'] = rules_dic
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
@@ -226,7 +223,7 @@ class myHandler(BaseHTTPRequestHandler):
                 else:
                     bin_message += b'1'
                 socket_test.send(bin_message)
-            print('actions test:' + str(ids))
+            #print('actions test:' + str(ids))
         if self.path == '/load':
             print('load')
 

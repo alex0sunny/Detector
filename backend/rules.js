@@ -41,7 +41,9 @@ function updateRules(rulesObj)	{
     	var row = rows[i];
       	var ruleId = row.cells[ruleIdCol].innerHTML;
        	//console.log('ruleId:' + ruleId + ' ruleVal:' + rulesObj[ruleId]);
-       	row.cells[ruleValCol].innerHTML = rulesObj[ruleId];
+      	if (ruleId in rulesObj)	{
+      		row.cells[ruleValCol].innerHTML = rulesObj[ruleId];
+      	}
     }	
 }
 
@@ -205,6 +207,16 @@ function apply()	{
 	var pageHTML = "<html>\n" + document.documentElement.innerHTML + "\n</html>";
 	var data = JSON.stringify({"html": pageHTML, "sessionId":  sessionId});
 	xhr.send(data);
+	setTimeout(nullifyVals, 3000);
+}
+
+function nullifyVals()	{
+	//console.log('time out');
+	var rows = document.getElementById("rulesTable").rows;
+	for (var i = 1; i < rows.length; i++) {
+		var valCell = rows[i].cells[ruleValCol];
+		valCell.innerHTML = 0;
+	}
 }
 
 function getRulesObj()	{

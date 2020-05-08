@@ -9,7 +9,7 @@ from detector.misc.globals import logger
 
 
 def turn(relay_n, on_off):
-    print('inside turn, on_off:' + str(on_off))
+    #print('inside turn, on_off:' + str(on_off))
     if relay_n == 2:
         sleep(.5)
     fname = os.path.split(inspect.getfile(backend))[0] + '/actions.html'

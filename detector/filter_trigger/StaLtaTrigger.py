@@ -18,7 +18,7 @@ from detector.misc.header_util import prep_name, ChHeader, prep_ch
 from detector.filter_trigger.filter_bandpass import Filter
 
 logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d %(message)s',
-                    level=logging.DEBUG)
+                    level=logging.INFO)
 logger = logging.getLogger('detector')
 
 logging.getLogger("matplotlib").setLevel(logging.WARNING)

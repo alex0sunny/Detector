@@ -121,23 +121,13 @@ def clear_triggers(sockets_trigger, sockets_detrigger):
             pass
 
 
-def update_sockets(trigger_index, conn_str, context, sockets_trigger, sockets_detrigger,
-                   subscription=Subscription.trigger.value):
+def update_sockets(trigger_index, conn_str, context, sockets_trigger, subscription=Subscription.trigger.value):
     logger.info('update sockets with ' + str(trigger_index))
     socket_trigger = context.socket(zmq.SUB)
-    socket_detrigger = context.socket(zmq.SUB)
     socket_trigger.connect(conn_str)
-    socket_detrigger.connect(conn_str)
     trigger_index_s = '%02d' % trigger_index
-    socket_trigger.setsockopt(zmq.SUBSCRIBE,
-                              subscription + trigger_index_s.encode() + b'1')
-    socket_detrigger.setsockopt(zmq.SUBSCRIBE,
-                                subscription + trigger_index_s.encode() + b'0')
+    socket_trigger.setsockopt(zmq.SUBSCRIBE, subscription + trigger_index_s.encode())
     sockets_trigger[trigger_index] = socket_trigger
-    #logger.debug('sockets inds:' + str(list(sockets_trigger.keys())))
-    sockets_detrigger[trigger_index] = socket_detrigger
-    # if subscription != Subscription.trigger.value:
-    #     logger.info('created sockets:' + str(socket_trigger) + ', ' + str(socket_detrigger))
 
 
 def save_triggers(post_data_str):
@@ -145,7 +135,7 @@ def save_triggers(post_data_str):
 
 
 def update_triggers_sockets(conn_str, context, sockets_trigger, sockets_detrigger):
-    clear_triggers(sockets_trigger, sockets_detrigger)
+    #clear_triggers(sockets_trigger, sockets_detrigger)
     for trigger_param in getTriggerParams():
         trigger_index = trigger_param['ind']
         if trigger_index not in sockets_trigger:
@@ -165,43 +155,25 @@ def save_actions(post_data_str):
 
 
 def apply_sockets_rule(conn_str, context, sockets_rule, sockets_rule_off):
-    clear_triggers(sockets_rule, sockets_rule_off)
+    #clear_triggers(sockets_rule, sockets_rule_off)
     for rule_id in getRuleDic().keys():
         if rule_id not in sockets_rule:
             update_sockets(rule_id, conn_str, context, sockets_rule, sockets_rule_off)
 
 
-def post_triggers(json_triggers, chans, socket_channels, sockets_trigger, sockets_detrigger):
+def post_triggers(json_triggers, chans, socket_channels, sockets_trigger):
     triggers = {int(k): v for k, v in json_triggers.items()}
     # logger.debug('post_data_str:' + post_data_str + '\ntriggers dic:' + str(triggers) + '\ntriggers keys:' +
     #              str(triggers.keys()))
     for i in triggers:
-        # logger.debug('i:' + str(i))
         if i in sockets_trigger:
-            # logger.debug('i in triggers')
-            if triggers[i]:
-                socket_target = sockets_detrigger[i]
-                socket_non_target = sockets_trigger[i]
-            else:
-                socket_target = sockets_trigger[i]
-                socket_non_target = sockets_detrigger[i]
+            socket_trigger = sockets_trigger[i]
             try:
-                mes = socket_target.recv(zmq.NOBLOCK)
+                mes = socket_trigger.recv(zmq.NOBLOCK)
+                triggers[i] = int(mes[3:4])
                 #logger.info('triggering detected, message:' + str(mes))
-                if triggers[i]:
-                    triggers[i] = 0
-                else:
-                    triggers[i] = 1
-                while True:
-                    socket_target.recv(zmq.NOBLOCK)
             except zmq.ZMQError:
                 pass
-            if triggers[i] == 0:  # clear previous triggerings
-                try:
-                    while True:
-                        socket_non_target.recv(zmq.NOBLOCK)
-                except zmq.ZMQError:
-                    pass
         else:
             logger.warning('i ' + str(i) + ' not in triggers')
 
@@ -224,38 +196,19 @@ def post_triggers(json_triggers, chans, socket_channels, sockets_trigger, socket
     return json_map
 
 
-def update_rules(json_rules, sockets_rule, sockets_rule_off):
+def update_rules(json_rules, sockets_rule):
     rules = {int(k): v for k, v in json_rules.items()}
     # logger.debug('post_data_str:' + post_data_str + '\ntriggers dic:' + str(triggers) + '\ntriggers keys:' +
     #              str(triggers.keys()))
     #logger.debug('rules:' + str(rules) + ' n of rule sockets:' + str(len(sockets_rule)))
     for i in rules:
         if i in sockets_rule:
-            #logger.debug('rule id:' + str(i))
-            # logger.debug('i in triggers')
-            if rules[i]:
-                socket_target = sockets_rule_off[i]
-                socket_non_target = sockets_rule[i]
-            else:
-                socket_target = sockets_rule[i]
-                socket_non_target = sockets_rule_off[i]
+            socket_rule = sockets_rule[i]
             try:
-                mes = socket_target.recv(zmq.NOBLOCK)
-                logger.info('triggering detected, message:' + str(mes))
-                if rules[i]:
-                    rules[i] = 0
-                else:
-                    rules[i] = 1
-                while True:
-                    socket_target.recv(zmq.NOBLOCK)
+                mes = socket_rule.recv(zmq.NOBLOCK)
+                rules[i] = int(mes[3:4])
             except zmq.ZMQError:
                 pass
-            if rules[i] == 0:  # clear previous triggerings
-                try:
-                    while True:
-                        socket_non_target.recv(zmq.NOBLOCK)
-                except zmq.ZMQError:
-                    pass
         else:
             logger.warning('i ' + str(i) + ' not in rules')
 
