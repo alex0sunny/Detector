@@ -11,6 +11,7 @@ from ctypes import cast, POINTER
 from io import BytesIO
 
 import zmq
+import numpy as np
 from obspy import UTCDateTime
 
 from detector.filter_trigger.StaLtaTrigger import logger
@@ -57,7 +58,8 @@ def signal_receiver(conn_str, station_bin):
             for ch in chs:
                 #bin_header = pack_ch_header(station_bin, ch, sampling_rate, starttime._ns)
                 bin_header = ChHeader(station_bin, ch, int(sampling_rate), starttime._ns)
-                bin_signal = (base64.decodebytes(json_data['signal']['samples'][ch].encode("ASCII")))
+                bin_signal_int = (base64.decodebytes(json_data['signal']['samples'][ch].encode("ASCII")))
+                bin_signal = np.frombuffer(bin_signal_int, dtype='int32').astype('float32').tobytes()
                 bin_data = BytesIO(bin_header).read() + bin_signal
                 socket_pub.send(Subscription.intern.value + bin_data)
             #chs_bin = len(chs).to_bytes(1, byteorder='big') + b''.join(list(map(prep_ch, chs)))

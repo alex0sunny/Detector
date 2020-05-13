@@ -20,7 +20,7 @@ class RmsTrigger:
             decrement = 0
         self.buf = self.buf[-self.n:]
         self.buf -= decrement
-        cum_sum = np.cumsum(data.astype('float32')**2)
+        cum_sum = np.cumsum(data**2)
         next_vals = self.v + (cum_sum - self.buf[-self.n:-self.n + data.size]) / self.n
         self.v = next_vals[-1]
         self.buf = np.append(self.buf, cum_sum+self.buf[-1])

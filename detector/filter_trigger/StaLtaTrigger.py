@@ -48,7 +48,7 @@ class StaLtaTriggerCore:
             decrement = 0
         self.buf = self.buf[-self.nlta:]
         self.buf -= decrement
-        cum_sum = np.cumsum(data.astype('float32')**2)
+        cum_sum = np.cumsum(data**2)
         next_sta = self.sta + \
             (cum_sum - self.buf[-self.nsta:-self.nsta + data.size] + self.buf[-self.nsta - 1]) / self.nsta
         next_lta = self.lta + (cum_sum - self.buf[-self.nlta:-self.nlta + data.size]) / self.nlta
@@ -100,7 +100,7 @@ def trigger_picker(ind, station, channel, trigger_type, freqmin, freqmax, init_l
         BytesIO(raw_data[:header_size]).readinto(header)
         sampling_rate = header.sampling_rate
         starttime = UTCDateTime(header.ns / 10 ** 9)
-        data = np.frombuffer(raw_data[header_size:], dtype='int32')
+        data = np.frombuffer(raw_data[header_size:], dtype='float32')
         if not filter:
             filter = Filter(sampling_rate, freqmin, freqmax)
         data = filter.bandpass(data)
