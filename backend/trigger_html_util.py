@@ -65,7 +65,15 @@ def getSources():
         src_dic[station] = {}
         src_dic[station]['host'] = row[1].text.strip()
         src_dic[station]['port'] = int(row[2].text.strip())
+        src_dic[station]['channels'] = row[3].text.split(' ')
     return src_dic
+
+
+def set_source_channels(station, channels):
+    fpath = os.path.split(inspect.getfile(backend))[0] + '/sources.html'
+    root = etree.parse(fpath)
+    root.xpath("//tr[./td='" + station + "']/td")[-1].text = ' '.join(channels)
+    root.write(fpath)
 
 
 def get_action_data(action_type, root, id_col, address_col, message_col):

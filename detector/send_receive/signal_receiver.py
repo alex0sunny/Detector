@@ -14,6 +14,7 @@ import zmq
 import numpy as np
 from obspy import UTCDateTime
 
+from backend.trigger_html_util import set_source_channels
 from detector.filter_trigger.StaLtaTrigger import logger
 from detector.misc.ChannelsUpdater import ChannelsUpdater
 from detector.misc.globals import Port, Subscription
@@ -31,6 +32,7 @@ def signal_receiver(conn_str, station_bin):
     socket_buf = context.socket(zmq.PUB)
     socket_buf.connect(conn_str_pub)
 
+    chs_ref = []
     channels_updater = ChannelsUpdater()
 
     while True:
@@ -55,6 +57,9 @@ def signal_receiver(conn_str, station_bin):
             sampling_rate = json_data['signal']['sample_rate']
             starttime = UTCDateTime(json_data['signal']['timestmp'])
             chs = json_data['signal']['samples']
+            if not chs_ref:
+                chs_ref = sorted(chs)
+                set_source_channels(station_bin.decode(), chs_ref)
             for ch in chs:
                 #bin_header = pack_ch_header(station_bin, ch, sampling_rate, starttime._ns)
                 bin_header = ChHeader(station_bin, ch, int(sampling_rate), starttime._ns)
