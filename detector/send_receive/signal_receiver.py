@@ -16,7 +16,6 @@ from obspy import UTCDateTime
 
 from backend.trigger_html_util import set_source_channels
 from detector.filter_trigger.StaLtaTrigger import logger
-from detector.misc.ChannelsUpdater import ChannelsUpdater
 from detector.misc.globals import Port, Subscription
 from detector.misc.header_util import prep_ch, CustomHeader, ChName, ChHeader
 from detector.send_receive.tcp_client import TcpClient
@@ -33,7 +32,6 @@ def signal_receiver(conn_str, station_bin):
     socket_buf.connect(conn_str_pub)
 
     chs_ref = []
-    channels_updater = ChannelsUpdater()
 
     while True:
         size_bytes = socket.recv(4)
@@ -67,15 +65,10 @@ def signal_receiver(conn_str, station_bin):
                 bin_signal = np.frombuffer(bin_signal_int, dtype='int32').astype('float32').tobytes()
                 bin_data = BytesIO(bin_header).read() + bin_signal
                 socket_pub.send(Subscription.intern.value + bin_data)
-            #chs_bin = len(chs).to_bytes(1, byteorder='big') + b''.join(list(map(prep_ch, chs)))
-            #custom_header = (ns_bin + chs_bin).ljust(50)
             custom_header = CustomHeader()
             chs_blist = list(map(prep_ch, chs))
-            channels_updater.update(station_bin, chs_blist)
-            socket_pub.send(Subscription.channel.value + json.dumps(channels_updater.get_channels_dic()).encode())
             chs_bin = b''.join(chs_blist)
             custom_header.channels = cast(chs_bin, POINTER(ChName * 20)).contents
             custom_header.ns = starttime._ns
-            #logger.debug('chs_bin:' + str(chs_bin))
             socket_buf.send(Subscription.signal.value + custom_header + size_bytes + raw_data)
 

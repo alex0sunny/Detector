@@ -62,7 +62,7 @@ kwargs_list = [{'target': send_signal,
                 'kwargs': {'st': st,
                            'conn_str': 'tcp://*:' + str(sources_dic[stations[0]]['port'])}},
                {'target': send_signal,
-                'kwargs': {'st': st100,
+                'kwargs': {'st': st100[:3],
                            'conn_str': 'tcp://*:' + str(sources_dic[stations[1]]['port'])}}]
 if __name__ == '__main__':
     for kwargs in kwargs_list:

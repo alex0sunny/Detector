@@ -21,15 +21,13 @@ def getTriggerParams():
     rows = root.xpath('/html/body/table/tbody/tr')[1:]
     params_list = []
     for row in rows:
+        [station] = [el.text for el in row[header_inds['station']].iter() if 'selected' in el.attrib]
         [channel] = [el.text for el in row[header_inds['channel']].iter() if 'selected' in el.attrib]
         [type_str] = [el.text for el in row[header_inds['trigger']].iter() if 'selected' in el.attrib]
         trigger_type = TriggerType[type_str]
-        params_map = {'channel': channel, 'trigger_type': trigger_type}
+        params_map = {'station': station, 'channel': channel, 'trigger_type': trigger_type}
         for header in header_inds.keys():
-            if header == 'station':
-                params_map[header] = row[header_inds[header]].text
-                continue
-            if header not in ['channel', 'val', 'trigger']:
+            if header not in ['channel', 'val', 'trigger', 'station']:
                 params_map[header] = int(row[header_inds[header]].text)
         params_list.append(params_map)
     return params_list
@@ -142,12 +140,12 @@ def save_triggers(post_data_str):
     save_pprint_trig(post_data_str, os.path.split(inspect.getfile(backend))[0] + '/triggers.html')
 
 
-def update_triggers_sockets(conn_str, context, sockets_trigger, sockets_detrigger):
+def update_triggers_sockets(conn_str, context, sockets_trigger):
     #clear_triggers(sockets_trigger, sockets_detrigger)
     for trigger_param in getTriggerParams():
         trigger_index = trigger_param['ind']
         if trigger_index not in sockets_trigger:
-            update_sockets(trigger_index, conn_str, context, sockets_trigger, sockets_detrigger)
+            update_sockets(trigger_index, conn_str, context, sockets_trigger)
 
 
 def save_sources(post_data_str):
@@ -162,17 +160,15 @@ def save_actions(post_data_str):
     save_pprint(post_data_str, os.path.split(inspect.getfile(backend))[0] + '/actions.html')
 
 
-def apply_sockets_rule(conn_str, context, sockets_rule, sockets_rule_off):
+def apply_sockets_rule(conn_str, context, sockets_rule):
     #clear_triggers(sockets_rule, sockets_rule_off)
     for rule_id in getRuleDic().keys():
         if rule_id not in sockets_rule:
-            update_sockets(rule_id, conn_str, context, sockets_rule, sockets_rule_off)
+            update_sockets(rule_id, conn_str, context, sockets_rule)
 
 
-def post_triggers(json_triggers, chans, socket_channels, sockets_trigger):
+def post_triggers(json_triggers, sockets_trigger):
     triggers = {int(k): v for k, v in json_triggers.items()}
-    # logger.debug('post_data_str:' + post_data_str + '\ntriggers dic:' + str(triggers) + '\ntriggers keys:' +
-    #              str(triggers.keys()))
     for i in triggers:
         if i in sockets_trigger:
             socket_trigger = sockets_trigger[i]
@@ -184,24 +180,7 @@ def post_triggers(json_triggers, chans, socket_channels, sockets_trigger):
                 pass
         else:
             logger.warning('i ' + str(i) + ' not in triggers')
-
-    # logging.debug('triggers:' + str(triggers))
-    try:
-        while True:
-            chans_dic = json.loads(socket_channels.recv(zmq.NOBLOCK)[1:].decode())
-            for station in chans_dic:
-                chans += chans_dic[station]
-    except zmq.ZMQError:
-        pass
-    chans = sorted(set(chans))
-    #logger.debug('chans:' + str(chans))
-
-    # logger.debug('chans:' + str(chans) + '\ntriggers:' + str(triggers))
-    json_map = {'triggers': triggers}
-    # chans = ['EH1', 'EH2', 'EHN']
-    if chans:
-        json_map['channels'] = chans
-    return json_map
+    return {'triggers': triggers}
 
 
 def update_rules(json_rules, sockets_rule):

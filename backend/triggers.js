@@ -7,29 +7,44 @@ var headersObj = new Object();
     }
 }
 //console.log('headersObj:' + JSON.stringify(headersObj));
+var stationCol = headersObj["station"];
 var channelCol = headersObj["channel"];
 var valCol = headersObj["val"];
 var indexCol = headersObj["ind"];
 var triggerCol = headersObj["trigger"];
 var sessionId = Math.floor(Math.random() * 1000000) + 1;
 
+initPage();
+
 function initPage() {
-	alert("onLoad");
 	var xhr = new XMLHttpRequest();
-	var url = "load";
-	xhr.open("POST", url, true);
+	xhr.open("POST", "initTrigger", true);
 	xhr.setRequestHeader("Content-Type", "application/json");
+	var respObj;
 	xhr.onreadystatechange = function () {
 		if (xhr.readyState === 4 && xhr.status === 200) {
-		    //console.log("do nothing now")
+		    respObj = JSON.parse(xhr.responseText);
+//		    console.log("respObj:" + respObj + "\nresponseText:" + xhr.responseText +
+//		    		"\nkeys:" + Object.keys(respObj) + "\n" + respObj.keys);
+		    var stations = Object.keys(respObj);
+		    stations.sort();
+			var rows = document.getElementById("triggerTable").rows;
+			for (var row of Array.from(rows).slice(1))	{
+				var channelCell = row.cells[channelCol];
+				var stationCell = row.cells[stationCol];
+				var station = getStation(stationCell);
+				setStationsCell(stations, stationCell);
+				if (station in respObj)	{
+					var channels = respObj[station]["channels"];
+					setChannelsCell(channels, channelCell);
+				}
+			}
 		}
 	};
-	var rows = document.getElementById("triggerTable").rows;
-	rows.forEach(function (row) {
-	    row.cells[valCol].innerHTML = 0 + "";
-	})
-	var data = JSON.stringify({"load": 1});
-	xhr.send(data);
+//	rows.forEach(function (row) {
+//	    row.cells[valCol].innerHTML = 0 + "";
+//	})
+	xhr.send();
 }
 
 function apply_save() {
@@ -72,6 +87,7 @@ function apply() {
 //	console.log('channels:' + channels.toString());
 	setSelectedChannels(channels);
 	setSelectedTriggers();
+	setSelectedStations();
 	var data = JSON.stringify({"apply": 1, "channels":  channels.join(" ")});
 	xhr.send(data);
 }
@@ -115,13 +131,6 @@ function myTimer() {
 //			console.log('trigger vals:' + Object.values(json.triggers));
 			var triggers = json.triggers;
 			setTriggerVals(triggers);
-			if ("channels" in json)    {
-                var channels = json.channels;
-//                console.log("page channels:" + pageMap.channels.toString() + "; channels:" + channels.toString());
-                if (channels.toString() != pageMap.channels.toString()) {
-                    setChannelsList(channels);
-                }
-            }
 		}
 	};
 	pageMap["sessionId"] = sessionId;
@@ -210,6 +219,24 @@ function setChannelsList(channels) {
 	}
 }
 
+function setChannelsCell(channels, channelCell)	{
+	var options = channelCell.children[0].options;
+	var selectedChannel = options[options.selectedIndex].text;
+	var channels_cur = channels.slice();
+	if (!channels_cur.includes(selectedChannel))	{
+		channels_cur.push(selectedChannel);
+	};
+	channelCell.children[0].innerHTML = "";
+	channels_cur.forEach(function (channel) {
+		var optionNode = document.createElement("option");
+		optionNode.text = channel;
+		if (channel == selectedChannel) {
+			optionNode.setAttribute("selected", "selected");
+		}
+		channelCell.children[0].appendChild(optionNode);
+	});
+}
+
 function setSelectedChannels(selectedChannels) {
 	var rows = document.getElementById("triggerTable").rows;
 	if (rows.length > 1) {
@@ -289,3 +316,42 @@ function addTrigger() {
     row.cells[indexCol].innerHTML = ind;
     table.children[0].appendChild(row);
 }
+
+function getStation(stationCell)	{
+	var options = stationCell.children[0].options;
+	return options[options.selectedIndex].text;
+}
+
+function setStationsCell(stations, stationCell)	{
+	var selectedStation = getStation(stationCell);
+	var stations_cur = stations.slice();
+	if (!stations_cur.includes(selectedStation))	{
+		stations_cur.push(selectedStation);
+	};
+	stationCell.children[0].innerHTML = "";
+	stations_cur.forEach(function (station) {
+		var optionNode = document.createElement("option");
+		optionNode.text = station;
+		if (station == selectedStation) {
+			optionNode.setAttribute("selected", "selected");
+		}
+		stationCell.children[0].appendChild(optionNode);
+	});
+}
+
+function setSelectedStations(stations, stationCell)	{
+	var rows = document.getElementById("triggerTable").rows;
+	for (var row of Array.from(rows).slice(1))	{
+		var stationCell = row.cells[stationCol];
+		var selectedStation = getStation(stationCell);
+		var options = stationCell.children[0].options;
+		for (var option of Array.from(options))	{
+			if (option.text == selectedStation)	{
+				option.setAttribute("selected", "selected");
+			} else	{
+				option.removeAttribute("selected");
+			}
+		}
+	}
+}
+

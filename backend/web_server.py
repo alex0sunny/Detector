@@ -8,7 +8,7 @@ import os
 import backend
 from backend.trigger_html_util import save_pprint_trig, getTriggerParams, save_triggers, update_sockets, post_triggers, \
     save_sources, save_rules, update_rules, apply_sockets_rule, save_actions, \
-    update_triggers_sockets, getActions, getRuleDic
+    update_triggers_sockets, getActions, getRuleDic, getSources
 from detector.action.relay_actions import get_val
 
 logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
@@ -30,18 +30,6 @@ socket_test = context.socket(zmq.PUB)
 socket_test.connect('tcp://localhost:' + str(Port.multi.value))
 
 conn_str_sub = 'tcp://localhost:' + str(Port.proxy.value)
-
-socket_channels = context.socket(zmq.SUB)
-socket_channels.connect(conn_str_sub)
-socket_channels.setsockopt(zmq.SUBSCRIBE, Subscription.channel.value)
-
-chans = []
-
-# socket_trigger = context.socket(zmq.SUB)
-# socket_trigger.connect(conn_str)
-# socket_trigger.setsockopt(zmq.SUBSCRIBE, b'ND01011')
-
-#trigger_params = getTriggerParams()
 
 sockets_data_dic = {}
 
@@ -137,6 +125,12 @@ class myHandler(BaseHTTPRequestHandler):
         content_length = int(self.headers['Content-Length'])  # <--- Gets the size of data
         post_data = self.rfile.read(content_length)  # <--- Gets the data itself
         post_data_str = post_data.decode()
+        if self.path == '/initTrigger':
+            stations_dic = getSources()
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps(stations_dic).encode())
         if self.path == '/trigger':
             # logging.info('json_map:' + str(json_map))
             json_dic = json.loads(post_data_str)
@@ -144,7 +138,7 @@ class myHandler(BaseHTTPRequestHandler):
             #logger.debug('session id:' + str(session_id))
             json_triggers = json_dic['triggers']
             sockets_trigger = get_sockets_data(session_id)
-            json_map = post_triggers(json_triggers, chans, socket_channels, sockets_trigger)
+            json_map = post_triggers(json_triggers, sockets_trigger)
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
@@ -155,7 +149,7 @@ class myHandler(BaseHTTPRequestHandler):
             #logger.debug('session id:' + str(session_id))
             json_triggers = json_dic['triggers']
             sockets_trigger = get_sockets_data(session_id)
-            json_map = post_triggers(json_triggers, chans, socket_channels, sockets_trigger)
+            json_map = post_triggers(json_triggers, sockets_trigger)
             sockets_rule = get_rule_sockets(session_id)
             rules_dic = json_dic['rules']
             rules_dic = update_rules(rules_dic, sockets_rule)
@@ -186,16 +180,16 @@ class myHandler(BaseHTTPRequestHandler):
             session_id = json_dic['sessionId']
             html = json_dic['html']
             save_rules(html)
-            sockets_rule, sockets_rule_off = get_rule_sockets(session_id)
-            apply_sockets_rule(conn_str_sub, context, sockets_rule, sockets_rule_off)
+            sockets_rule = get_rule_sockets(session_id)
+            apply_sockets_rule(conn_str_sub, context, sockets_rule)
             socket_backend.send(b'AP')
         if self.path == '/save':
             json_dic = json.loads(post_data_str)
             session_id = json_dic['sessionId']
             html = json_dic['html']
             save_triggers(html)
-            sockets_trigger, sockets_detrigger = get_sockets_data(session_id)
-            update_triggers_sockets(conn_str_sub, context, sockets_trigger, sockets_detrigger)
+            sockets_trigger = get_sockets_data(session_id)
+            update_triggers_sockets(conn_str_sub, context, sockets_trigger)
         if self.path == '/saveSources':
             save_sources(post_data_str)
             socket_backend.send(b'AP')
