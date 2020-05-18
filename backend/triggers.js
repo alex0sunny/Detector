@@ -16,17 +16,18 @@ var sessionId = Math.floor(Math.random() * 1000000) + 1;
 
 initPage();
 
+var stationsData;
+
 function initPage() {
 	var xhr = new XMLHttpRequest();
 	xhr.open("POST", "initTrigger", true);
 	xhr.setRequestHeader("Content-Type", "application/json");
-	var respObj;
 	xhr.onreadystatechange = function () {
 		if (xhr.readyState === 4 && xhr.status === 200) {
-		    respObj = JSON.parse(xhr.responseText);
+			stationsData = JSON.parse(xhr.responseText);
 //		    console.log("respObj:" + respObj + "\nresponseText:" + xhr.responseText +
 //		    		"\nkeys:" + Object.keys(respObj) + "\n" + respObj.keys);
-		    var stations = Object.keys(respObj);
+		    var stations = Object.keys(stationsData);
 		    stations.sort();
 			var rows = document.getElementById("triggerTable").rows;
 			for (var row of Array.from(rows).slice(1))	{
@@ -34,8 +35,8 @@ function initPage() {
 				var stationCell = row.cells[stationCol];
 				var station = getStation(stationCell);
 				setStationsCell(stations, stationCell);
-				if (station in respObj)	{
-					var channels = respObj[station]["channels"];
+				if (station in stationsData)	{
+					var channels = stationsData[station]["channels"];
 					setChannelsCell(channels, channelCell);
 				}
 			}
@@ -355,3 +356,14 @@ function setSelectedStations(stations, stationCell)	{
 	}
 }
 
+function stationChange(node)	{
+	var station = node.value;
+	var row = node.parentNode.parentNode;
+	if (!stationsData)	{
+		console.log("stations data is unavailable");
+	} else	{
+		var channelCell = row.cells[channelCol];
+		var channels = stationsData[station]["channels"];
+		setChannelsCell(channels, channelCell);
+	}
+}
