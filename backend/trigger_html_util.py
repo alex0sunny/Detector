@@ -26,8 +26,11 @@ def getTriggerParams():
         [type_str] = [el.text for el in row[header_inds['trigger']].iter() if 'selected' in el.attrib]
         trigger_type = TriggerType[type_str]
         params_map = {'station': station, 'channel': channel, 'trigger_type': trigger_type}
+        for cell_name in ['init_level', 'stop_level']:
+            params_map[cell_name] = float(row[header_inds[cell_name]][0].get('value'))
+        excluded_headers = ['channel', 'val', 'trigger'] + list(params_map.keys())
         for header in header_inds.keys():
-            if header not in ['channel', 'val', 'trigger', 'station']:
+            if header not in excluded_headers:
                 params_map[header] = int(row[header_inds[header]].text)
         params_list.append(params_map)
     return params_list
@@ -169,6 +172,8 @@ def apply_sockets_rule(conn_str, context, sockets_rule):
 
 def post_triggers(json_triggers, sockets_trigger):
     triggers = {int(k): v for k, v in json_triggers.items()}
+    # logger.debug('post_data_str:' + post_data_str + '\ntriggers dic:' + str(triggers) + '\ntriggers keys:' +
+    #              str(triggers.keys()))
     for i in triggers:
         if i in sockets_trigger:
             socket_trigger = sockets_trigger[i]
@@ -180,6 +185,7 @@ def post_triggers(json_triggers, sockets_trigger):
                 pass
         else:
             logger.warning('i ' + str(i) + ' not in triggers')
+
     return {'triggers': triggers}
 
 

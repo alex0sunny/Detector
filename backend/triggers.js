@@ -89,6 +89,7 @@ function apply() {
 	setSelectedChannels(channels);
 	setSelectedTriggers();
 	setSelectedStations();
+	setLevels();
 	var data = JSON.stringify({"apply": 1, "channels":  channels.join(" ")});
 	xhr.send(data);
 }
@@ -358,12 +359,22 @@ function setSelectedStations(stations, stationCell)	{
 
 function stationChange(node)	{
 	var station = node.value;
-	var row = node.parentNode.parentNode;
+	var row = node.parentNode;
 	if (!stationsData)	{
 		console.log("stations data is unavailable");
 	} else	{
 		var channelCell = row.cells[channelCol];
 		var channels = stationsData[station]["channels"];
 		setChannelsCell(channels, channelCell);
+	}
+}
+
+function setLevels()	{
+	var rows = document.getElementById("triggerTable").rows;
+	for (var row of Array.from(rows).slice(1))	{
+		for (var header of ["init_level", "stop_level"])	{
+			var inputElement = row.cells[headersObj[header]].children[0];
+			inputElement.setAttribute("value", inputElement.value);
+		}
 	}
 }
