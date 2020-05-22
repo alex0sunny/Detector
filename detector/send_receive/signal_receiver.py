@@ -57,7 +57,8 @@ def signal_receiver(conn_str, station_bin):
             chs = json_data['signal']['samples']
             if not chs_ref:
                 chs_ref = sorted(chs)
-                set_source_channels(station_bin.decode(), chs_ref)
+                units = json_data['signal']['counts']
+                set_source_channels(station_bin.decode(), chs_ref, units)
             for ch in chs:
                 #bin_header = pack_ch_header(station_bin, ch, sampling_rate, starttime._ns)
                 bin_header = ChHeader(station_bin, ch, int(sampling_rate), starttime._ns)

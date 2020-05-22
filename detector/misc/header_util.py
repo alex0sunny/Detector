@@ -121,7 +121,7 @@ def stream_to_bin(st):
     return bin_stats + data_multiplexed.tobytes()
 
 
-def stream_to_json(st):
+def stream_to_json(st, units='V'):
     stats = st[0].stats
     station = stats.station
     sampling_rate = stats.sampling_rate
@@ -136,6 +136,7 @@ def stream_to_json(st):
         data_decoded = base64.encodebytes(tr.data.tobytes()).decode('ASCII')
         samples_dic[tr.stats.channel] = data_decoded
     signal_dic['samples'] = samples_dic
+    signal_dic['counts'] = units
     json_dic['signal'] = signal_dic
     return json.dumps(json_dic)
 

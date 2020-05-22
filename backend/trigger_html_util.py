@@ -67,13 +67,16 @@ def getSources():
         src_dic[station]['host'] = row[1].text.strip()
         src_dic[station]['port'] = int(row[2].text.strip())
         src_dic[station]['channels'] = row[3].text.split(' ')
+        src_dic[station]['units'] = row[4].text.split(' ')
     return src_dic
 
 
-def set_source_channels(station, channels):
+def set_source_channels(station, channels, units):
     fpath = os.path.split(inspect.getfile(backend))[0] + '/sources.html'
     root = etree.parse(fpath)
-    root.xpath("//tr[./td='" + station + "']/td")[-1].text = ' '.join(channels)
+    cell_path = "//tr[./td='" + station + "']/td"
+    root.xpath(cell_path)[3].text = ' '.join(channels)
+    root.xpath(cell_path)[4].text = units
     root.write(fpath)
 
 

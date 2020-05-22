@@ -12,6 +12,8 @@ var channelCol = headersObj["channel"];
 var valCol = headersObj["val"];
 var indexCol = headersObj["ind"];
 var triggerCol = headersObj["trigger"];
+var initCol = headersObj["init_level"];
+var stopCol = headersObj["stop_level"];
 var sessionId = Math.floor(Math.random() * 1000000) + 1;
 
 initPage();
@@ -35,6 +37,7 @@ function initPage() {
 				var stationCell = row.cells[stationCol];
 				var station = getStation(stationCell);
 				setStationsCell(stations, stationCell);
+				setUnits(row);
 				if (station in stationsData)	{
 					var channels = stationsData[station]["channels"];
 					setChannelsCell(channels, channelCell);
@@ -359,10 +362,12 @@ function setSelectedStations(stations, stationCell)	{
 
 function stationChange(node)	{
 	var station = node.value;
-	var row = node.parentNode;
+	var row = node.parentNode.parentNode;
+	//console.log("row innerHTML:" + row.innerHTML);
 	if (!stationsData)	{
 		console.log("stations data is unavailable");
 	} else	{
+		setUnits(row);
 		var channelCell = row.cells[channelCol];
 		var channels = stationsData[station]["channels"];
 		setChannelsCell(channels, channelCell);
@@ -377,4 +382,20 @@ function setLevels()	{
 			inputElement.setAttribute("value", inputElement.value);
 		}
 	}
+}
+
+function setUnits(row)	{
+	var unitsNode  = row.cells[initCol].children[1];
+	var unitsNode2 = row.cells[stopCol].children[1];
+	var units = "";
+	if (row.cells[triggerCol].children[0].value == "RMS")	{
+		units = "V";
+		var stationCell = row.cells[stationCol];
+		var station = getStation(stationCell);
+		if (station in stationsData)	{
+			units = stationsData[station]["units"];
+		}
+	}
+	unitsNode.innerHTML  = units;
+	unitsNode2.innerHTML = units;
 }

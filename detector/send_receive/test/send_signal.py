@@ -17,7 +17,7 @@ import detector.misc as misc
 import inspect
 
 
-def send_signal(st, conn_str):
+def send_signal(st, conn_str, units='V'):
     signal_generator = SignalGenerator(st)
 
     context = zmq.Context()
@@ -40,7 +40,7 @@ def send_signal(st, conn_str):
             pyplot.show()
             pyplot.pause(.01)
         sts = chunk_stream(st)
-        json_datas = [stream_to_json(st).encode('utf8') for st in sts]
+        json_datas = [stream_to_json(st, units).encode('utf8') for st in sts]
         for json_data in json_datas:
             data_len = len(json_data)
             # print('bdata size:' + str(data_len))
@@ -62,7 +62,7 @@ kwargs_list = [{'target': send_signal,
                 'kwargs': {'st': st,
                            'conn_str': 'tcp://*:' + str(sources_dic[stations[0]]['port'])}},
                {'target': send_signal,
-                'kwargs': {'st': st100[:3],
+                'kwargs': {'st': st100[:3], 'units': 'A',
                            'conn_str': 'tcp://*:' + str(sources_dic[stations[1]]['port'])}}]
 if __name__ == '__main__':
     for kwargs in kwargs_list:

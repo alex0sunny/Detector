@@ -1,27 +1,26 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
 <html><head><title>signal sources</title></head><body>
-		<table style="width:100%" id="sourcesTable"><tbody><tr><th align="left">station</th>
-					<th align="left">host</th>
-					<th align="left">port</th>
-					<th align="left">channels</th>
-				</tr><tr><td contenteditable="true">ND01</td>
-					<td contenteditable="true">localhost</td>
-					<td contenteditable="true">5555</td>
-					<td>CHE CHN CHZ</td>
-				</tr><tr><td contenteditable="true">ND02</td>
-					<td contenteditable="true">alexeynote</td>
-					<td contenteditable="true">5565</td>
-					<td>CHN CHX CHZ</td>
-				</tr></tbody></table><p align="right">
-			<button type="button" onclick="apply_save()">
-					apply
-			</button>
-			<button type="button" onclick="location.reload(true)">
-					discard
-			</button>
-			<button type="add" onclick="addSource()">
-					add source
-			</button>
-		</p>
-		<script src="sources.js">
-		</script></body></html>
+	<table style="width: 100%" id="sourcesTable"><tbody><tr><th align="left">station</th>
+				<th align="left">host</th>
+				<th align="left">port</th>
+				<th align="left">channels</th>
+				<th align="left">units</th>
+			</tr><tr><td contenteditable="true">ND01</td>
+				<td contenteditable="true">localhost</td>
+				<td contenteditable="true">5555</td>
+				<td>CHE CHN CHZ</td>
+				<td>V</td>
+			</tr><tr><td contenteditable="true">ND02</td>
+				<td contenteditable="true">alexeynote</td>
+				<td contenteditable="true">5565</td>
+				<td>CHN CHX CHZ</td>
+				<td>A</td>
+			</tr></tbody></table><p align="right">
+		<button type="button" onclick="apply_save()">apply</button>
+		<button type="button" onclick="location.reload(true)">
+			discard</button>
+		<button type="add" onclick="addSource()">add source</button>
+	</p>
+	<script src="sources.js">
+		
+	</script></body></html>
