@@ -101,9 +101,14 @@ def trigger_picker(ind, station, channel, trigger_type, freqmin, freqmax, init_l
         sampling_rate = header.sampling_rate
         starttime = UTCDateTime(header.ns / 10 ** 9)
         data = np.frombuffer(raw_data[header_size:], dtype='float32')
+        # if np.max(data) > 1:
+        #     logger.info('exceed 1:\n' + str(data))
         if not filter:
             filter = Filter(sampling_rate, freqmin, freqmax)
-        data = filter.bandpass(data)
+        data_f = filter.bandpass(data)
+        # if np.max(data) > 1:
+        #     logger.info('exceed 1 after filter:\n' + str(data_f))
+        data = data_f
         if not data_trigger:
             nsta = round(sta * sampling_rate)
             if trigger_type == TriggerType.sta_lta:
@@ -122,12 +127,14 @@ def trigger_picker(ind, station, channel, trigger_type, freqmin, freqmax, init_l
                 socket_trigger.send(message_start + b'0' + date_time._ns.to_bytes(8, byteorder='big'))
                 socket_trigger.send(message_start + b'0' + date_time._ns.to_bytes(8, byteorder='big'))
                 logger.debug('detriggered, ch:' + channel + ' trigger id:' + str(trigger_index_s))
+                #              '\ndata:\n' + str(data) + '\ntrigger_data:\n' + str(trigger_data))
                 # events_list.append({'channel': channel, 'dt': date_time, 'trigger': False})
                 trigger_on = False
             if not trigger_on and a:
                 socket_trigger.send(message_start + b'1' + date_time._ns.to_bytes(8, byteorder='big'))
                 socket_trigger.send(message_start + b'1' + date_time._ns.to_bytes(8, byteorder='big'))
                 logger.debug('triggered, ch:' + channel + ' trigger id:' + str(trigger_index_s))
+                #              '\ndata:\n' + str(data) + '\ntrigger_data:\n' + str(trigger_data))
                 #events_list.append({'channel': channel, 'dt': date_time, 'trigger': True})
                 trigger_on = True
             date_time += 1.0 / sampling_rate

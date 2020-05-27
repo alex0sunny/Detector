@@ -1,6 +1,8 @@
 import numpy as np
 from obspy import *
 
+from detector.misc.globals import logger
+
 
 class RmsTrigger:
 
@@ -10,6 +12,7 @@ class RmsTrigger:
         self.buf = np.require(np.zeros(n), dtype='float32')
 
     def trigger(self, data):
+        #logger.debug('data:\n' + str(data))
         if data.size >= self.n:
             res1 = self.trigger(data[:self.n - 1])
             res2 = self.trigger(data[self.n - 1:])
@@ -24,8 +27,9 @@ class RmsTrigger:
         next_vals = self.v + (cum_sum - self.buf[-self.n:-self.n + data.size]) / self.n
         self.v = next_vals[-1]
         self.buf = np.append(self.buf, cum_sum+self.buf[-1])
-        #logger.debug('\nsta:' + str(self.sta[-data.size:]))  # + '\nlta:' + str(self.lta[-data.size:]))
-        return np.sqrt(next_vals)
+        ret_val = np.sqrt(next_vals)
+        #logger.debug('ret_val:\n' + str(ret_val))
+        return ret_val
 
 
 # class RmsTrigger:

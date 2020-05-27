@@ -1,3 +1,4 @@
+import json
 import time
 from multiprocessing import Process
 
@@ -9,6 +10,7 @@ from matplotlib import pyplot
 #from detector.misc.globals import ports_map
 from backend.trigger_html_util import getSources
 from detector.misc.header_util import chunk_stream, stream_to_json
+from detector.send_receive.njsp_server import NjspServer
 from detector.test.signal_generator import SignalGenerator
 from detector.send_receive.tcp_server import TcpServer
 import zmq
@@ -21,14 +23,20 @@ def send_signal(st, conn_str, units='V'):
     signal_generator = SignalGenerator(st)
 
     context = zmq.Context()
-    sender = TcpServer(conn_str, context)
     pyplot.ion()
     figure = pyplot.figure()
     st_vis = Stream()
     check_time = time.time()
+    json_str = json.dumps({'parameters': {'k': float(st[0].stats.k)}})
+    size_bytes = int(len(json_str)).to_bytes(4, byteorder='little')
+    sender = NjspServer(size_bytes + json_str.encode(), conn_str, context)
+
     while True:
         st = signal_generator.get_stream()
-        st_vis += st.copy()
+        st_add = st.copy()
+        for tr_vis in st_add:
+            tr_vis.data = np.require(tr_vis.data / tr_vis.stats.k, 'float32')
+        st_vis += st_add
         cur_time = time.time()
         if cur_time > check_time + 1:
             check_time = cur_time
@@ -52,7 +60,11 @@ def send_signal(st, conn_str, units='V'):
 
 base_path = os.path.split(inspect.getfile(misc))[0] + '/'
 st = read(base_path + 'st1000.mseed')
+for tr in st:
+    tr.stats.k = 1000.0
 st100 = read(base_path + 'st100.mseed')
+for tr in st100:
+    tr.stats.k = 10000
 data = st[-1].data
 st[-1].data = np.append(data[2000:], data[:2000])
 sources_dic = getSources()

@@ -33,6 +33,7 @@ def signal_receiver(conn_str, station_bin):
 
     chs_ref = []
 
+    k = 1
     while True:
         size_bytes = socket.recv(4)
         size = int.from_bytes(size_bytes, byteorder='little')
@@ -51,6 +52,9 @@ def signal_receiver(conn_str, station_bin):
         except Exception as e:
             logger.error('cannot parse json data:\n' + str(raw_data) + '\n' + str(e))
             continue
+        if 'parameters' in json_data:
+            k = json_data['parameters']['k']
+            print('received k:' + str(k))
         if 'signal' in json_data:
             sampling_rate = json_data['signal']['sample_rate']
             starttime = UTCDateTime(json_data['signal']['timestmp'])
@@ -63,7 +67,11 @@ def signal_receiver(conn_str, station_bin):
                 #bin_header = pack_ch_header(station_bin, ch, sampling_rate, starttime._ns)
                 bin_header = ChHeader(station_bin, ch, int(sampling_rate), starttime._ns)
                 bin_signal_int = (base64.decodebytes(json_data['signal']['samples'][ch].encode("ASCII")))
-                bin_signal = np.frombuffer(bin_signal_int, dtype='int32').astype('float32').tobytes()
+                # test_signal = np.frombuffer(bin_signal_int, dtype='int32').astype('float32') / k
+                # if np.max(test_signal) > 1:
+                #     logger.info('exceed 1:\n' + str(test_signal))
+                #logger.info('sampling_rate:' + str(sampling_rate) + ' k:' + str(k))
+                bin_signal = (np.frombuffer(bin_signal_int, dtype='int32').astype('float32') / k).tobytes()
                 bin_data = BytesIO(bin_header).read() + bin_signal
                 socket_pub.send(Subscription.intern.value + bin_data)
             custom_header = CustomHeader()
