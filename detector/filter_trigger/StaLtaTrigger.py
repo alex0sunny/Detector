@@ -101,14 +101,9 @@ def trigger_picker(ind, station, channel, trigger_type, freqmin, freqmax, init_l
         sampling_rate = header.sampling_rate
         starttime = UTCDateTime(header.ns / 10 ** 9)
         data = np.frombuffer(raw_data[header_size:], dtype='float32')
-        # if np.max(data) > 1:
-        #     logger.info('exceed 1:\n' + str(data))
         if not filter:
             filter = Filter(sampling_rate, freqmin, freqmax)
-        data_f = filter.bandpass(data)
-        # if np.max(data) > 1:
-        #     logger.info('exceed 1 after filter:\n' + str(data_f))
-        data = data_f
+        data = filter.bandpass(data)
         if not data_trigger:
             nsta = round(sta * sampling_rate)
             if trigger_type == TriggerType.sta_lta:

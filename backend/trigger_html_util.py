@@ -71,7 +71,7 @@ def getSources():
     return src_dic
 
 
-def set_source_channels(station, channels, units):
+def set_source_channels(station, channels, units='V'):
     fpath = os.path.split(inspect.getfile(backend))[0] + '/sources.html'
     root = etree.parse(fpath)
     cell_path = "//tr[./td='" + station + "']/td"

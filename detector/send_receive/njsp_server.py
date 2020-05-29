@@ -13,6 +13,7 @@ class NjspServer(TcpServer):
     def send(self, data):
         if not self.identity:
             print('send params')
+            super().send(b'NJSP\0\0');
             super().send(self.params_bstr)
         super().send(data)
 

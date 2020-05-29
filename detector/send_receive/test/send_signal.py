@@ -1,5 +1,6 @@
 import json
 import time
+from collections import OrderedDict
 from multiprocessing import Process
 
 import numpy as np
@@ -27,8 +28,19 @@ def send_signal(st, conn_str, units='V'):
     figure = pyplot.figure()
     st_vis = Stream()
     check_time = time.time()
-    json_str = json.dumps({'parameters': {'k': float(st[0].stats.k)}})
-    size_bytes = int(len(json_str)).to_bytes(4, byteorder='little')
+    ch_dic = {tr.stats.channel: {'ch_active': True, 'counts_in_volt': tr.stats.k} for tr in st}
+    parameters_dic = {
+        'parameters': {
+            'streams': {
+                st[0].stats.station: {
+                    'sample_rate': int(st[0].stats.sampling_rate),
+                    'channels': ch_dic
+                }
+            }
+        }
+    }
+    json_str = json.dumps(OrderedDict(parameters_dic))
+    size_bytes = ('%08x' % len(json_str)).encode()
     sender = NjspServer(size_bytes + json_str.encode(), conn_str, context)
 
     while True:
@@ -52,7 +64,8 @@ def send_signal(st, conn_str, units='V'):
         for json_data in json_datas:
             data_len = len(json_data)
             # print('bdata size:' + str(data_len))
-            size_bytes = int(data_len).to_bytes(4, byteorder='little')
+            #size_bytes = int(data_len).to_bytes(4, byteorder='little')
+            size_bytes = ('%08x' % data_len).encode()
             sender.send(size_bytes + json_data)
             time.sleep(.01)
         time.sleep(.1)

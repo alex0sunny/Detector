@@ -1,4 +1,5 @@
 from _ctypes import Structure
+from collections import OrderedDict
 from ctypes import c_char, c_ushort, c_uint64, c_ulonglong
 
 from obspy import *
@@ -124,21 +125,20 @@ def stream_to_bin(st):
 def stream_to_json(st, units='V'):
     stats = st[0].stats
     station = stats.station
-    sampling_rate = stats.sampling_rate
     stamp_ns = stats.starttime._ns
-    n_of_chans = len(st)
-    json_dic = {}
-    signal_dic = {}
-    signal_dic['sample_rate'] = sampling_rate
-    signal_dic['timestmp'] = stamp_ns / 10**9
     samples_dic = {}
     for tr in st:
         data_decoded = base64.encodebytes(tr.data.tobytes()).decode('ASCII')
         samples_dic[tr.stats.channel] = data_decoded
-    signal_dic['samples'] = samples_dic
-    signal_dic['counts'] = units
-    json_dic['signal'] = signal_dic
-    return json.dumps(json_dic)
+    data_packet = {
+        'streams': {
+            station: {
+                'timestamp': stamp_ns / 10 ** 9,
+                'samples': samples_dic
+            }
+        }
+    }
+    return json.dumps(OrderedDict(data_packet))
 
 
 def bin_to_stream(bin_data):
