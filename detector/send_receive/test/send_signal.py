@@ -21,11 +21,14 @@ import inspect
 
 
 def send_signal(st, conn_str, units='V'):
+    show_signal = False
+
     signal_generator = SignalGenerator(st)
 
     context = zmq.Context()
-    pyplot.ion()
-    figure = pyplot.figure()
+    if show_signal:
+        pyplot.ion()
+        figure = pyplot.figure()
     st_vis = Stream()
     check_time = time.time()
     ch_dic = {tr.stats.channel: {'ch_active': True, 'counts_in_volt': tr.stats.k} for tr in st}
@@ -55,16 +58,17 @@ def send_signal(st, conn_str, units='V'):
             st_vis.sort().merge()
             starttime = st_vis[0].stats.endtime - 5
             st_vis.trim(starttime=starttime)
-            pyplot.clf()
-            st_vis.plot(fig=figure)
-            pyplot.show()
-            pyplot.pause(.01)
+            if show_signal:
+                pyplot.clf()
+                st_vis.plot(fig=figure)
+                pyplot.show()
+                pyplot.pause(.01)
+            else:
+                time.sleep(.1)  # delete this when return pyplot!
         sts = chunk_stream(st)
         json_datas = [stream_to_json(st, units).encode('utf8') for st in sts]
         for json_data in json_datas:
             data_len = len(json_data)
-            # print('bdata size:' + str(data_len))
-            #size_bytes = int(data_len).to_bytes(4, byteorder='little')
             size_bytes = ('%08x' % data_len).encode()
             sender.send(size_bytes + json_data)
             time.sleep(.01)
@@ -83,9 +87,9 @@ st[-1].data = np.append(data[2000:], data[:2000])
 sources_dic = getSources()
 print(sources_dic)
 stations = list(sources_dic.keys())
-kwargs_list = [{'target': send_signal,
-                'kwargs': {'st': st,
-                           'conn_str': 'tcp://*:' + str(sources_dic[stations[0]]['port'])}},
+kwargs_list = [#{'target': send_signal,
+                #'kwargs': {'st': st,
+                           #'conn_str': 'tcp://*:' + str(sources_dic[stations[0]]['port'])}},
                {'target': send_signal,
                 'kwargs': {'st': st100[:3], 'units': 'A',
                            'conn_str': 'tcp://*:' + str(sources_dic[stations[1]]['port'])}}]

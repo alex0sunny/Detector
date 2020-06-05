@@ -100,7 +100,7 @@ def trigger_picker(ind, station, channel, trigger_type, freqmin, freqmax, init_l
         BytesIO(raw_data[:header_size]).readinto(header)
         sampling_rate = header.sampling_rate
         starttime = UTCDateTime(header.ns / 10 ** 9)
-        data = np.frombuffer(raw_data[header_size:], dtype='float32')
+        data = np.frombuffer(raw_data[header_size:], dtype='float64')
         if not filter:
             filter = Filter(sampling_rate, freqmin, freqmax)
         data = filter.bandpass(data)
@@ -111,7 +111,13 @@ def trigger_picker(ind, station, channel, trigger_type, freqmin, freqmax, init_l
                 data_trigger = StaLtaTrigger(nsta, nlta)
             if trigger_type == TriggerType.RMS:
                 data_trigger = RmsTrigger(nsta)
-        trigger_data = data_trigger.trigger(data)
+        trigger_data = data_trigger.trigger(data.astype('float'))
+        # data_square = data ** 2
+        # nsta = data_trigger.triggerCore.nsta
+        # logger.debug('max relation:' + str(np.max(trigger_data)) + ', avr data square:' + str(np.average(data_square)))
+        # if len(data_square) > nsta:
+        #     logger.debug('avr nsta square:' + str(np.average(data_square[-nsta:])))
+
         activ_data = trigger_data > init_level
         deactiv_data = trigger_data < stop_level
         date_time = starttime

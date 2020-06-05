@@ -20,7 +20,10 @@ logger = logging.getLogger('detector')
 # print('list dir: ' + str(os.listdir()))
 from detector.misc.globals import Port, Subscription
 
-PORT_NUMBER = 8080
+PORT_NUMBER = 8001
+
+web_dir = os.path.dirname(__file__)
+os.chdir(web_dir)
 
 context = zmq.Context()
 socket_backend = context.socket(zmq.PUB)

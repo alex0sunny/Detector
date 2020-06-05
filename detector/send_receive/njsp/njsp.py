@@ -1,4 +1,10 @@
-import json, base64, threading, socket, select, collections, queue, time
+import base64
+import collections
+import json
+import queue
+import select
+import socket
+import threading
 
 
 class NJSP:
