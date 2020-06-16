@@ -10,6 +10,7 @@ import json
 from collections import OrderedDict
 from ctypes import cast, POINTER
 from io import BytesIO
+from time import sleep
 
 import zmq
 import numpy as np
@@ -21,13 +22,13 @@ from detector.filter_trigger.StaLtaTrigger import logger
 from detector.misc.globals import Port, Subscription
 from detector.misc.header_util import prep_ch, CustomHeader, ChName, ChHeader
 from detector.send_receive.njsp_client import NjspClient
-from detector.send_receive.tcp_client import TcpClient
 
 STREAM_IND = 0
 STREAM_NAME = None
 
 
 def signal_receiver(conn_str, station_bin):
+    sleep(5)
     show_signal = True
 
     context = zmq.Context()
@@ -72,10 +73,12 @@ def signal_receiver(conn_str, station_bin):
             logger.error('cannot parse json data:\n' + str(raw_data) + '\n' + str(e))
             continue
         if 'parameters' in json_data:
-            print('received parameters')
+            logger.debug('received parameters')
             streams_dic = json_data['parameters']['streams']
             STREAM_NAME = list(streams_dic.keys())[STREAM_IND]
             params_dic = streams_dic[STREAM_NAME]
+            socket_buf.send(Subscription.parameters.value + size_bytes + raw_data)
+            #print('params bytes sent to inner socket:' + str(Subscription.parameters.value + size_bytes + raw_data))
         if 'streams' in json_data:
             #sampling_rate = json_data['streams']['sample_rate']
             starttime = UTCDateTime(json_data['streams'][STREAM_NAME]['timestamp'])

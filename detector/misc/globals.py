@@ -19,7 +19,7 @@ class Port(Enum):
     signal = 10003
     signal_route = 5559
     internal_resend = 5560
-    signal_resend = 5561
+    signal_resend = 10001
     multi = 5562
     proxy = 5563
     backend = 5564
@@ -36,6 +36,7 @@ class Subscription(Enum):
     raw     = bytes([4])
     rule    = bytes([5])
     test    = bytes([6])
+    parameters = bytes([7])
 
 
 class CustomThread(Thread):

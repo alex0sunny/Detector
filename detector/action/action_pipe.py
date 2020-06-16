@@ -24,7 +24,7 @@ def execute_action(action_type, action_message, action_address=None):
     actions_str = json.dumps({"actions": [action_dic]})
     try:
         with open('/var/lib/cloud9/ndas_rt/fifos/trigger', 'w') as p:
-            p.write(actions_str)
+            p.write(actions_str + '\n')
         logger.info("Trigger fired!")
     except Exception as ex:
         logger.error("Error writing data to trigger pipe:" + str(ex))

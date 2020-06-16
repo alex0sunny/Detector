@@ -1,3 +1,4 @@
+import time
 from time import sleep
 
 import zmq
@@ -34,6 +35,11 @@ def to_action_rules(rule_actions):
                 action_rules[action] = []
             action_rules[action].append(rule)
     return action_rules
+
+
+def f_empty():
+    while True:
+        time.sleep(2)
 
 
 # def get_channels(context, stations_set):

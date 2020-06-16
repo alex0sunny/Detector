@@ -2,8 +2,9 @@
 import numpy as np
 from detector.send_receive.njsp.njsp import NJSP_STREAMREADER
 
-streamreader = NJSP_STREAMREADER(('localhost', 5555))
+streamreader = NJSP_STREAMREADER(('localhost', 10001))
 streamreader.connected_event.wait()
+print('connected')
 stream_name = list(streamreader.init_packet['parameters']['streams'].keys())[0]
 channel_name = list(streamreader.init_packet['parameters']['streams'][stream_name]['channels'].keys())[0]
 while streamreader.connected_event.is_set():

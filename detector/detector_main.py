@@ -1,5 +1,5 @@
 import time
-from multiprocessing import Process
+from multiprocessing import Process, Pool
 
 from detector.action.action_process import action_process
 from detector.action.relay_actions import turn
@@ -10,7 +10,7 @@ from detector.filter_trigger.StaLtaTrigger import trigger_picker
 from detector.filter_trigger.rule_resender import resend
 from detector.misc.globals import Port, CustomThread
 from backend.trigger_html_util import getTriggerParams, getSources, getActions, getRuleDic
-from detector.misc.misc_util import to_action_rules
+from detector.misc.misc_util import to_action_rules, f_empty
 from detector.send_receive.signal_receiver import signal_receiver
 
 
@@ -22,6 +22,8 @@ use_thread = False
 
 if __name__ == '__main__':
 
+    #Pool(processes=50)
+
     context = zmq.Context()
     socket_backend = context.socket(zmq.SUB)
     socket_backend.bind('tcp://*:' + str(Port.backend.value))
@@ -32,11 +34,6 @@ if __name__ == '__main__':
         paramsList = getTriggerParams()
 
         kwargs_list = []
-        for station, conn_data in getSources().items():
-            kwargs = {'target': signal_receiver,
-                      'kwargs': {'conn_str': 'tcp://' + conn_data['host'] + ':' + str(conn_data['port']),
-                                 'station_bin': station.encode()}}
-            kwargs_list.append(kwargs)
 
         action_params = getActions()
         rule_dic = getRuleDic()
@@ -66,6 +63,12 @@ if __name__ == '__main__':
                 rules = action_rules[action_id]
             kwargs_list.append({'target': action_process,
                                 'kwargs': {'action_id': action_id, 'rules': rules, 'send_func': turn}})
+
+        for station, conn_data in getSources().items():
+            kwargs = {'target': signal_receiver,
+                      'kwargs': {'conn_str': 'tcp://' + conn_data['host'] + ':' + str(conn_data['port']),
+                                 'station_bin': station.encode()}}
+            kwargs_list.append(kwargs)
 
         for params in paramsList:
             #params.update({'init_level': 2, 'stop_level': 1})
