@@ -28,7 +28,7 @@ STREAM_NAME = None
 
 
 def signal_receiver(conn_str, station_bin):
-    sleep(5)
+    #sleep(5)
     show_signal = True
 
     context = zmq.Context()
@@ -39,6 +39,12 @@ def signal_receiver(conn_str, station_bin):
     socket_pub.connect(conn_str_pub)
     socket_buf = context.socket(zmq.PUB)
     socket_buf.connect(conn_str_pub)
+
+    socket_confirm = context.socket(zmq.SUB)
+    socket_confirm.connect('tcp://localhost:' + str(Port.proxy.value))
+    socket_confirm.setsockopt(zmq.SUBSCRIBE, Subscription.confirm.value)
+
+    confirmed = None
 
     if show_signal:
         pyplot.ion()
@@ -111,6 +117,10 @@ def signal_receiver(conn_str, station_bin):
             custom_header.channels = cast(chs_bin, POINTER(ChName * 20)).contents
             custom_header.ns = starttime._ns
             socket_buf.send(Subscription.signal.value + custom_header + size_bytes + raw_data)
+            if not confirmed:
+                socket_confirm.recv()
+                logger.info('signal resent confirmed')
+                confirmed = True
 
             if not check_time:
                 check_time = starttime

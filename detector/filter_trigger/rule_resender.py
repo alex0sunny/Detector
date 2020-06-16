@@ -21,6 +21,10 @@ def resend(conn_str, rules, pem, pet):
     socket_sub.setsockopt(zmq.SUBSCRIBE, Subscription.parameters.value)
     socket_sub.setsockopt(zmq.SUBSCRIBE, Subscription.signal.value)
 
+    socket_confirm = context.socket(zmq.PUB)
+    socket_confirm.connect('tcp://localhost:' + str(Port.multi.value))
+    confirmed = None
+
     socket_server = NjspServer(conn_str, context)
 
     socket_rule = context.socket(zmq.SUB)
@@ -70,6 +74,9 @@ def resend(conn_str, rules, pem, pet):
 
         # logger.debug('wait custom header')
         raw_data = socket_sub.recv()
+        if not confirmed:
+            socket_confirm.send(Subscription.confirm.value + b'1')
+            confirmed = True
         #print('raw_data recvd:' + str(raw_data))
         if raw_data[:1] == Subscription.parameters.value:
             logger.debug('parameters received in resender')

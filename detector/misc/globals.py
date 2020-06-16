@@ -37,6 +37,7 @@ class Subscription(Enum):
     rule    = bytes([5])
     test    = bytes([6])
     parameters = bytes([7])
+    confirm = bytes([8])
 
 
 class CustomThread(Thread):
