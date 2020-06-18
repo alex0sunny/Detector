@@ -13,7 +13,6 @@ from detector.send_receive.tcp_server import TcpServer
 
 
 def resend(conn_str, rules, pem, pet):
-    logger.debug('start rule resender')
     context = zmq.Context()
 
     socket_sub = context.socket(zmq.SUB)

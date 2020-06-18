@@ -29,7 +29,7 @@ STREAM_NAME = None
 
 def signal_receiver(conn_str, station_bin):
     #sleep(5)
-    show_signal = False
+    show_signal = True
 
     context = zmq.Context()
     socket = NjspClient(conn_str, context)

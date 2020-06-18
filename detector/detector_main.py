@@ -1,5 +1,6 @@
 import time
 from multiprocessing import Process, Pool
+from threading import Thread
 
 from detector.action.action_process import action_process
 from detector.action.relay_actions import turn
@@ -19,6 +20,20 @@ import zmq
 from detector.send_receive.triggers_proxy import triggers_proxy
 
 use_thread = True
+
+
+def fps(kwargs_list, use_thread):
+    ps = []
+    for kwargs in kwargs_list:
+        if use_thread:
+            p = Thread(**kwargs)
+        else:
+            p = Process(**kwargs)
+        ps.append(p)
+    for p in ps:
+        p.start()
+    return ps
+
 
 if __name__ == '__main__':
 
@@ -49,14 +64,15 @@ if __name__ == '__main__':
                                                       'rules': rules, 'pem': pem, 'pet': pet}},
                         {'target': triggers_proxy, 'kwargs': {}}]
         for action_type, send_func in {'email': send_email, 'sms': send_sms}.items():
-            send_params_dic = action_params[action_type]
-            for action_id in send_params_dic:
-                rules = []
-                if action_id in action_rules:
-                    rules = action_rules[action_id]
-                kwargs = {'action_id': action_id, 'rules': rules, 'send_func': send_func,
-                          'args': send_params_dic[action_id]}
-                kwargs_list.append({'target': action_process, 'kwargs': kwargs})
+            if action_type in action_params:
+                send_params_dic = action_params[action_type]
+                for action_id in send_params_dic:
+                    rules = []
+                    if action_id in action_rules:
+                        rules = action_rules[action_id]
+                    kwargs = {'action_id': action_id, 'rules': rules, 'send_func': send_func,
+                              'args': send_params_dic[action_id]}
+                    kwargs_list.append({'target': action_process, 'kwargs': kwargs})
         for action_id in [1, 2]:
             rules = []
             if action_id in action_rules:
@@ -81,21 +97,20 @@ if __name__ == '__main__':
             formula_list = rule_dic[rule_id]['formula']
             kwargs_list.append({'target': rule_picker, 'kwargs': {'rule_id': rule_id, 'formula_list': formula_list}})
 
-        ps = []
-        for kwargs in kwargs_list:
-            if use_thread:
-                p = CustomThread(**kwargs)
-            else:
-                p = Process(**kwargs)
-            ps.append(p)
-        for p in ps:
-            p.start()
+        if use_thread:
+            threads_proc = Process(target=fps, args=(kwargs_list, use_thread))
+            threads_proc.start()
+        else:
+            ps = fps(kwargs_list, use_thread)
 
         socket_backend.recv()
         time.sleep(1)
 
-        for p in ps:
-            p.terminate()
+        if use_thread:
+            threads_proc.terminate()
+        else:
+            for p in ps:
+                p.terminate()
         print('threads stopped')
-        continue
     print('after break away from cycle, should exit')
+
