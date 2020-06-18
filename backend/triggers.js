@@ -7,6 +7,7 @@ var headersObj = new Object();
     }
 }
 //console.log('headersObj:' + JSON.stringify(headersObj));
+var checkCol = headersObj["check"];
 var stationCol = headersObj["station"];
 var channelCol = headersObj["channel"];
 var valCol = headersObj["val"];
@@ -158,15 +159,13 @@ function getFromHtml()	{
 	var i;
 	if (rows.length > 1) {
 		for (i = 1; i < rows.length; i++)	{
-		    row = rows[i];
-		    ind = parseInt(row.cells[indexCol].innerHTML);
-//		    console.log('ind type:' + typeof(ind));
+		    var row = rows[i];
+		    var ind = parseInt(row.cells[indexCol].innerHTML);
 			triggers[ind] = parseInt(row.cells[valCol].innerHTML);
-//			console.log('trigger val type:' + typeof(triggers[ind]));
 		}
 		var options = rows[1].cells[channelCol].children[0].options;
 		for (i = 0; i < options.length; i++) {
-		    optionNode = options[i];
+		    var optionNode = options[i];
 		    channels.push(optionNode.text);
 		}
 		channels = [...(new Set(channels))].sort();
@@ -398,4 +397,18 @@ function setUnits(row)	{
 	}
 	unitsNode.innerHTML  = units;
 	unitsNode2.innerHTML = units;
+}
+
+function remove()	{
+	var table = document.getElementById("triggerTable");
+	var rows = table.rows;
+	for (var row of Array.from(rows).slice(1))	{
+		var triggerId = parseInt(row.cells[indexCol].innerHTML);
+		if (triggerId > 1)	{
+	    	var checkBox = row.cells[checkCol].children[0];
+	    	if (checkBox.checked == true)	{
+	    		table.children[0].removeChild(row);
+	    	}
+		}
+    }
 }
