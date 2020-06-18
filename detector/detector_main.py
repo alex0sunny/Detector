@@ -18,7 +18,7 @@ import zmq
 
 from detector.send_receive.triggers_proxy import triggers_proxy
 
-use_thread = False
+use_thread = True
 
 if __name__ == '__main__':
 

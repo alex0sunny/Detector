@@ -1,7 +1,3 @@
-import base64
-import json
-import socket as sock
-# from matplotlib import pyplot
 from _ctypes import sizeof
 from io import BytesIO
 
@@ -94,6 +90,8 @@ def trigger_picker(ind, station, channel, trigger_type, freqmin, freqmax, init_l
     trigger_on = False
     filter = None
     while True:
+        # threading.stack_size(10000000)
+        # print('stack size:' + str(threading.stack_size()))
         raw_data = socket.recv()[1:]
         header = ChHeader()
         header_size = sizeof(ChHeader)
@@ -141,3 +139,4 @@ def trigger_picker(ind, station, channel, trigger_type, freqmin, freqmax, init_l
             date_time += 1.0 / sampling_rate
         # if events_list:
         #     print('events_list:' + str(events_list))
+

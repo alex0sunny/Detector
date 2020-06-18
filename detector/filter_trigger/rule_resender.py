@@ -13,6 +13,7 @@ from detector.send_receive.tcp_server import TcpServer
 
 
 def resend(conn_str, rules, pem, pet):
+    logger.debug('start rule resender')
     context = zmq.Context()
 
     socket_sub = context.socket(zmq.SUB)
@@ -23,8 +24,7 @@ def resend(conn_str, rules, pem, pet):
 
     socket_confirm = context.socket(zmq.PUB)
     socket_confirm.connect('tcp://localhost:' + str(Port.multi.value))
-    confirmed = None
-
+    
     socket_server = NjspServer(conn_str, context)
 
     socket_rule = context.socket(zmq.SUB)
@@ -72,11 +72,11 @@ def resend(conn_str, rules, pem, pet):
         except zmq.ZMQError:
             pass
 
-        # logger.debug('wait custom header')
+        socket_confirm.send(Subscription.confirm.value + b'1')
+        if not socket_sub.poll(3000):
+            logger.info('no signal or params data')
+            continue
         raw_data = socket_sub.recv()
-        if not confirmed:
-            socket_confirm.send(Subscription.confirm.value + b'1')
-            confirmed = True
         #print('raw_data recvd:' + str(raw_data))
         if raw_data[:1] == Subscription.parameters.value:
             logger.debug('parameters received in resender')

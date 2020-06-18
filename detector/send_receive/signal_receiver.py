@@ -29,7 +29,7 @@ STREAM_NAME = None
 
 def signal_receiver(conn_str, station_bin):
     #sleep(5)
-    show_signal = True
+    show_signal = False
 
     context = zmq.Context()
     socket = NjspClient(conn_str, context)
@@ -78,6 +78,11 @@ def signal_receiver(conn_str, station_bin):
         except Exception as e:
             logger.error('cannot parse json data:\n' + str(raw_data) + '\n' + str(e))
             continue
+        if not confirmed:
+            logger.debug('wait confirmation')
+            socket_confirm.recv()
+            logger.debug('signal resent confirmed')
+            confirmed = True
         if 'parameters' in json_data:
             logger.debug('received parameters')
             streams_dic = json_data['parameters']['streams']
@@ -117,10 +122,6 @@ def signal_receiver(conn_str, station_bin):
             custom_header.channels = cast(chs_bin, POINTER(ChName * 20)).contents
             custom_header.ns = starttime._ns
             socket_buf.send(Subscription.signal.value + custom_header + size_bytes + raw_data)
-            if not confirmed:
-                socket_confirm.recv()
-                logger.info('signal resent confirmed')
-                confirmed = True
 
             if not check_time:
                 check_time = starttime
@@ -132,4 +133,5 @@ def signal_receiver(conn_str, station_bin):
                 st.plot(fig=figure)
                 pyplot.show()
                 pyplot.pause(.1)
+
 
