@@ -134,3 +134,19 @@ function test()	{
 	console.log(JSON.stringify(sendObj));
 	xhr.send(JSON.stringify(sendObj));
 }
+
+function remove()	{
+	var table = getTable();
+	var rows = getRows();
+    for (var i = 1; i < rows.length; i++)	{
+    	var row = rows[i];
+		actionId = parseInt(row.cells[actionIdCol].innerHTML);
+		if (actionId <= 3)	{
+			continue;
+		}
+    	var checkBox = row.cells[checkCol].children[0];
+    	if (checkBox.checked == true)	{
+    		table.children[0].removeChild(row);
+    	}
+    }
+}
