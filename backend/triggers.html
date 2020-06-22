@@ -1,12 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
-<html>
-<head>
-<title>triggers table</title>
-</head>
-<body>
-	<table style="width: 100%" id="triggerTable">
-		<tbody>
-			<tr>
+<html><head><title>triggers table</title></head><body>
+	<table style="width: 100%" id="triggerTable"><tbody><tr><th align="left">check</th>
 				<th align="left">ind</th>
 				<th align="left">station</th>
 				<th align="left">channel</th>
@@ -18,229 +12,94 @@
 				<th align="left">freqmin</th>
 				<th align="left">freqmax</th>
 				<th align="left">val</th>
-			</tr>
-			<tr>
+			</tr><tr><td><input type="checkbox"/></td>
 				<td>1</td>
-				<td><select onchange="stationChange(this)"><option
-							selected="selected">ND01</option></select></td>
-				<td><select><option selected="selected">ch1</option>
-						<option>ch2</option>
-						<option>ch3</option></select></td>
-				<td><select onchange="setUnits(this.parentNode.parentNode)"><option
-							selected="selected">sta_lta</option>
-						<option>RMS</option></select></td>
+				<td><select onchange="stationChange(this)"><option selected="selected">ND01</option></select></td>
+				<td><select><option>CHE</option><option>CHN</option><option>CHZ</option><option selected="selected">ch1</option></select></td>
+				<td><select onchange="setUnits(this.parentNode.parentNode)"><option selected="selected">sta_lta</option><option>RMS</option></select></td>
 				<td contenteditable="true">1</td>
 				<td contenteditable="true">5</td>
-				<td><input type="numeric" value="3" size="5"
-					style="text-align: right;" />
-				<output /></td>
-				<td><input type="numeric" value="1" size="5"
-					style="text-align: right;" />
-				<output /></td>
+				<td><input type="numeric" value="3" size="5" style="text-align: right;"/><output/></td>
+				<td><input type="numeric" value="1" size="5" style="text-align: right;"/><output/></td>
 				<td contenteditable="true">20</td>
 				<td contenteditable="true">100</td>
 				<td>0</td>
-			</tr>
-			<tr>
+			</tr><tr><td><input type="checkbox"/></td>
 				<td>2</td>
-				<td><select onchange="stationChange(this)"><option
-							selected="selected">ND01</option></select></td>
-				<td><select><option selected="selected">ch1</option>
-						<option>ch2</option>
-						<option>ch3</option></select></td>
-				<td><select onchange="setUnits(this.parentNode.parentNode)"><option>sta_lta</option>
-						<option selected="selected">RMS</option></select></td>
+				<td><select onchange="stationChange(this)"><option selected="selected">ND01</option></select></td>
+				<td><select><option>CHE</option><option>CHN</option><option>CHZ</option><option selected="selected">ch1</option></select></td>
+				<td><select onchange="setUnits(this.parentNode.parentNode)"><option>sta_lta</option><option selected="selected">RMS</option></select></td>
 				<td contenteditable="true">1</td>
-				<td contenteditable="true">0<br /></td>
-				<td><input type="numeric" value="0.04" size="5"
-					style="text-align: right;" />
-				<output>V</output></td>
-				<td><input type="numeric" value="0.04" size="5"
-					style="text-align: right;" />
-				<output>V</output></td>
+				<td contenteditable="true">0<br/></td>
+				<td><input type="numeric" value="0.04" size="5" style="text-align: right;"/><output>V</output></td>
+				<td><input type="numeric" value="0.04" size="5" style="text-align: right;"/><output>V</output></td>
 				<td contenteditable="true">20</td>
 				<td contenteditable="true">100</td>
 				<td>0</td>
-			</tr>
-			<tr>
+			</tr><tr><td><input type="checkbox"/></td>
 				<td>3</td>
-				<td><select onchange="stationChange(this)"><option
-							selected="selected">ND01</option></select></td>
-				<td><select><option selected="selected">ch1</option>
-						<option>ch2</option>
-						<option>ch3</option></select></td>
-				<td><select onchange="setUnits(this.parentNode.parentNode)"><option>sta_lta</option>
-						<option selected="selected">RMS</option></select></td>
+				<td><select onchange="stationChange(this)"><option selected="selected">ND01</option></select></td>
+				<td><select><option>CHE</option><option>CHN</option><option>CHZ</option><option selected="selected">ch1</option></select></td>
+				<td><select onchange="setUnits(this.parentNode.parentNode)"><option>sta_lta</option><option selected="selected">RMS</option></select></td>
 				<td contenteditable="true">1</td>
-				<td contenteditable="true">0<br /></td>
-				<td><input type="numeric" value="0.03" size="5"
-					style="text-align: right;" />
-				<output>V</output></td>
-				<td><input type="numeric" value="0.03" size="5"
-					style="text-align: right;" />
-				<output>V</output></td>
+				<td contenteditable="true">0<br/></td>
+				<td><input type="numeric" value="0.03" size="5" style="text-align: right;"/><output>V</output></td>
+				<td><input type="numeric" value="0.03" size="5" style="text-align: right;"/><output>V</output></td>
 				<td contenteditable="true">20</td>
 				<td contenteditable="true">100</td>
 				<td>0</td>
-			</tr>
-			<tr>
+			</tr><tr><td><input type="checkbox"/></td>
 				<td>4</td>
-				<td><select onchange="stationChange(this)"><option
-							selected="selected">ND01</option></select></td>
-				<td><select><option selected="selected">ch1</option>
-						<option>ch2</option>
-						<option>ch3</option></select></td>
-				<td><select onchange="setUnits(this.parentNode.parentNode)"><option
-							selected="selected">sta_lta</option>
-						<option>RMS</option></select></td>
+				<td><select onchange="stationChange(this)"><option selected="selected">ND01</option></select></td>
+				<td><select><option>CHE</option><option>CHN</option><option>CHZ</option><option selected="selected">ch1</option></select></td>
+				<td><select onchange="setUnits(this.parentNode.parentNode)"><option selected="selected">sta_lta</option><option>RMS</option></select></td>
 				<td contenteditable="true">3</td>
-				<td contenteditable="true">10<br /></td>
-				<td><input type="numeric" value="3" size="5"
-					style="text-align: right;" />
-				<output /></td>
-				<td><input type="numeric" value="1" size="5"
-					style="text-align: right;" />
-				<output /></td>
+				<td contenteditable="true">10<br/></td>
+				<td><input type="numeric" value="3" size="5" style="text-align: right;"/><output/></td>
+				<td><input type="numeric" value="1" size="5" style="text-align: right;"/><output/></td>
 				<td contenteditable="true">20</td>
 				<td contenteditable="true">100</td>
 				<td>0</td>
-			</tr>
-			<tr>
+			</tr><tr><td><input type="checkbox"/></td>
 				<td>5</td>
-				<td><select onchange="stationChange(this)"><option
-							selected="selected">ND01</option></select></td>
-				<td><select><option selected="selected">ch1</option>
-						<option>ch2</option>
-						<option>ch3</option></select></td>
-				<td><select onchange="setUnits(this.parentNode.parentNode)"><option
-							selected="selected">sta_lta</option>
-						<option>RMS</option></select></td>
+				<td><select onchange="stationChange(this)"><option selected="selected">ND01</option></select></td>
+				<td><select><option>CHE</option><option>CHN</option><option>CHZ</option><option selected="selected">ch1</option></select></td>
+				<td><select onchange="setUnits(this.parentNode.parentNode)"><option selected="selected">sta_lta</option><option>RMS</option></select></td>
 				<td contenteditable="true">2</td>
-				<td contenteditable="true">8<br /></td>
-				<td><input type="numeric" value="3" size="5"
-					style="text-align: right;" />
-				<output /></td>
-				<td><input type="numeric" value="1" size="5"
-					style="text-align: right;" />
-				<output /></td>
+				<td contenteditable="true">8<br/></td>
+				<td><input type="numeric" value="3" size="5" style="text-align: right;"/><output/></td>
+				<td><input type="numeric" value="1" size="5" style="text-align: right;"/><output/></td>
 				<td contenteditable="true">20</td>
 				<td contenteditable="true">100</td>
 				<td>0</td>
-			</tr>
-			<tr>
+			</tr><tr><td><input type="checkbox"/></td>
 				<td>6</td>
-				<td><select onchange="stationChange(this)"><option
-							selected="selected">ND01</option></select></td>
-				<td><select><option selected="selected">ch1</option>
-						<option>ch2</option>
-						<option>ch3</option></select></td>
-				<td><select onchange="setUnits(this.parentNode.parentNode)"><option>sta_lta</option>
-						<option selected="selected">RMS</option></select></td>
+				<td><select onchange="stationChange(this)"><option selected="selected">ND01</option></select></td>
+				<td><select><option>CHE</option><option>CHN</option><option>CHZ</option><option selected="selected">ch1</option></select></td>
+				<td><select onchange="setUnits(this.parentNode.parentNode)"><option>sta_lta</option><option selected="selected">RMS</option></select></td>
 				<td contenteditable="true">2</td>
-				<td contenteditable="true">0<br /></td>
-				<td><input type="numeric" value="0.02" size="5"
-					style="text-align: right;" />
-				<output>V</output></td>
-				<td><input type="numeric" value="0.02" size="5"
-					style="text-align: right;" />
-				<output>V</output></td>
+				<td contenteditable="true">0<br/></td>
+				<td><input type="numeric" value="0.02" size="5" style="text-align: right;"/><output>V</output></td>
+				<td><input type="numeric" value="0.02" size="5" style="text-align: right;"/><output>V</output></td>
 				<td contenteditable="true">20</td>
 				<td contenteditable="true">100</td>
 				<td>0</td>
-			</tr>
-			<tr>
+			</tr><tr><td><input type="checkbox"/></td>
 				<td>7</td>
-				<td><select onchange="stationChange(this)"><option
-							selected="selected">ND01</option></select></td>
-				<td><select><option selected="selected">ch1</option>
-						<option>ch2</option>
-						<option>ch3</option></select></td>
-				<td><select onchange="setUnits(this.parentNode.parentNode)"><option
-							selected="selected">sta_lta</option>
-						<option>RMS</option></select></td>
-				<td contenteditable="true">3</td>
-				<td contenteditable="true">10<br /></td>
-				<td><input type="numeric" value="3" size="5"
-					style="text-align: right;" />
-				<output /></td>
-				<td><input type="numeric" value="1" size="5"
-					style="text-align: right;" />
-				<output /></td>
+				<td><select onchange="stationChange(this)"><option selected="selected">ND01</option></select></td>
+				<td><select><option>CHE</option><option>CHN</option><option>CHZ</option><option selected="selected">ch1</option></select></td>
+				<td><select onchange="setUnits(this.parentNode.parentNode)"><option selected="selected">sta_lta</option><option>RMS</option></select></td>
+				<td contenteditable="true">2</td>
+				<td contenteditable="true">6<br/></td>
+				<td><input type="numeric" value="3" size="5" style="text-align: right;"/><output/></td>
+				<td><input type="numeric" value="1" size="5" style="text-align: right;"/><output/></td>
 				<td contenteditable="true">20</td>
 				<td contenteditable="true">100</td>
 				<td>0</td>
-			</tr>
-			<tr>
-				<td>8</td>
-				<td><select onchange="stationChange(this)"><option
-							selected="selected">ND01</option></select></td>
-				<td><select><option selected="selected">ch1</option>
-						<option>ch2</option>
-						<option>ch3</option></select></td>
-				<td><select onchange="setUnits(this.parentNode.parentNode)"><option
-							selected="selected">sta_lta</option>
-						<option>RMS</option></select></td>
-				<td contenteditable="true">3</td>
-				<td contenteditable="true">10<br /></td>
-				<td><input type="numeric" value="3" size="5"
-					style="text-align: right;" />
-				<output /></td>
-				<td><input type="numeric" value="1" size="5"
-					style="text-align: right;" />
-				<output /></td>
-				<td contenteditable="true">20</td>
-				<td contenteditable="true">100</td>
-				<td>0</td>
-			</tr>
-			<tr>
-				<td>9</td>
-				<td><select onchange="stationChange(this)"><option
-							selected="selected">ND01</option></select></td>
-				<td><select><option selected="selected">ch1</option>
-						<option>ch2</option>
-						<option>ch3</option></select></td>
-				<td><select onchange="setUnits(this.parentNode.parentNode)"><option
-							selected="selected">sta_lta</option>
-						<option>RMS</option></select></td>
-				<td contenteditable="true">3</td>
-				<td contenteditable="true">10<br /></td>
-				<td><input type="numeric" value="3" size="5"
-					style="text-align: right;" />
-				<output /></td>
-				<td><input type="numeric" value="1" size="5"
-					style="text-align: right;" />
-				<output /></td>
-				<td contenteditable="true">20</td>
-				<td contenteditable="true">100</td>
-				<td>0</td>
-			</tr>
-			<tr>
-				<td>10</td>
-				<td><select onchange="stationChange(this)"><option
-							selected="selected">ND01</option></select></td>
-				<td><select><option selected="selected">ch1</option>
-						<option>ch2</option>
-						<option>ch3</option></select></td>
-				<td><select onchange="setUnits(this.parentNode.parentNode)"><option
-							selected="selected">sta_lta</option>
-						<option>RMS</option></select></td>
-				<td contenteditable="true">3</td>
-				<td contenteditable="true">10<br /></td>
-				<td><input type="numeric" value="3" size="5"
-					style="text-align: right;" />
-				<output /></td>
-				<td><input type="numeric" value="1" size="5"
-					style="text-align: right;" />
-				<output /></td>
-				<td contenteditable="true">20</td>
-				<td contenteditable="true">100</td>
-				<td>0</td>
-			</tr>
-		</tbody>
-	</table>
-	<p style="text-align: left;">
+			</tr></tbody></table><p style="text-align: left;">
 		<a href="rules.html">rules</a> <span style="float: right;">
-			<button type="add" onclick="addTrigger()">add trigger</button>
+			<button type="button" onclick="addTrigger()">add trigger</button>
+			<button type="button" onclick="remove()">remove</button>
 			<button type="button" onclick="location.reload(true)">
 				discard</button>
 			<button type="button" onclick="apply_save()">apply</button>
@@ -248,6 +107,4 @@
 	</p>
 	<script src="triggers.js">
 		
-	</script>
-</body>
-</html>
+	</script></body></html>

@@ -28,7 +28,7 @@ def getTriggerParams():
         params_map = {'station': station, 'channel': channel, 'trigger_type': trigger_type}
         for cell_name in ['init_level', 'stop_level']:
             params_map[cell_name] = float(row[header_inds[cell_name]][0].get('value'))
-        excluded_headers = ['channel', 'val', 'trigger'] + list(params_map.keys())
+        excluded_headers = ['check', 'channel', 'val', 'trigger'] + list(params_map.keys())
         for header in header_inds.keys():
             if header not in excluded_headers:
                 params_map[header] = int(row[header_inds[header]].text)
@@ -59,24 +59,32 @@ def getRuleDic():
 
 def getSources():
     root = etree.parse(os.path.split(inspect.getfile(backend))[0] + '/sources.html')
+    headers_dic = getHeaderDic(root)
+    station_col = headers_dic['station']
+    host_col = headers_dic['host']
+    port_col = headers_dic['port']
+    channels_col = headers_dic['channels']
+    units_col = headers_dic['units']
     rows = root.xpath('/html/body/table/tbody/tr')[1:]
     src_dic = {}
     for row in rows:
-        station = row[0].text.strip()
+        #logger.debug('row:' + etree.tostring(row).decode())
+        station = row[station_col].text.strip()
         src_dic[station] = {}
-        src_dic[station]['host'] = row[1].text.strip()
-        src_dic[station]['port'] = int(row[2].text.strip())
-        src_dic[station]['channels'] = row[3].text.split(' ')
-        src_dic[station]['units'] = row[4].text.split(' ')
+        src_dic[station]['host'] = row[host_col].text.strip()
+        src_dic[station]['port'] = int(row[port_col].text.strip())
+        src_dic[station]['channels'] = row[channels_col].text.split(' ')
+        src_dic[station]['units'] = row[units_col].text.strip()
     return src_dic
 
 
 def set_source_channels(station, channels, units='V'):
     fpath = os.path.split(inspect.getfile(backend))[0] + '/sources.html'
     root = etree.parse(fpath)
+    headers_dic = getHeaderDic(root)
     cell_path = "//tr[./td='" + station + "']/td"
-    root.xpath(cell_path)[3].text = ' '.join(channels)
-    root.xpath(cell_path)[4].text = units
+    root.xpath(cell_path)[headers_dic['channels']].text = ' '.join(channels)
+    root.xpath(cell_path)[headers_dic['units']].text = units
     root.write(fpath)
 
 

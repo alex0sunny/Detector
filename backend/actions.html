@@ -1,106 +1,71 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
 <html>
-	<head>
-		<title>actions table</title>
-	</head>
-	<body>
-		<table style="width: 100%" id="actionTable">
-			<tbody>
-				<tr>
-					<th align="left">check</th>
-					<th align="left">action_id</th>
-					<th align="left">type</th>
-					<th align="left">address</th>
-					<th align="left">message</th>
-					<th align="left">additional</th>
-				</tr>
-				<tr>
-					<td>
-						<input type="checkbox"/>
-					</td>
-					<td>1</td>
-					<td>relay1</td>
-					<td>-</td>
-					<td>-</td>
-					<td>
-						<label>relay ON:</label>
-						<input id="relay1" type="checkbox" checked="true"/>
-					</td>
-				</tr>
-				<tr>
-					<td>
-						<input type="checkbox"/>
-					</td>
-					<td>2</td>
-					<td>relay2</td>
-					<td>-</td>
-					<td>-</td>
-					<td>
-						<label>relay ON:</label>
-						<input id="relay2" type="checkbox" checked="true"/>
-					</td>
-				</tr>
-				<tr>
-					<td>
-						<input type="checkbox"/>
-					</td>
-					<td>3</td>
-					<td>send signal</td>
-					<td>-</td>
-					<td>-</td>
-					<td>
-						<label style="width: 30px; display: inline-block;">PEM</label>
-						<input id="PEM" type="numeric" value="4" size="2"/>
-						<br/>
-						<label style="width: 30px; display: inline-block;">PET</label>
-						<input id="PET" type="numeric" value="3" size="2"/>
-					</td>
-				</tr>
-				<tr>
-					<td>
-						<input type="checkbox"/>
-					</td>
-					<td>4</td>
-					<td>
-						<select>
-							<option selected="selected">SMS</option>
-							<option>email</option>
-						</select>
-					</td>
-					<td contenteditable="true">89012223344</td>
-					<td contenteditable="true">Earthquake!</td>
-					<td>-</td>
-				</tr>
-				<tr>
-					<td>
-						<input type="checkbox"/>
-					</td>
-					<td>5</td>
-					<td>
-						<select>
-							<option>SMS</option>
-							<option selected="selected">email</option>
-						</select>
-					</td>
-					<td contenteditable="true">neeshpapa@bigboss.moldova</td>
-					<td contenteditable="true">Wake up!</td>
-					<td>-</td>
-				</tr>
-			</tbody>
-		</table>
-		<p style="text-align: left;">
-			<a href="rules.html">rules</a>
-			<span style="float: right;">
-				<button type="button" onclick="test()">test</button>
-				<button type="sbutton" onclick="add()">add action</button>
-				<button type="sbutton" onclick="remove()">remove</button>
-				<button type="button" onclick="location.reload(true)">
-					discard
-				</button>
-				<button type="button" onclick="apply()">apply</button>
-			</span>
-		</p>
-		<script src="actions.js">
-		</script>
-	</body>
+<head>
+<title>actions table</title>
+</head>
+<body>
+	<table style="width: 100%" id="actionTable">
+		<tbody>
+			<tr>
+				<th align="left">check</th>
+				<th align="left">action_id</th>
+				<th align="left">type</th>
+				<th align="left">address</th>
+				<th align="left">message</th>
+				<th align="left">additional</th>
+			</tr>
+			<tr>
+				<td><input type="checkbox" /></td>
+				<td>1</td>
+				<td>relay1</td>
+				<td>-</td>
+				<td>-</td>
+				<td><label>relay ON:</label> <input id="relay1" type="checkbox"
+					checked="true" /></td>
+			</tr>
+			<tr>
+				<td><input type="checkbox" /></td>
+				<td>2</td>
+				<td>relay2</td>
+				<td>-</td>
+				<td>-</td>
+				<td><label>relay ON:</label> <input id="relay2" type="checkbox"
+					checked="true" /></td>
+			</tr>
+			<tr>
+				<td><input type="checkbox" /></td>
+				<td>3</td>
+				<td>send signal</td>
+				<td>-</td>
+				<td>-</td>
+				<td><label style="width: 30px; display: inline-block;">PEM</label>
+					<input id="PEM" type="numeric" value="4" size="2" /><br />
+				<label style="width: 30px; display: inline-block;">PET</label> <input
+					id="PET" type="numeric" value="3" size="2" /></td>
+			</tr>
+			<tr>
+				<td><input type="checkbox" /></td>
+				<td>4</td>
+				<td><select><option selected="selected">SMS</option>
+						<option>email</option></select></td>
+				<td contenteditable="true">89012223344</td>
+				<td contenteditable="true">Earthquake!</td>
+				<td>-</td>
+			</tr>
+		</tbody>
+	</table>
+	<p style="text-align: left;">
+		<a href="rules.html">rules</a> <span style="float: right;">
+			<button type="button" onclick="test()">test</button>
+			<button type="sbutton" onclick="add()">add action</button>
+			<button type="sbutton" onclick="remove()">remove</button>
+			<button type="button" onclick="location.reload(true)">
+				discard</button>
+			<button type="button" onclick="apply()">apply</button>
+		</span>
+	</p>
+	<script src="actions.js">
+		
+	</script>
+</body>
 </html>

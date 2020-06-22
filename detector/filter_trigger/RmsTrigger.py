@@ -9,7 +9,7 @@ class RmsTrigger:
     def __init__(self, n):
         self.n = n
         self.v = .0
-        self.buf = np.require(np.zeros(n), dtype='float32')
+        self.buf = np.require(np.zeros(n), dtype='float')
 
     def trigger(self, data):
         #logger.debug('data:\n' + str(data))

@@ -145,7 +145,7 @@ function remove()	{
 			continue;
 		}
     	var checkBox = row.cells[checkCol].children[0];
-    	if (checkBox.checked == true)	{
+    	if (checkBox.checked == true && table.rows.length > 5)	{
     		table.children[0].removeChild(row);
     	}
     }

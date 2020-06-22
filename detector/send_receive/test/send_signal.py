@@ -44,7 +44,8 @@ def send_signal(st, conn_str, units='V'):
     }
     json_str = json.dumps(OrderedDict(parameters_dic))
     size_bytes = ('%08x' % len(json_str)).encode()
-    sender = NjspServer(size_bytes + json_str.encode(), conn_str, context)
+    sender = NjspServer(conn_str, context)
+    sender.set_params(size_bytes + json_str.encode())
 
     while True:
         st = signal_generator.get_stream()
@@ -87,13 +88,13 @@ st[-1].data = np.append(data[2000:], data[:2000])
 sources_dic = getSources()
 print(sources_dic)
 stations = list(sources_dic.keys())
-kwargs_list = [#{'target': send_signal,
-                #'kwargs': {'st': st,
-                           #'conn_str': 'tcp://*:' + str(sources_dic[stations[0]]['port'])}},
-               {'target': send_signal,
-                'kwargs': {'st': st100[:3], 'units': 'A',
-                           'conn_str': 'tcp://*:' + str(sources_dic[stations[1]]['port'])}}]
+kwargs_list = [{'target': send_signal,
+                'kwargs': {'st': st,
+                           'conn_str': 'tcp://*:' + str(sources_dic[stations[0]]['port'])}}]#,
+               #{'target': send_signal,
+                #'kwargs': {'st': st100[:3], 'units': 'A',
+                           #'conn_str': 'tcp://*:' + str(sources_dic[stations[1]]['port'])}}]
 if __name__ == '__main__':
-    for kwargs in kwargs_list:
+    for kwargs in kwargs_list[:1]:
         Process(**kwargs).start()
 

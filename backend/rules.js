@@ -1,7 +1,17 @@
-var ruleIdCol = 0;
-var formulaCol = 1;
-var ruleValCol = 2;
-var actionCol = 3
+var headersObj = new Object();
+{	
+	var row = document.getElementById("rulesTable").rows[0];
+    var headerCells = row.children;
+    for (var i = 0; i < headerCells.length; i++)  {
+        var header = headerCells[i].innerHTML;
+        headersObj[header] = i;
+    }
+}
+
+var ruleIdCol = headersObj["rule_id"];
+var formulaCol = headersObj["formula"];
+var ruleValCol = headersObj["val"];
+var actionCol = headersObj["actions"];
 
 var timerVar = setInterval(updateFunc, 1000);
 
@@ -230,4 +240,15 @@ function getRulesObj()	{
     	rulesObj[ruleId] = ruleVal;
     }
     return rulesObj;
+}
+
+function remove()	{
+	var table = document.getElementById("rulesTable");
+	var rows = table.rows;
+	for (var row of Array.from(rows).slice(1))	{
+    	var checkBox = row.cells[checkCol].children[0];
+    	if (checkBox.checked == true && rows.length > 2)	{
+	    		table.children[0].removeChild(row);
+    	}
+    }
 }

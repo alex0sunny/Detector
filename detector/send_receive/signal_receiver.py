@@ -93,7 +93,7 @@ def signal_receiver(conn_str, station_bin):
         if 'streams' in json_data:
             #sampling_rate = json_data['streams']['sample_rate']
             starttime = UTCDateTime(json_data['streams'][STREAM_NAME]['timestamp'])
-            logger.debug('received packet, dt:' + str(starttime))
+            #logger.debug('received packet, dt:' + str(starttime))
             chs = json_data['streams'][STREAM_NAME]['samples']
             if not chs_ref:
                 chs_ref = sorted(chs)
@@ -104,11 +104,11 @@ def signal_receiver(conn_str, station_bin):
                 bin_header = ChHeader(station_bin, ch, int(sample_rate), starttime._ns)
                 bin_signal_int = (base64.decodebytes(json_data['streams'][STREAM_NAME]['samples'][ch].encode("ASCII")))
                 k = params_dic['channels'][ch]['counts_in_volt']
-                bin_signal = (np.frombuffer(bin_signal_int, dtype='int32').astype('float32') / k).tobytes()
+                data = np.frombuffer(bin_signal_int, dtype='int32').astype('float') / k
+                bin_signal = data.tobytes()
                 bin_data = BytesIO(bin_header).read() + bin_signal
                 socket_pub.send(Subscription.intern.value + bin_data)
 
-                data = np.frombuffer(bin_signal_int, dtype='int32').astype('float32') / k
                 tr = Trace()
                 tr.stats.starttime = starttime
                 tr.stats.sampling_rate = sample_rate

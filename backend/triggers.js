@@ -403,12 +403,9 @@ function remove()	{
 	var table = document.getElementById("triggerTable");
 	var rows = table.rows;
 	for (var row of Array.from(rows).slice(1))	{
-		var triggerId = parseInt(row.cells[indexCol].innerHTML);
-		if (triggerId > 1)	{
-	    	var checkBox = row.cells[checkCol].children[0];
-	    	if (checkBox.checked == true)	{
-	    		table.children[0].removeChild(row);
-	    	}
-		}
+	    var checkBox = row.cells[checkCol].children[0];
+	    if (checkBox.checked == true && rows.length > 2)	{
+	    	table.children[0].removeChild(row);
+	    }
     }
 }

@@ -7,6 +7,9 @@ var headersObj = new Object();
     }
 }
 
+var checkCol = headersObj["check"];
+var indexCol = headersObj["ind"];
+
 function apply_save() {
     sendHTML();
 }
@@ -27,4 +30,15 @@ function addSource() {
     var len = rows.length
     var row = rows[len - 1].cloneNode(true);
     table.children[0].appendChild(row);
+}
+
+function remove()	{
+	var table = document.getElementById("sourcesTable");
+	var rows = table.rows;
+	for (var row of Array.from(rows).slice(1))	{
+    	var checkBox = row.cells[checkCol].children[0];
+    	if (checkBox.checked == true && rows.length > 2)	{
+	    		table.children[0].removeChild(row);
+    	}
+    }
 }
