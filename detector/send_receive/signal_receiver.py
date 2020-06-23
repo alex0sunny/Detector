@@ -7,7 +7,6 @@
 # from detector.misc.header_util import pack_ch_header
 import base64
 import json
-from collections import OrderedDict
 from ctypes import cast, POINTER
 from io import BytesIO
 from time import sleep
@@ -29,7 +28,7 @@ STREAM_NAME = None
 
 def signal_receiver(conn_str, station_bin):
     #sleep(5)
-    show_signal = True
+    show_signal = False
 
     context = zmq.Context()
     socket = NjspClient(conn_str, context)
@@ -74,7 +73,7 @@ def signal_receiver(conn_str, station_bin):
             logger.error('incorrect last symbol, \'}\' expected')
             continue
         try:
-            json_data = json.loads(raw_data.decode('utf-8'), object_pairs_hook=OrderedDict)
+            json_data = json.loads(raw_data.decode('utf-8'))
         except Exception as e:
             logger.error('cannot parse json data:\n' + str(raw_data) + '\n' + str(e))
             continue
@@ -88,7 +87,7 @@ def signal_receiver(conn_str, station_bin):
             streams_dic = json_data['parameters']['streams']
             STREAM_NAME = list(streams_dic.keys())[STREAM_IND]
             params_dic = streams_dic[STREAM_NAME]
-            socket_buf.send(Subscription.parameters.value + size_bytes + raw_data)
+            socket_buf.send(Subscription.parameters.value + raw_data)
             #print('params bytes sent to inner socket:' + str(Subscription.parameters.value + size_bytes + raw_data))
         if 'streams' in json_data:
             #sampling_rate = json_data['streams']['sample_rate']
@@ -121,7 +120,7 @@ def signal_receiver(conn_str, station_bin):
             chs_bin = b''.join(chs_blist)
             custom_header.channels = cast(chs_bin, POINTER(ChName * 20)).contents
             custom_header.ns = starttime._ns
-            socket_buf.send(Subscription.signal.value + custom_header + size_bytes + raw_data)
+            socket_buf.send(Subscription.signal.value + custom_header + raw_data)
 
             if not check_time:
                 check_time = starttime

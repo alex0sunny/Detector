@@ -8,6 +8,7 @@ var headersObj = new Object();
     }
 }
 
+var checkCol = headersObj["check"];
 var ruleIdCol = headersObj["rule_id"];
 var formulaCol = headersObj["formula"];
 var ruleValCol = headersObj["val"];

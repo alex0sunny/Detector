@@ -44,20 +44,6 @@ class TcpServer:
             self.socket.close()
 
     def __del__(self):
-        if self.identity:
-            try:
-                self.socket.setsockopt(zmq.LINGER, 0)
-                self.socket.setsockopt(zmq.RCVTIMEO, 2000)
-                identity = self.socket.recv()
-                logger.info('identity received:' + str(identity) + ' supposed identity:' + str(self.identity))
-                empty = self.socket.recv()
-                if empty:
-                    logger.info('connection closed')
-                else:
-                    logger.error('cannot close the connection')
-            except Exception as ex:
-                logger.error('cannot close connection:' + str(ex))
-                pass
         if self.socket:
             self.socket.close()
 
