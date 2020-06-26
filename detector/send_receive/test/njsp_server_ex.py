@@ -17,7 +17,7 @@ init_packet = {
     }
 }
 
-streamserver = NJSP_STREAMSERVER(('localhost', 12345), init_packet)
+streamserver = NJSP_STREAMSERVER(('localhost',12345), init_packet)
 counter = 0
 while counter <= 100:
     data_packet = {

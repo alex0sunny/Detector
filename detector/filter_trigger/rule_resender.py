@@ -1,6 +1,3 @@
-import base64
-import json
-import re
 from _ctypes import sizeof
 from ctypes import memmove, addressof
 from io import BytesIO
@@ -11,9 +8,8 @@ from obspy import *
 from detector.filter_trigger.StaLtaTrigger import logger
 from detector.misc.globals import Port, Subscription
 from detector.misc.header_util import CustomHeader
-# from detector.send_receive.njsp_server import NjspServer
-# from detector.send_receive.tcp_server import TcpServer
-from detector.send_receive.njsp.njsp import NJSP_STREAMSERVER
+from detector.send_receive.njsp_server import NjspServer
+from detector.send_receive.tcp_server import TcpServer
 
 
 def resend(conn_str, rules, pem, pet):
@@ -28,7 +24,7 @@ def resend(conn_str, rules, pem, pet):
     socket_confirm = context.socket(zmq.PUB)
     socket_confirm.connect('tcp://localhost:' + str(Port.multi.value))
     
-    stream_server = None
+    socket_server = NjspServer(conn_str, context)
 
     socket_rule = context.socket(zmq.SUB)
     socket_rule.connect(conn_str_sub)
@@ -84,11 +80,8 @@ def resend(conn_str, rules, pem, pet):
         if raw_data[:1] == Subscription.parameters.value:
             logger.debug('parameters received in resender')
             #exit(1)
-            json_bytes = raw_data[1:]
-            json_dic = json.loads(json_bytes.decode())
-            port = int(re.search('\\d+$', conn_str).group())
-            print('port:' + str(port))
-            stream_server = NJSP_STREAMSERVER(('localhost', port), json_dic)
+            parameters_bytes = raw_data[1:]
+            socket_server.set_params(parameters_bytes)
             continue
         resent_data = raw_data[1:]
         custom_header = CustomHeader()
@@ -99,12 +92,7 @@ def resend(conn_str, rules, pem, pet):
         dt = UTCDateTime(custom_header.ns / 10 ** 9)
         #logger.debug('dt:' + str(dt))
         # logger.debug('wait binary data')
-        data_packet = json.loads(resent_data[header_size:].decode())
-        [stream_name] = data_packet['streams'].keys()
-        for ch in data_packet['streams'][stream_name]['samples'].keys():
-            data_packet['streams'][stream_name]['samples'][ch] = \
-                (base64.decodebytes(data_packet['streams'][stream_name]['samples'][ch].encode("ASCII")))
-        #logger.info('data_packet:' + str(data_packet))
+        bdata = resent_data[header_size:]
         # logger.debug('binary data received')
         #logger.debug('dt:' + str(UTCDateTime(dt)) + ' bdata len:' + str(len(bdata)))
         if not pet_time:
@@ -116,15 +104,15 @@ def resend(conn_str, rules, pem, pet):
             #     logger.debug('clear buf, trigger:' + str(trigger))
             while buf:
                 #logger.debug('send data to output from buf')
-                stream_server.broadcast_data(buf[0][1])
+                socket_server.send(buf[0][1])
                 # logger.debug('buf item dt:' + str(buf[0][0]))
                 buf = buf[1:]
             # logger.debug('send regular data, dt' + str(dt))
             #logger.debug('send data to output')
-            stream_server.broadcast_data(data_packet)
+            socket_server.send(bdata)
         else:
             # logger.debug('append to buf with dt:' + str(dt))
-            buf.append((dt, data_packet))
+            buf.append((dt, bdata))
         if buf:
             # logger.debug('buf[0]:' + str(buf[0]) + '\nbuf[0][0]:' + str(buf[0][0]))
             dt_begin = buf[0][0]
