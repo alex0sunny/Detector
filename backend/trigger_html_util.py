@@ -28,15 +28,16 @@ def getTriggerParams():
         params_map = {'station': station, 'channel': channel, 'trigger_type': trigger_type}
         for cell_name in ['init_level', 'stop_level']:
             params_map[cell_name] = float(row[header_inds[cell_name]][0].get('value'))
-        excluded_headers = ['check', 'channel', 'val', 'trigger'] + list(params_map.keys())
+        excluded_headers = ['check', 'name', 'channel', 'val', 'trigger'] + list(params_map.keys())
         for header in header_inds.keys():
             if header not in excluded_headers:
                 params_map[header] = int(row[header_inds[header]].text)
+        params_map['name'] = row[header_inds['name']].text
         params_list.append(params_map)
     return params_list
 
 
-def getRuleDic():
+def getRuleDic(trigger_dic):
     root = etree.parse(os.path.split(inspect.getfile(backend))[0] + '/rules.html')
     headers_dic = getHeaderDic(root)
     id_col = headers_dic['rule_id']
@@ -50,6 +51,11 @@ def getRuleDic():
         formula_list = [el.text for el in row[formula_col].iter() if 'selected' in el.attrib]
         while formula_list[-1] == '-' and len(formula_list) > 2:
             formula_list = formula_list[:-2]
+        names_dic = {trigger_name: str(trigger_id) for trigger_id, trigger_name in trigger_dic.items()}
+        #logger.debug('names_dic:' + str(names_dic))
+        for i in range(len(formula_list))[::2]:
+            #logger.debug('i:' + str(i) + ' formula_list[i]:' + str(formula_list[i]))
+            formula_list[i] = names_dic.get(formula_list[i], 0)
         rule_dic[rule_id]['formula'] = formula_list
         actions_list = [int(el.text) for el in row[actions_col].iter()
                         if 'selected' in el.attrib and el.text != '-']
@@ -176,7 +182,8 @@ def save_actions(post_data_str):
 
 def apply_sockets_rule(conn_str, context, sockets_rule):
     #clear_triggers(sockets_rule, sockets_rule_off)
-    for rule_id in getRuleDic().keys():
+    trigger_dic = {params['ind']: params['name'] for params in getTriggerParams()}
+    for rule_id in getRuleDic(trigger_dic).keys():
         if rule_id not in sockets_rule:
             update_sockets(rule_id, conn_str, context, sockets_rule)
 

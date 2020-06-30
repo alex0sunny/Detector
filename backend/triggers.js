@@ -12,6 +12,7 @@ var stationCol = headersObj["station"];
 var channelCol = headersObj["channel"];
 var valCol = headersObj["val"];
 var indexCol = headersObj["ind"];
+var nameCol = headersObj["name"];
 var triggerCol = headersObj["trigger"];
 var initCol = headersObj["init_level"];
 var stopCol = headersObj["stop_level"];
@@ -53,6 +54,7 @@ function initPage() {
 }
 
 function apply_save() {
+	genNames();
     apply();
     sendHTML();
     setTimeout(nullifyVals, 3000);
@@ -318,6 +320,7 @@ function addTrigger() {
     var row = rows[len - 1].cloneNode(true);
     var ind = parseInt(row.cells[indexCol].innerHTML) + 1;
     row.cells[indexCol].innerHTML = ind;
+    row.cells[nameCol].innerHTML = "";
     table.children[0].appendChild(row);
 }
 
@@ -407,5 +410,55 @@ function remove()	{
 	    if (checkBox.checked == true && rows.length > 2)	{
 	    	table.children[0].removeChild(row);
 	    }
+    }
+}
+
+function genName(station, channel, trigger, name, names)	{
+	console.log("name:" + name)
+	if (!name)	{
+		if (trigger == "RMS")	{
+			name = "rms";
+		}	else	{
+			name = "slta";
+		}
+		//console.log("name, first part:" + name);
+		name += channel.substring(channel.length - 1, channel.length).toUpperCase();
+		//console.log("name, second part:" + name);
+		name += station.substring(station.length - 1, station.length).toUpperCase();
+		//console.log("name, third part:" + name);
+	}
+	if (names.has(name))	{
+		//console.log("names has name " + name);
+		var newName;
+		for (var i = 2; i < 20; i++) {
+			  newName = name + i;
+			  //console.log("candidate name:" + newName);
+			  if (names.has(newName) == false)	{
+				  //console.log("candidate name is OK");
+				  name = newName;
+				  break;
+			  }
+		}
+	}
+	//console.log("generated name:" + name);
+	return name;
+}
+
+function genNames()	{
+	var names = new Set();
+	var rows = document.getElementById("triggerTable").rows;
+	for (var row of Array.from(rows).slice(1))	{
+		var cells = row.cells;
+	    var name = cells[nameCol].textContent.trim();
+//	    if (!name) {
+//	    	console.log("name is false");
+//	    }
+//	    console.log("name value:" + name);
+	    var station = cells[stationCol].children[0].value;
+	    var channel = cells[channelCol].children[0].value;
+	    var trigger = cells[triggerCol].children[0].value;
+	    name = genName(station, channel, trigger, name, names);
+	    cells[nameCol].innerHTML = name;
+	    names.add(name);
     }
 }

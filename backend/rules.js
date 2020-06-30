@@ -8,6 +8,8 @@ var headersObj = new Object();
     }
 }
 
+var triggersDic;
+
 var ruleIdCol = headersObj["rule_id"];
 var formulaCol = headersObj["formula"];
 var ruleValCol = headersObj["val"];
@@ -32,8 +34,14 @@ function updateTriggers (triggersObj, ruleCell) {
 			var triggerNode = children[i - 1];
 			var options = triggerNode.options;
 			var selectedIndex = triggerNode.selectedIndex;
-			var triggerIdStr = options[selectedIndex].text;
+			var triggerName = options[selectedIndex].text;
 			//console.log('triggerIdStr:' + triggerIdStr);
+			var triggerIdStr;
+			for (triggerIdStr in triggersDic)	{
+				if (triggerName == triggersDic[triggerIdStr])	{
+					break;
+				}
+			}
 			var triggerVal = triggersObj[triggerIdStr];
 			if (triggerVal == undefined)	{
 				triggerVal = "-";
@@ -91,17 +99,24 @@ function initFunc () {
 		if (xhr.readyState === 4 && xhr.status === 200) {
 		    //console.log('response:' + xhr.responseText);
 			var responseObj = JSON.parse(xhr.responseText);
-			var triggersIds = responseObj['ids'];
+			triggersDic = responseObj['triggers'];
 			var actionIds = responseObj['actions'];
-			//console.log('triggersIds:' + triggersIds + ' actionIds:' + actionIds);
+			var triggersIds = [];
+			for (triggerId in triggersDic)	{
+				triggersIds.push(triggerId);
+			}
+			triggersIds.sort();
+			//console.log('triggersIds:' + triggersIds + ' triggersDic:' + JSON.stringify(triggersDic));
+			var triggerNames = [];
 			for (var triggerId of triggersIds)	{
 				triggersObj[triggerId] = 0;
+				triggerNames.push(triggersDic[triggerId]);
 			}
 			var rows = document.getElementById("rulesTable").rows;
 			for (var i = 1; i < rows.length; i = i + 1)	{
 				var row = rows[i];
 				var ruleCell = row.cells[formulaCol];
-				fillTriggers(triggersIds, ruleCell);
+				fillTriggers(triggerNames, ruleCell);
 				var actionCell = row.cells[actionCol];
 				fillActions(actionIds, actionCell);
 			}
@@ -111,7 +126,7 @@ function initFunc () {
 	xhr.send();
 }
 
-function fillTriggers (triggersIds, ruleCell)	{
+function fillTriggers (triggerNames, ruleCell)	{
 	var children = ruleCell.children;
 	for (var i = 0; i < children.length; i++)	{
 		var node = children[i];
@@ -121,14 +136,14 @@ function fillTriggers (triggersIds, ruleCell)	{
 			var selectedIndex = triggerNode.selectedIndex;
 			var selectedTrigger = options[selectedIndex].text;
 			var option = options[0];
-			if (selectedIndex == 0 || !triggersIds.includes(selectedTrigger))	{
+			if (selectedIndex == 0 || !triggerNames.includes(selectedTrigger))	{
 				option.setAttribute("selected", "selected");
 			} else	{
 				option.removeAttribute("selected");
 			}
 			triggerNode.innerHTML = "";
 			triggerNode.appendChild(option);
-			triggersIds.forEach(function (trigger) {
+			triggerNames.forEach(function (trigger) {
 				option = document.createElement("option");
 				option.text = trigger;
 				if (trigger == selectedTrigger) {

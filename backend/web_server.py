@@ -52,7 +52,8 @@ rule_sockets_dic = {}
 
 def create_rule_sockets():
     rule_sockets = {}
-    for rule_id in sorted(getRuleDic().keys()):
+    trigger_dic = {params['ind']: params['name'] for params in getTriggerParams()}
+    for rule_id in sorted(getRuleDic(trigger_dic).keys()):
         update_sockets(rule_id, conn_str_sub, context, rule_sockets, subscription=Subscription.rule.value)
     return rule_sockets
 
@@ -160,14 +161,16 @@ class myHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(json_map).encode())
         if self.path == '/initRule':
             params_list = getTriggerParams()
-            trigger_ids = [params['ind'] for params in params_list]
+            logger.debug('params_list:' + str(params_list))
+            trigger_dic = {params['ind']: params['name'] for params in params_list}
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             # print('trigger ids' + str(trigger_ids))
-            json_dic = {'ids': trigger_ids, 'actions': [1, 2, 3]}
+            json_dic = {'triggers': trigger_dic, 'actions': [1, 2, 3]}
             actions_dic = getActions()
-            json_dic['actions'] += list(actions_dic['sms'].keys()) + list(actions_dic['email'].keys())
+            json_dic['actions'] += list(actions_dic.get('sms', {}).keys()) + \
+                                   list(actions_dic.get('email', {}).keys())
             self.wfile.write(json.dumps(json_dic).encode())
         if self.path == '/apply':
             socket_backend.send(b'AP')

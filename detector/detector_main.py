@@ -47,11 +47,12 @@ if __name__ == '__main__':
     while True:
 
         paramsList = getTriggerParams()
+        trigger_dic = {params['ind']: params['name'] for params in paramsList}
 
         kwargs_list = []
 
         action_params = getActions()
-        rule_dic = getRuleDic()
+        rule_dic = getRuleDic(trigger_dic)
         rule_actions = {rule: rule_dic[rule]['actions'] for rule in rule_dic}
         action_rules = to_action_rules(rule_actions)
         send_signal_params = action_params['send_signal']
@@ -88,7 +89,9 @@ if __name__ == '__main__':
 
         for params in paramsList:
             #params.update({'init_level': 2, 'stop_level': 1})
-            kwargs_list.append({'target': trigger_picker, 'kwargs': params})
+            trigger_params = params.copy()
+            del trigger_params['name']
+            kwargs_list.append({'target': trigger_picker, 'kwargs': trigger_params})
         # for kwargs in kwargs_list:
         #     print('\nkwargs:\n' + str(kwargs))
         # exit(1)
