@@ -10,6 +10,9 @@ var headersObj = new Object();
 
 var triggersDic;
 
+var actionsDic;
+
+var checkCol = headersObj["check"];
 var ruleIdCol = headersObj["rule_id"];
 var formulaCol = headersObj["formula"];
 var ruleValCol = headersObj["val"];
@@ -100,7 +103,7 @@ function initFunc () {
 		    //console.log('response:' + xhr.responseText);
 			var responseObj = JSON.parse(xhr.responseText);
 			triggersDic = responseObj['triggers'];
-			var actionIds = responseObj['actions'];
+			actionsDic = responseObj['actions'];
 			var triggersIds = [];
 			for (triggerId in triggersDic)	{
 				triggersIds.push(triggerId);
@@ -112,13 +115,25 @@ function initFunc () {
 				triggersObj[triggerId] = 0;
 				triggerNames.push(triggersDic[triggerId]);
 			}
+			
+			var actionIds = [];
+			for (actionId in actionsDic)	{
+				actionIds.push(actionId);
+			}
+			actionIds.sort();
+			//console.log('triggersIds:' + triggersIds + ' triggersDic:' + JSON.stringify(triggersDic));
+			var actionNames = [];
+			for (var actionId of actionIds)	{
+				actionNames.push(actionsDic[actionId]);
+			}
+
 			var rows = document.getElementById("rulesTable").rows;
 			for (var i = 1; i < rows.length; i = i + 1)	{
 				var row = rows[i];
 				var ruleCell = row.cells[formulaCol];
 				fillTriggers(triggerNames, ruleCell);
 				var actionCell = row.cells[actionCol];
-				fillActions(actionIds, actionCell);
+				fillActions(actionNames, actionCell);
 			}
 		}
 	}
@@ -155,20 +170,20 @@ function fillTriggers (triggerNames, ruleCell)	{
 	}	
 }
 
-function fillActions (actionIds, actionCell)	{
+function fillActions (actionNames, actionCell)	{
 	for (var actionNode of actionCell.children)	{
 		var options = actionNode.options;
 		var selectedIndex = actionNode.selectedIndex;
 		var selectedAction = options[selectedIndex].text;
 		var option = options[0];
-		if (selectedIndex == 0 || !actionIds.includes(selectedAction))	{
+		if (selectedIndex == 0 || !actionNames.includes(selectedAction))	{
 			option.setAttribute("selected", "selected");
 		} else	{
 			option.removeAttribute("selected");
 		}
 		actionNode.innerHTML = "";
 		actionNode.appendChild(option);
-		for (var action of actionIds)	{
+		for (var action of actionNames)	{
 			option = document.createElement("option");
 			option.text = action;
 			if (action == selectedAction) {

@@ -9,11 +9,11 @@ import backend
 from backend.trigger_html_util import save_pprint_trig, getTriggerParams, save_triggers, update_sockets, post_triggers, \
     save_sources, save_rules, update_rules, apply_sockets_rule, save_actions, \
     update_triggers_sockets, getActions, getRuleDic, getSources
-from detector.misc.globals import Port, Subscription
+from detector.misc.globals import Port, Subscription, action_names_dic0
 
 logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
                            '%(message)s',
-                    level=logging.INFO)
+                    level=logging.DEBUG)
 logger = logging.getLogger('detector')
 
 
@@ -167,10 +167,12 @@ class myHandler(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             # print('trigger ids' + str(trigger_ids))
-            json_dic = {'triggers': trigger_dic, 'actions': [1, 2, 3]}
+            json_dic = {'triggers': trigger_dic, 'actions': action_names_dic0}
             actions_dic = getActions()
-            json_dic['actions'] += list(actions_dic.get('sms', {}).keys()) + \
-                                   list(actions_dic.get('email', {}).keys())
+            sms_dic = actions_dic.get('sms', {})
+            sms_dic = {sms_id: sms_dic[sms_id]['name'] for sms_id in sms_dic}
+            json_dic['actions'].update(sms_dic)
+            logger.debug('actions_dic:' + str(json_dic['actions']))
             self.wfile.write(json.dumps(json_dic).encode())
         if self.path == '/apply':
             socket_backend.send(b'AP')

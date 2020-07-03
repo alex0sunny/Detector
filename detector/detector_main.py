@@ -9,7 +9,7 @@ from detector.action.send_sms import send_sms
 from detector.filter_trigger.rule import rule_picker
 from detector.filter_trigger.StaLtaTrigger import trigger_picker
 from detector.filter_trigger.rule_resender import resend
-from detector.misc.globals import Port, CustomThread
+from detector.misc.globals import Port, CustomThread, action_names_dic0
 from backend.trigger_html_util import getTriggerParams, getSources, getActions, getRuleDic
 from detector.misc.misc_util import to_action_rules, f_empty
 from detector.send_receive.signal_receiver import signal_receiver
@@ -52,7 +52,13 @@ if __name__ == '__main__':
         kwargs_list = []
 
         action_params = getActions()
-        rule_dic = getRuleDic(trigger_dic)
+        action_names_dic = {}
+        action_names_dic.update(action_names_dic0)
+        sms_dic0 = action_params.get('sms', {})
+        sms_dic = {sms_id: sms_dic0[sms_id]['name'] for sms_id in sms_dic0}
+        action_names_dic.update(sms_dic)
+        rule_dic = getRuleDic(trigger_dic, action_names_dic)
+        #print('rule_dic:' + str(rule_dic) + '\naction_names_dic:' + str(action_names_dic))
         rule_actions = {rule: rule_dic[rule]['actions'] for rule in rule_dic}
         action_rules = to_action_rules(rule_actions)
         send_signal_params = action_params['send_signal']

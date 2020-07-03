@@ -21,6 +21,7 @@ var headersObj = new Object();
 //console.log('headersObj:' + JSON.stringify(headersObj));
 var checkCol = headersObj["check"];
 var actionIdCol = headersObj["action_id"];
+var nameCol = headersObj["name"];
 var typeCol = headersObj["type"];
 var addressCol = headersObj["address"];
 var messageCol = headersObj["message"];
@@ -44,6 +45,7 @@ function add() {
     var row = rows[len - 1].cloneNode(true);
     var ind = parseInt(row.cells[actionIdCol].innerHTML) + 1;
     row.cells[actionIdCol].innerHTML = ind;
+    row.cells[nameCol].innerHTML = "";
     table.children[0].appendChild(row);
 }
 
@@ -84,6 +86,7 @@ function apply()	{
 	cycleFunc(prepareRow);
 	setValue("PEM");
 	setValue("PET");
+	genNames();
 	var xhr = new XMLHttpRequest();
 	var url = "applyActions";
 	xhr.open("POST", url, true);
@@ -148,5 +151,36 @@ function remove()	{
     	if (checkBox.checked == true && table.rows.length > 5)	{
     		table.children[0].removeChild(row);
     	}
+    }
+}
+
+function genName(phoneNum, name, names)	{
+	if (!name)	{
+		name = "sms";
+		name += phoneNum.substring(phoneNum.length - 2, phoneNum.length);
+	}
+	if (names.has(name))	{
+		var newName;
+		for (var i = 2; i < 20; i++) {
+			  newName = name + "_" + i;
+			  if (names.has(newName) == false)	{
+				  name = newName;
+				  break;
+			  }
+		}
+	}
+	return name;
+}
+
+function genNames()	{
+	var names = new Set();
+	var rows = getRows();
+	for (var row of Array.from(rows).slice(4))	{
+		var cells = row.cells;
+	    var name = cells[nameCol].textContent.trim();
+	    var phoneNum = cells[addressCol].textContent.trim();
+	    name = genName(phoneNum, name, names);
+	    cells[nameCol].innerHTML = name;
+	    names.add(name);
     }
 }

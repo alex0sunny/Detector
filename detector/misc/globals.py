@@ -79,3 +79,6 @@ class CustomThread(Thread):
             sleep(.1)
         self.join()
 
+
+action_names_dic0 = {1: 'relay_A', 2: 'relay_B', 3: 'send_signal'}
+

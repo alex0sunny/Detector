@@ -37,7 +37,7 @@ def getTriggerParams():
     return params_list
 
 
-def getRuleDic(trigger_dic):
+def getRuleDic(trigger_dic, action_names_dic=None):
     root = etree.parse(os.path.split(inspect.getfile(backend))[0] + '/rules.html')
     headers_dic = getHeaderDic(root)
     id_col = headers_dic['rule_id']
@@ -57,9 +57,11 @@ def getRuleDic(trigger_dic):
             #logger.debug('i:' + str(i) + ' formula_list[i]:' + str(formula_list[i]))
             formula_list[i] = names_dic.get(formula_list[i], 0)
         rule_dic[rule_id]['formula'] = formula_list
-        actions_list = [int(el.text) for el in row[actions_col].iter()
-                        if 'selected' in el.attrib and el.text != '-']
-        rule_dic[rule_id]['actions'] = actions_list
+        if action_names_dic:
+            names_ids_dic = {v: int(k) for k, v in action_names_dic.items()}
+            actions_list = [names_ids_dic[el.text] for el in row[actions_col].iter()
+                            if 'selected' in el.attrib and el.text != '-']
+            rule_dic[rule_id]['actions'] = actions_list
     return rule_dic
 
 
@@ -94,9 +96,10 @@ def set_source_channels(station, channels, units='V'):
     root.write(fpath)
 
 
-def get_action_data(action_type, root, id_col, address_col, message_col):
+def get_action_data(action_type, root, id_col, address_col, message_col, name_col):
     rows = root.xpath("//tr[./td/select/option[@selected]='" + action_type + "']")
-    return {int(row[id_col].text): {'address': row[address_col].text, 'message': row[message_col].text}
+    return {int(row[id_col].text):
+                {'address': row[address_col].text, 'message': row[message_col].text, 'name': row[name_col].text}
             for row in rows}
 
 
@@ -107,8 +110,9 @@ def getActions():
     id_col = headers_dic['action_id']
     address_col = headers_dic['address']
     message_col = headers_dic['message']
+    name_col = headers_dic['name']
     for action_type in ['SMS', 'email']:
-        dic = get_action_data(action_type, root, id_col, address_col, message_col)
+        dic = get_action_data(action_type, root, id_col, address_col, message_col, name_col)
         if dic:
             actions_dic[action_type.lower()] = dic
     pem = int(root.xpath("//input[@id='PEM']/@value")[0])
