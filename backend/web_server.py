@@ -98,13 +98,19 @@ class myHandler(BaseHTTPRequestHandler):
                 mimetype = 'text/css'
                 sendReply = True
 
-            if sendReply == True:
+            if sendReply:
                 # Open the static file requested and send it
-                f = open(curdir + sep + self.path)
+                if  mimetype == 'image/jpg':
+                    f = open(curdir + sep + self.path, 'rb')
+                else:
+                    f = open(curdir + sep + self.path)
                 self.send_response(200)
                 self.send_header('Content-type', mimetype)
                 self.end_headers()
-                self.wfile.write(f.read().encode())
+                if mimetype == 'image/jpg':
+                    self.wfile.write(f.read())
+                else:
+                    self.wfile.write(f.read().encode())
                 f.close()
             return
 

@@ -162,8 +162,14 @@ function getFromHtml()	{
 	if (rows.length > 1) {
 		for (i = 1; i < rows.length; i++)	{
 		    var row = rows[i];
+		    var imgNode = row.cells[valCol].children[0];
+		    var src = imgNode.getAttribute("src");
+		    var triggerVal = 1;
+		    if (src == "img\\circle-gray.jpg")	{
+		    	triggerVal = 0;
+		    }
 		    var ind = parseInt(row.cells[indexCol].innerHTML);
-			triggers[ind] = parseInt(row.cells[valCol].innerHTML);
+			triggers[ind] = triggerVal;
 		}
 		var options = rows[1].cells[channelCol].children[0].options;
 		for (i = 0; i < options.length; i++) {
@@ -197,7 +203,12 @@ function setTriggerVals(triggers) {
 		    ind = row.cells[indexCol].innerHTML;
 		    //console.log('ind:' + ind + ' triggers keys:' + Object.keys(triggers));
 		    if (ind in triggers) {
-			    row.cells[valCol].innerHTML = triggers[ind];
+		    	var imgNode = row.cells[valCol].children[0];
+		    	var src = "img\\circle-gray.jpg";
+		    	if (triggers[ind])	{
+		    		src = "img\\circle-green.jpg";
+		    	}
+			    imgNode.setAttribute("src", src);
 			}
 		}
 	}
