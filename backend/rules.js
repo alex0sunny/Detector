@@ -33,7 +33,7 @@ function updateTriggers (triggersObj, ruleCell) {
 	for (var i = 0; i < children.length; i++)	{
 		var node = children[i];
 		//console.log('nodeName:' + node.nodeName);
-		if (node.nodeName == "OUTPUT") 	{
+		if (node.nodeName == "IMG") 	{
 			var triggerNode = children[i - 1];
 			var options = triggerNode.options;
 			var selectedIndex = triggerNode.selectedIndex;
@@ -46,11 +46,14 @@ function updateTriggers (triggersObj, ruleCell) {
 				}
 			}
 			var triggerVal = triggersObj[triggerIdStr];
-			if (triggerVal == undefined)	{
-				triggerVal = "-";
-			} 
 			//console.log('triggerVal:' + triggerVal);
-			node.value = triggerVal;
+			var src;
+			if (triggerVal)	{
+				src = "img\\green16.jpg";
+			}	else	{
+				src = "img\\gray16.jpg";
+			}
+			node.setAttribute("src", src);
 		} 
 	}
 }
@@ -60,10 +63,17 @@ function updateRules(rulesObj)	{
     var rows = table.rows;
     for (var i = 1; i < rows.length; i++)	{
     	var row = rows[i];
+    	var imgNode = row.cells[ruleValCol].children[0];
       	var ruleId = row.cells[ruleIdCol].innerHTML;
+      	var src;
        	//console.log('ruleId:' + ruleId + ' ruleVal:' + rulesObj[ruleId]);
       	if (ruleId in rulesObj)	{
-      		row.cells[ruleValCol].innerHTML = rulesObj[ruleId];
+      		if (rulesObj[ruleId])	{
+      			src = "img\\circle-green.jpg";
+      		}	else	{
+      			src = "img\\circle-gray.jpg";
+      		}
+      		imgNode.setAttribute("src", src);
       	}
     }	
 }
@@ -145,7 +155,7 @@ function fillTriggers (triggerNames, ruleCell)	{
 	var children = ruleCell.children;
 	for (var i = 0; i < children.length; i++)	{
 		var node = children[i];
-		if (node.nodeName == "OUTPUT") 	{
+		if (node.nodeName == "IMG") 	{
 			var triggerNode = children[i - 1];
 			var options = triggerNode.options;
 			var selectedIndex = triggerNode.selectedIndex;
@@ -174,6 +184,7 @@ function fillActions (actionNames, actionCell)	{
 	for (var actionNode of actionCell.children)	{
 		var options = actionNode.options;
 		var selectedIndex = actionNode.selectedIndex;
+		//console.log("action node:" + actionNode.innerHTML);
 		var selectedAction = options[selectedIndex].text;
 		var option = options[0];
 		if (selectedIndex == 0 || !actionNames.includes(selectedAction))	{
@@ -266,7 +277,13 @@ function getRulesObj()	{
     for (var i = 1; i < rows.length; i++)	{
     	var row = rows[i];
     	var ruleId = parseInt(row.cells[ruleIdCol].innerHTML);
-    	var ruleVal = parseInt(row.cells[ruleValCol].innerHTML);
+	    var src = row.cells[ruleValCol].children[0].getAttribute("src");
+	    var ruleVal;
+	    if (src == "img\\circle-green.jpg")	{
+	    	ruleVal = 1;
+	    }	else	{
+	    	ruleVal = 0;
+	    }
     	rulesObj[ruleId] = ruleVal;
     }
     return rulesObj;
