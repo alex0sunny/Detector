@@ -265,8 +265,8 @@ function nullifyVals()	{
 	//console.log('time out');
 	var rows = document.getElementById("rulesTable").rows;
 	for (var i = 1; i < rows.length; i++) {
-		var valCell = rows[i].cells[ruleValCol];
-		valCell.innerHTML = 0;
+		var imgNode = rows[i].cells[ruleValCol].children[0];
+		imgNode.setAttribute("src", "img\\circle-gray.jpg");
 	}
 }
 
@@ -298,4 +298,45 @@ function remove()	{
 	    		table.children[0].removeChild(row);
     	}
     }
+}
+
+function addTrigger(triggersCell)	{
+	var nodes = triggersCell.children;
+	var len = nodes.length;
+	var i = len - 1;
+	//console.log("nodes[i].name:" + nodes[i].name);
+	while (nodes[i].nodeName != "IMG")	{
+		i = i - 1;
+	}
+	var node = nodes[i+1];
+	var indicatorNode = nodes[i].cloneNode();
+	var triggerNode = nodes[i-1].cloneNode(true);
+	var opNode = document.createElement('select');
+	opNode.setAttribute("class", "operation");
+	for (var op of ["and", "and not", "or", "or not"])	{
+		var subNode = document.createElement("option");
+		subNode.innerHTML = op;
+		opNode.appendChild(subNode);
+	}
+	opNode.children[0].setAttribute("selected", "selected");
+	triggersCell.insertBefore(opNode, node);
+	triggersCell.insertBefore(triggerNode, node);
+	triggersCell.insertBefore(indicatorNode, node);
+}
+
+function removeTrigger(triggersCell)	{
+	var nodes = triggersCell.children;
+	var len = nodes.length;
+	var i = len - 1;
+	//console.log("nodes[i].name:" + nodes[i].name);
+	while (nodes[i].nodeName != "IMG")	{
+		i = i - 1;
+	}
+	while (true)	{
+		triggersCell.removeChild(nodes[i]);
+		i = i - 1;
+		if (nodes[i].nodeName == "IMG")	{
+			break;
+		} 
+	}
 }

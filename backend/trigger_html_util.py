@@ -131,8 +131,8 @@ def save_pprint_trig(xml, file):
     tree = etree.fromstring(xml, parser).getroottree()
     header_inds = getHeaderDic(tree)
     rows = tree.xpath('/html/body/table/tbody/tr')[1:]
-    for row in rows:
-        row[header_inds['val']].text = '0'
+    # for row in rows:
+    #     row[header_inds['val']].text = "<img src=\"img\\circle-gray.jpg\"/>"
     tree.write(file)
 
 

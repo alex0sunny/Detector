@@ -111,11 +111,10 @@ function sendHTML() {
 }
 
 function nullifyVals()	{
-	//console.log('time out');
 	var rows = document.getElementById("triggerTable").rows;
 	for (var j = 1; j < rows.length; j++) {
-		var valCell = rows[j].cells[valCol];
-		valCell.innerHTML = 0;
+		var imgNode = rows[j].cells[valCol].children[0];
+	    imgNode.setAttribute("src", "img\\circle-gray.jpg");
 	}
 }
 
