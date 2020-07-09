@@ -157,17 +157,11 @@ function fillTriggers (triggerNames, ruleCell)	{
 		var node = children[i];
 		if (node.nodeName == "IMG") 	{
 			var triggerNode = children[i - 1];
-			var options = triggerNode.options;
-			var selectedIndex = triggerNode.selectedIndex;
-			var selectedTrigger = options[selectedIndex].text;
-			var option = options[0];
-			if (selectedIndex == 0 || !triggerNames.includes(selectedTrigger))	{
-				option.setAttribute("selected", "selected");
-			} else	{
-				option.removeAttribute("selected");
+			var selectedTrigger = triggerNode.value;
+			if (!triggerNames.includes(selectedTrigger))	{
+				selectedTrigger = triggerNames[0];
 			}
 			triggerNode.innerHTML = "";
-			triggerNode.appendChild(option);
 			triggerNames.forEach(function (trigger) {
 				option = document.createElement("option");
 				option.text = trigger;
@@ -182,6 +176,9 @@ function fillTriggers (triggerNames, ruleCell)	{
 
 function fillActions (actionNames, actionCell)	{
 	for (var actionNode of actionCell.children)	{
+		if (actionNode.nodeName != "SELECT")	{
+			return;
+		}
 		var options = actionNode.options;
 		var selectedIndex = actionNode.selectedIndex;
 		//console.log("action node:" + actionNode.innerHTML);
@@ -304,13 +301,28 @@ function addTrigger(triggersCell)	{
 	var nodes = triggersCell.children;
 	var len = nodes.length;
 	var i = len - 1;
-	//console.log("nodes[i].name:" + nodes[i].name);
 	while (nodes[i].nodeName != "IMG")	{
 		i = i - 1;
 	}
-	var node = nodes[i+1];
+	if (i > 9)	{
+		return;
+	}
+	var refNode = nodes[i+1];
 	var indicatorNode = nodes[i].cloneNode();
 	var triggerNode = nodes[i-1].cloneNode(true);
+	var curNames = [];
+	for (var j = 0; j < i; j += 3)	{
+		curNames.push(nodes[j].value);
+	}
+	var selected = false;
+	for (var option of triggerNode.options)	{
+		if (curNames.includes(option.innerHTML) || selected)	{
+			option.removeAttribute("selected");
+		}	else	{
+			option.setAttribute("selected", "selected");
+			selected = true;
+		}
+	}
 	var opNode = document.createElement('select');
 	opNode.setAttribute("class", "operation");
 	for (var op of ["and", "and not", "or", "or not"])	{
@@ -319,9 +331,9 @@ function addTrigger(triggersCell)	{
 		opNode.appendChild(subNode);
 	}
 	opNode.children[0].setAttribute("selected", "selected");
-	triggersCell.insertBefore(opNode, node);
-	triggersCell.insertBefore(triggerNode, node);
-	triggersCell.insertBefore(indicatorNode, node);
+	triggersCell.insertBefore(opNode, refNode);
+	triggersCell.insertBefore(triggerNode, refNode);
+	triggersCell.insertBefore(indicatorNode, refNode);
 }
 
 function removeTrigger(triggersCell)	{
@@ -332,6 +344,9 @@ function removeTrigger(triggersCell)	{
 	while (nodes[i].nodeName != "IMG")	{
 		i = i - 1;
 	}
+	if (i < 3)	{
+		return;
+	}
 	while (true)	{
 		triggersCell.removeChild(nodes[i]);
 		i = i - 1;
@@ -339,4 +354,47 @@ function removeTrigger(triggersCell)	{
 			break;
 		} 
 	}
+}
+
+function addAction(refNode)	{
+	var actionCell = refNode.parentNode;
+	var nodes = actionCell.children;
+	var len = nodes.length;
+	var i = len - 1;
+	//console.log("nodes[i].name:" + nodes[i].name);
+	while (nodes[i].nodeName != "SELECT")	{
+		i = i - 1;
+	}
+	if (i > 2)	{
+		return;
+	}
+	var actionNode = nodes[i].cloneNode(true);
+	var curActions = [];
+	for (var j = 0; j <= i; j++)	{
+		curActions.push(nodes[j].value);
+	}
+	var selected = false;
+	for (var option of actionNode.options)	{
+		if (curActions.includes(option.innerHTML) || selected)	{
+			option.removeAttribute("selected");
+		}	else	{
+			option.setAttribute("selected", "selected");
+			selected = true;
+		}
+	}
+	actionCell.insertBefore(actionNode, refNode);
+}
+
+function removeAction(actionCell)	{
+	var nodes = actionCell.children;
+	var len = nodes.length;
+	var i = len - 1;
+	//console.log("nodes[i].name:" + nodes[i].name);
+	while (nodes[i].nodeName != "SELECT")	{
+		i = i - 1;
+	}
+	if (i < 1)	{
+		return;
+	}
+	actionCell.removeChild(nodes[i]);
 }

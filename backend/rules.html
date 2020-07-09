@@ -20,260 +20,40 @@
 					<td>1</td>
 					<td>
 						<select class="trigger">
+							<option>trigger1</option>
+							<option>rms11</option>
+							<option>rms112</option>
+							<option selected="selected">slta11</option>
+						</select>
+						<img src="img\gray16.jpg"/>
+						<select class="operation">
+							<option>and</option>
+							<option selected="selected">and not</option>
+							<option>or</option>
+							<option>or not</option>
+						</select>
+						<select class="trigger">
 							<option selected="selected">trigger1</option>
 							<option>rms11</option>
 							<option>rms112</option>
 							<option>slta11</option>
-							<option>slta112</option>
-							<option>rms113</option>
-							<option>slta113</option>
 						</select>
 						<img src="img\gray16.jpg"/>
-						<select class="operation">
-							<option>and</option>
-							<option>and not</option>
-							<option selected="selected">or</option>
-							<option>or not</option>
-						</select>
-						<select class="trigger">
-							<option>trigger1</option>
-							<option selected="selected">rms11</option>
-							<option>rms112</option>
-							<option>slta11</option>
-							<option>slta112</option>
-							<option>rms113</option>
-							<option>slta113</option>
-						</select>
-						<img src="img\gray16.jpg"/>
-						<select class="operation">
-							<option>and</option>
-							<option>and not</option>
-							<option selected="selected">or</option>
-							<option>or not</option>
-						</select>
-						<select class="trigger">
-							<option>trigger1</option>
-							<option>rms11</option>
-							<option selected="selected">rms112</option>
-							<option>slta11</option>
-							<option>slta112</option>
-							<option>rms113</option>
-							<option>slta113</option>
-						</select>
-						<img src="img\gray16.jpg"/>
-						<button type="button" onclick="addTrigger(this.parentNode)">+</button>
-						<button type="button" onclick="removeTrigger(this.parentNode)">X</button>						
+						<button type="button" style="font-weight:bold;color:green" onclick="addTrigger(this.parentNode)">+</button>
+						<button type="button" style="color:red;" onclick="removeTrigger(this.parentNode)">X</button>						
 					</td>
 					<td>
 						<img src="img\circle-gray.jpg"/>
 					</td>
 					<td>
 						<select>
-							<option>-</option>
 							<option>relay_A</option>
 							<option selected="selected">relay_B</option>
 							<option>send_signal</option>
 							<option>send_sms</option>
 						</select>
-						<select>
-							<option selected="selected">-</option>
-							<option>relay_A</option>
-							<option>relay_B</option>
-							<option>send_signal</option>
-							<option>send_sms</option>
-						</select>
-						<select>
-							<option selected="selected">-</option>
-							<option>relay_A</option>
-							<option>relay_B</option>
-							<option>send_signal</option>
-							<option>send_sms</option>
-						</select>
-						<select>
-							<option selected="selected">-</option>
-							<option>relay_A</option>
-							<option>relay_B</option>
-							<option>send_signal</option>
-							<option>send_sms</option>
-						</select>
-					</td>
-				</tr>
-				<tr>
-					<td>
-						<input type="checkbox"/>
-					</td>
-					<td>2</td>
-					<td>
-						<select class="trigger">
-							<option>-</option>
-							<option selected="selected">trigger1</option>
-							<option>rms11</option>
-							<option>rms112</option>
-							<option>slta11</option>
-							<option>slta112</option>
-							<option>rms113</option>
-							<option>slta113</option>
-						</select>
-						<img src="img\gray16.jpg"/>
-						<select class="operation">
-							<option selected="selected">and</option>
-							<option>and not</option>
-							<option>or</option>
-							<option>or not</option>
-						</select>
-						<select class="trigger">
-							<option>-</option>
-							<option>trigger1</option>
-							<option selected="selected">rms11</option>
-							<option>rms112</option>
-							<option>slta11</option>
-							<option>slta112</option>
-							<option>rms113</option>
-							<option>slta113</option>
-						</select>
-						<img src="img\gray16.jpg"/>
-						<select class="operation">
-							<option selected="selected">and</option>
-							<option>and not</option>
-							<option>or</option>
-							<option>or not</option>
-						</select>
-						<select class="trigger">
-							<option>-</option>
-							<option>trigger1</option>
-							<option>rms11</option>
-							<option selected="selected">rms112</option>
-							<option>slta11</option>
-							<option>slta112</option>
-							<option>rms113</option>
-							<option>slta113</option>
-						</select>
-						<img src="img\gray16.jpg"/>
-						<select class="operation">
-							<option>and</option>
-							<option>and not</option>
-							<option selected="selected">or</option>
-							<option>or not</option>
-						</select>
-						<select class="trigger">
-							<option selected="selected">-</option>
-							<option>trigger1</option>
-							<option>rms11</option>
-							<option>rms112</option>
-							<option>slta11</option>
-							<option>slta112</option>
-							<option>rms113</option>
-							<option>slta113</option>
-						</select>
-						<img src="img\gray16.jpg"/>
-						<select class="operation">
-							<option>and</option>
-							<option>and not</option>
-							<option selected="selected">or</option>
-							<option>or not</option>
-						</select>
-						<small>&gt;&gt;</small>
-						<br/>
-						<br/>
-						<small>&gt;&gt;</small>
-						<select class="trigger">
-							<option selected="selected">-</option>
-							<option>trigger1</option>
-							<option>rms11</option>
-							<option>rms112</option>
-							<option>slta11</option>
-							<option>slta112</option>
-							<option>rms113</option>
-							<option>slta113</option>
-						</select>
-						<img src="img\gray16.jpg"/>
-						<select class="operation">
-							<option selected="selected">and</option>
-							<option>and not</option>
-							<option>or</option>
-							<option>or not</option>
-						</select>
-						<select class="trigger">
-							<option selected="selected">-</option>
-							<option>trigger1</option>
-							<option>rms11</option>
-							<option>rms112</option>
-							<option>slta11</option>
-							<option>slta112</option>
-							<option>rms113</option>
-							<option>slta113</option>
-						</select>
-						<img src="img\gray16.jpg"/>
-						<select class="operation">
-							<option selected="selected">and</option>
-							<option>and not</option>
-							<option>or</option>
-							<option>or not</option>
-						</select>
-						<select class="trigger">
-							<option selected="selected">-</option>
-							<option>trigger1</option>
-							<option>rms11</option>
-							<option>rms112</option>
-							<option>slta11</option>
-							<option>slta112</option>
-							<option>rms113</option>
-							<option>slta113</option>
-						</select>
-						<img src="img\gray16.jpg"/>
-						<select class="operation">
-							<option selected="selected">and</option>
-							<option>and not</option>
-							<option>or</option>
-							<option>or not</option>
-						</select>
-						<select class="trigger">
-							<option selected="selected">-</option>
-							<option>trigger1</option>
-							<option>rms11</option>
-							<option>rms112</option>
-							<option>slta11</option>
-							<option>slta112</option>
-							<option>rms113</option>
-							<option>slta113</option>
-						</select>
-						<img src="img\gray16.jpg"/>
-						<br/>
-						<br/>
-						<br/>
-					</td>
-					<td>
-						<img src="img\circle-gray.jpg"/>
-					</td>
-					<td>
-						<select>
-							<option>-</option>
-							<option selected="selected">relay_A</option>
-							<option>relay_B</option>
-							<option>send_signal</option>
-							<option>send_sms</option>
-						</select>
-						<select>
-							<option selected="selected">-</option>
-							<option>relay_A</option>
-							<option>relay_B</option>
-							<option>send_signal</option>
-							<option>send_sms</option>
-						</select>
-						<select>
-							<option selected="selected">-</option>
-							<option>relay_A</option>
-							<option>relay_B</option>
-							<option>send_signal</option>
-							<option>send_sms</option>
-						</select>
-						<select>
-							<option selected="selected">-</option>
-							<option>relay_A</option>
-							<option>relay_B</option>
-							<option>send_signal</option>
-							<option>send_sms</option>
-						</select>s
+						<button type="button" style="font-weight:bold;color:green" onclick="addAction(this)">+</button>
+						<button type="button" style="color:red;" onclick="removeAction(this.parentNode)">X</button>						
 					</td>
 				</tr>
 			</tbody>
