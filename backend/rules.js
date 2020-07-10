@@ -316,7 +316,7 @@ function addTrigger(refNode)	{
 	var curTriggerNode;
 	for (node of nodes)	{
 		if (node.nodeName == "IMG")	{
-			curTriggerNode = node.previousSibling;
+			curTriggerNode = node.previousElementSibling;
 			curNames.push(curTriggerNode.value);
 		}
 	}

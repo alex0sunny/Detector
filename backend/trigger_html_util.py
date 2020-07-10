@@ -189,7 +189,7 @@ def apply_sockets_rule(conn_str, context, sockets_rule):
     trigger_dic = {params['ind']: params['name'] for params in getTriggerParams()}
     for rule_id in getRuleDic(trigger_dic).keys():
         if rule_id not in sockets_rule:
-            update_sockets(rule_id, conn_str, context, sockets_rule)
+            update_sockets(rule_id, conn_str, context, sockets_rule, Subscription.rule.value)
 
 
 def post_triggers(json_triggers, sockets_trigger):
@@ -212,6 +212,7 @@ def post_triggers(json_triggers, sockets_trigger):
 
 
 def update_rules(json_rules, sockets_rule):
+    #logger.debug('json_rules:' + str(json_rules))
     rules = {int(k): v for k, v in json_rules.items()}
     # logger.debug('post_data_str:' + post_data_str + '\ntriggers dic:' + str(triggers) + '\ntriggers keys:' +
     #              str(triggers.keys()))
