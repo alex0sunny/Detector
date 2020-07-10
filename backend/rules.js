@@ -297,23 +297,44 @@ function remove()	{
     }
 }
 
-function addTrigger(triggersCell)	{
+function addTrigger(refNode)	{
+	//console.log("refNode name:" + refNode.nodeName);
+	var imgNode = refNode.previousElementSibling;
+	//console.log("imgNode name:" + imgNode.nodeName);
+	var triggerNode = imgNode.previousElementSibling;
+	//console.log("triggerNode name:" + triggerNode.nodeName);
+	var opNode = triggerNode.previousElementSibling;
+	//console.log("opNode name:" + opNode.nodeName);
+	var imgNode = imgNode.cloneNode(true);
+	var triggerNode = triggerNode.cloneNode(true);
+	var opNode = opNode.cloneNode(true);
+	
+	var triggersCell = refNode.parentNode;
 	var nodes = triggersCell.children;
-	var len = nodes.length;
-	var i = len - 1;
-	while (nodes[i].nodeName != "IMG")	{
-		i = i - 1;
+	var node;
+	var curNames = [];
+	var curTriggerNode;
+	for (node of nodes)	{
+		if (node.nodeName == "IMG")	{
+			curTriggerNode = node.previousSibling;
+			curNames.push(curTriggerNode.value);
+		}
 	}
-	if (i > 9)	{
+	var nOfTriggers = curNames.length; 
+	if (nOfTriggers > 7)	{
 		return;
 	}
-	var refNode = nodes[i+1];
-	var indicatorNode = nodes[i].cloneNode();
-	var triggerNode = nodes[i-1].cloneNode(true);
-	var curNames = [];
-	for (var j = 0; j < i; j += 3)	{
-		curNames.push(nodes[j].value);
+	if (nOfTriggers == 4)	{
+		node = document.createElement("small");
+		node.innerHTML = ">>";
+		triggersCell.insertBefore(node, refNode);
+		node = node.cloneNode(true);
+		triggersCell.insertBefore(node, refNode);
+		var brNode = document.createElement("br");
+		triggersCell.insertBefore(brNode, node);
 	}
+
+	
 	var selected = false;
 	for (var option of triggerNode.options)	{
 		if (curNames.includes(option.innerHTML) || selected)	{
@@ -333,7 +354,7 @@ function addTrigger(triggersCell)	{
 	opNode.children[0].setAttribute("selected", "selected");
 	triggersCell.insertBefore(opNode, refNode);
 	triggersCell.insertBefore(triggerNode, refNode);
-	triggersCell.insertBefore(indicatorNode, refNode);
+	triggersCell.insertBefore(imgNode, refNode);
 }
 
 function removeTrigger(triggersCell)	{
