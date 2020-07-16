@@ -80,5 +80,5 @@ class CustomThread(Thread):
         self.join()
 
 
-action_names_dic0 = {1: 'relay_A', 2: 'relay_B', 3: 'send_signal'}
+action_names_dic0 = {1: 'relayA', 2: 'relayB', 3: 'seedlk'}
 

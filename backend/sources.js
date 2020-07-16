@@ -9,8 +9,10 @@ var headersObj = new Object();
 
 var checkCol = headersObj["check"];
 var indexCol = headersObj["ind"];
+var stationCol = headersObj["station"];
 
 function apply_save() {
+	genNames()
     sendHTML();
 }
 
@@ -29,6 +31,7 @@ function addSource() {
     var rows = table.rows;
     var len = rows.length
     var row = rows[len - 1].cloneNode(true);
+    row.cells[stationCol].innerHTML = "";
     table.children[0].appendChild(row);
 }
 
@@ -40,5 +43,34 @@ function remove()	{
     	if (checkBox.checked == true && rows.length > 2)	{
 	    		table.children[0].removeChild(row);
     	}
+    }
+}
+
+function genName(name, names)	{
+	if (!name)	{
+		name = "ND01";
+	}
+	if (names.has(name))	{
+		var newName;
+		for (var i = 2; i < 20; i++) {
+			newName = name.slice(0, 2) + ('0' + i).slice(-2);
+			if (names.has(newName) == false)	{
+				name = newName;
+				break;
+			}
+		}
+	}
+	return name;
+}
+
+function genNames()	{
+	var stations = new Set();
+	var rows = document.getElementById("sourcesTable").rows;
+	for (var row of Array.from(rows).slice(1))	{
+		var cells = row.cells;
+	    var station = cells[stationCol].textContent.trim();
+	    station = genName(station, stations);
+	    cells[stationCol].innerHTML = station;
+	    stations.add(station);
     }
 }

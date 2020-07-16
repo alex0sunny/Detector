@@ -20,10 +20,10 @@
 					<td>1</td>
 					<td>
 						<select class="trigger">
-							<option>trigger1</option>
-							<option>rms11</option>
-							<option>rms112</option>
-							<option selected="selected">slta11</option>
+							<option trigger_id="1">trigger1</option>
+							<option trigger_id="2">rms11</option>
+							<option trigger_id="3">rms112</option>
+							<option trigger_id="4" selected="selected">slta11</option>
 						</select>
 						<img src="img\gray16.jpg"/>
 						<select class="operation">
@@ -33,10 +33,10 @@
 							<option>or not</option>
 						</select>
 						<select class="trigger">
-							<option selected="selected">trigger1</option>
-							<option>rms11</option>
-							<option>rms112</option>
-							<option>slta11</option>
+							<option trigger_id="1" selected="selected">trigger1</option>
+							<option trigger_id="2">rms11</option>
+							<option trigger_id="3">rms112</option>
+							<option trigger_id="4">slta11</option>
 						</select>
 						<img src="img\gray16.jpg"/>
 						<button type="button" style="font-weight:bold;color:green" onclick="addTrigger(this)">+</button>
@@ -47,11 +47,10 @@
 					</td>
 					<td>
 						<select>
-							<option>relay_A</option>
-							<option selected="selected">relay_A</option>
-							<option>relay_B</option>
-							<option>send_signal</option>
-							<option>send_sms</option>
+							<option action_id="1" selected="selected">relayA</option>
+							<option action_id="2">relayB</option>
+							<option action_id="3">seedlk</option>
+							<option action_id="4">44sms</option>
 						</select>
 						<button type="button" style="font-weight:bold;color:green" onclick="addAction(this)">+</button>
 						<button type="button" style="color:red;" onclick="removeAction(this.parentNode)">X</button>						
@@ -64,10 +63,10 @@
 					<td>2</td>
 					<td>
 						<select class="trigger">
-							<option>trigger1</option>
-							<option>rms11</option>
-							<option>rms112</option>
-							<option selected="selected">slta11</option>
+							<option trigger_id="1">trigger1</option>
+							<option trigger_id="2">rms11</option>
+							<option trigger_id="3">rms112</option>
+							<option trigger_id="4" selected="selected">slta11</option>
 						</select>
 						<img src="img\gray16.jpg"/>
 						<select class="operation">
@@ -77,10 +76,10 @@
 							<option>or not</option>
 						</select>
 						<select class="trigger">
-							<option selected="selected">trigger1</option>
-							<option>rms11</option>
-							<option>rms112</option>
-							<option>slta11</option>
+							<option trigger_id="1" selected="selected">trigger1</option>
+							<option trigger_id="2">rms11</option>
+							<option trigger_id="3">rms112</option>
+							<option trigger_id="4">slta11</option>
 						</select>
 						<img src="img\gray16.jpg"/>
 						<select class="operation">
@@ -90,10 +89,10 @@
 							<option>or not</option>
 						</select>
 						<select class="trigger">
-							<option>trigger1</option>
-							<option selected="selected">rms11</option>
-							<option>rms112</option>
-							<option>slta11</option>
+							<option trigger_id="1">trigger1</option>
+							<option trigger_id="2" selected="selected">rms11</option>
+							<option trigger_id="3">rms112</option>
+							<option trigger_id="4">slta11</option>
 						</select>
 						<img src="img\gray16.jpg"/>
 						<select class="operation">
@@ -103,10 +102,10 @@
 							<option>or not</option>
 						</select>
 						<select class="trigger">
-							<option>trigger1</option>
-							<option>rms11</option>
-							<option selected="selected">rms112</option>
-							<option>slta11</option>
+							<option trigger_id="1">trigger1</option>
+							<option trigger_id="2">rms11</option>
+							<option trigger_id="3" selected="selected">rms112</option>
+							<option trigger_id="4">slta11</option>
 						</select>
 						<img src="img\gray16.jpg"/>
 						<small>&gt;&gt;</small>
@@ -133,11 +132,16 @@
 					</td>
 					<td>
 						<select>
-							<option>relay_A</option>
-							<option>relay_A</option>
-							<option selected="selected">relay_B</option>
-							<option>send_signal</option>
-							<option>send_sms</option>
+							<option action_id="1">relayA</option>
+							<option action_id="2" selected="selected">relayB</option>
+							<option action_id="3">seedlk</option>
+							<option action_id="4">44sms</option>
+						</select>
+						<select>
+							<option action_id="1">relayA</option>
+							<option action_id="2">relayB</option>
+							<option action_id="3">seedlk</option>
+							<option action_id="4" selected="selected">44sms</option>
 						</select>
 						<button type="button" style="font-weight:bold;color:green" onclick="addAction(this)">+</button>
 						<button type="button" style="color:red;" onclick="removeAction(this.parentNode)">X</button>						

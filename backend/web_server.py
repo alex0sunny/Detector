@@ -53,7 +53,7 @@ rule_sockets_dic = {}
 def create_rule_sockets():
     rule_sockets = {}
     trigger_dic = {params['ind']: params['name'] for params in getTriggerParams()}
-    for rule_id in sorted(getRuleDic(trigger_dic).keys()):
+    for rule_id in sorted(getRuleDic().keys()):
         update_sockets(rule_id, conn_str_sub, context, rule_sockets, subscription=Subscription.rule.value)
     return rule_sockets
 

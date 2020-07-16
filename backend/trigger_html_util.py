@@ -37,7 +37,7 @@ def getTriggerParams():
     return params_list
 
 
-def getRuleDic(trigger_dic, action_names_dic=None):
+def getRuleDic():
     root = etree.parse(os.path.split(inspect.getfile(backend))[0] + '/rules.html')
     headers_dic = getHeaderDic(root)
     id_col = headers_dic['rule_id']
@@ -48,20 +48,16 @@ def getRuleDic(trigger_dic, action_names_dic=None):
     for row in rows:
         rule_id = int(row[id_col].text)
         rule_dic[rule_id] = {}
-        formula_list = [el.text for el in row[formula_col].iter() if 'selected' in el.attrib]
-        while formula_list[-1] == '-' and len(formula_list) > 2:
-            formula_list = formula_list[:-2]
-        names_dic = {trigger_name: str(trigger_id) for trigger_id, trigger_name in trigger_dic.items()}
-        #logger.debug('names_dic:' + str(names_dic))
-        for i in range(len(formula_list))[::2]:
-            #logger.debug('i:' + str(i) + ' formula_list[i]:' + str(formula_list[i]))
-            formula_list[i] = names_dic.get(formula_list[i], 0)
+        formula_list = []
+        for el in row[formula_col].iter():
+            if 'selected' in el.attrib:
+                if 'trigger_id' in el.attrib:
+                    formula_list.append(el.attrib['trigger_id'])
+                else:
+                    formula_list.append(el.text)
         rule_dic[rule_id]['formula'] = formula_list
-        if action_names_dic:
-            names_ids_dic = {v: int(k) for k, v in action_names_dic.items()}
-            actions_list = [names_ids_dic[el.text] for el in row[actions_col].iter()
-                            if 'selected' in el.attrib and el.text != '-']
-            rule_dic[rule_id]['actions'] = actions_list
+        rule_dic[rule_id]['actions'] = \
+            [el.attrib['action_id'] for el in row[actions_col].iter() if 'selected' in el.attrib]
     return rule_dic
 
 
@@ -76,7 +72,7 @@ def getSources():
     rows = root.xpath('/html/body/table/tbody/tr')[1:]
     src_dic = {}
     for row in rows:
-        #logger.debug('row:' + etree.tostring(row).decode())
+        # logger.debug('row:' + etree.tostring(row).decode())
         station = row[station_col].text.strip()
         src_dic[station] = {}
         src_dic[station]['host'] = row[host_col].text.strip()
@@ -117,7 +113,7 @@ def getActions():
             actions_dic[action_type.lower()] = dic
     pem = int(root.xpath("//input[@id='PEM']/@value")[0])
     pet = int(root.xpath("//input[@id='PET']/@value")[0])
-    actions_dic['send_signal'] = {'pem': pem, 'pet': pet}
+    actions_dic['seedlk'] = {'pem': pem, 'pet': pet}
     # relay1cell = root.xpath("//*[@id='relay1']")[0]
     # relay2cell = root.xpath("//*[@id='relay2']")[0]
     # relays = ['checked' in releCell.attrib for releCell in [relay1cell, relay2cell]]
@@ -165,7 +161,7 @@ def save_triggers(post_data_str):
 
 
 def update_triggers_sockets(conn_str, context, sockets_trigger):
-    #clear_triggers(sockets_trigger, sockets_detrigger)
+    # clear_triggers(sockets_trigger, sockets_detrigger)
     for trigger_param in getTriggerParams():
         trigger_index = trigger_param['ind']
         if trigger_index not in sockets_trigger:
@@ -185,9 +181,9 @@ def save_actions(post_data_str):
 
 
 def apply_sockets_rule(conn_str, context, sockets_rule):
-    #clear_triggers(sockets_rule, sockets_rule_off)
+    # clear_triggers(sockets_rule, sockets_rule_off)
     trigger_dic = {params['ind']: params['name'] for params in getTriggerParams()}
-    for rule_id in getRuleDic(trigger_dic).keys():
+    for rule_id in getRuleDic().keys():
         if rule_id not in sockets_rule:
             update_sockets(rule_id, conn_str, context, sockets_rule, Subscription.rule.value)
 
@@ -202,7 +198,7 @@ def post_triggers(json_triggers, sockets_trigger):
             try:
                 mes = socket_trigger.recv(zmq.NOBLOCK)
                 triggers[i] = int(mes[3:4])
-                #logger.info('triggering detected, message:' + str(mes))
+                # logger.info('triggering detected, message:' + str(mes))
             except zmq.ZMQError:
                 pass
         else:
@@ -212,11 +208,11 @@ def post_triggers(json_triggers, sockets_trigger):
 
 
 def update_rules(json_rules, sockets_rule):
-    #logger.debug('json_rules:' + str(json_rules))
+    # logger.debug('json_rules:' + str(json_rules))
     rules = {int(k): v for k, v in json_rules.items()}
     # logger.debug('post_data_str:' + post_data_str + '\ntriggers dic:' + str(triggers) + '\ntriggers keys:' +
     #              str(triggers.keys()))
-    #logger.debug('rules:' + str(rules) + ' n of rule sockets:' + str(len(sockets_rule)))
+    # logger.debug('rules:' + str(rules) + ' n of rule sockets:' + str(len(sockets_rule)))
     for i in rules:
         if i in sockets_rule:
             socket_rule = sockets_rule[i]
@@ -230,16 +226,14 @@ def update_rules(json_rules, sockets_rule):
 
     return rules
 
+# print(str(getActions()))
 
-#print(str(getActions()))
+# print(getRuleFormulasDic())
 
-#print(getRuleFormulasDic())
-
-#print(getChannels())
-#save_pprint('<html><body>Hello<br/>World</body></html>', 'd:/temp/temp.xml')
-#print(getTriggerParams())
+# print(getChannels())
+# save_pprint('<html><body>Hello<br/>World</body></html>', 'd:/temp/temp.xml')
+# print(getTriggerParams())
 
 # f = open('D:\\programming\\python\\Detector\\backend\\index.html', 'r')
 # xml = f.read()
 # f.close()
-

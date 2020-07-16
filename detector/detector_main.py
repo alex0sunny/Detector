@@ -57,11 +57,11 @@ if __name__ == '__main__':
         sms_dic0 = action_params.get('sms', {})
         sms_dic = {sms_id: sms_dic0[sms_id]['name'] for sms_id in sms_dic0}
         action_names_dic.update(sms_dic)
-        rule_dic = getRuleDic(trigger_dic, action_names_dic)
+        rule_dic = getRuleDic()
         #print('rule_dic:' + str(rule_dic) + '\naction_names_dic:' + str(action_names_dic))
         rule_actions = {rule: rule_dic[rule]['actions'] for rule in rule_dic}
         action_rules = to_action_rules(rule_actions)
-        send_signal_params = action_params['send_signal']
+        send_signal_params = action_params['seedlk']
         pem = send_signal_params['pem']
         pet = send_signal_params['pet']
         rules = []
@@ -77,8 +77,10 @@ if __name__ == '__main__':
                     rules = []
                     if action_id in action_rules:
                         rules = action_rules[action_id]
+                    send_func_params = send_params_dic[action_id]
+                    del send_func_params['name']
                     kwargs = {'action_id': action_id, 'rules': rules, 'send_func': send_func,
-                              'args': send_params_dic[action_id]}
+                              'args': send_func_params}
                     kwargs_list.append({'target': action_process, 'kwargs': kwargs})
         for action_id in [1, 2]:
             rules = []

@@ -156,13 +156,12 @@ function remove()	{
 
 function genName(phoneNum, name, names)	{
 	if (!name)	{
-		name = "sms";
-		name += phoneNum.substring(phoneNum.length - 2, phoneNum.length);
+		name = phoneNum.substring(phoneNum.length - 2, phoneNum.length) + "sms";
 	}
 	if (names.has(name))	{
 		var newName;
 		for (var i = 2; i < 20; i++) {
-			  newName = name + "_" + i;
+			  newName = name + i;
 			  if (names.has(newName) == false)	{
 				  name = newName;
 				  break;

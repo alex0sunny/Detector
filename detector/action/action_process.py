@@ -20,5 +20,6 @@ def action_process(action_id, send_func, rules=[], args={}):
             args['relay_n'] = action_id
             print('message received for action ' + str(action_id) + ', mes:' + str(bin_message))
         args['on_off'] = int(bin_message[3:4])
+        #print('args:' + str(args))
         send_func(**args)
 
