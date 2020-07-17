@@ -109,6 +109,7 @@ def getActions():
     name_col = headers_dic['name']
     for action_type in ['SMS', 'email']:
         dic = get_action_data(action_type, root, id_col, address_col, message_col, name_col)
+        #print("dic:" + str(dic))
         if dic:
             actions_dic[action_type.lower()] = dic
     pem = int(root.xpath("//input[@id='PEM']/@value")[0])

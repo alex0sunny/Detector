@@ -114,12 +114,12 @@ function initFunc () {
 			var responseObj = JSON.parse(xhr.responseText);
 			triggersDic = responseObj['triggers'];
 			actionsDic = responseObj['actions'];
+			console.log("actions dic:" + JSON.stringify(actionsDic));
 			var triggersIds = [];
 			for (triggerId in triggersDic)	{
 				triggersIds.push(triggerId);
 			}
 			triggersIds.sort();
-			//console.log('triggersIds:' + triggersIds + ' triggersDic:' + JSON.stringify(triggersDic));
 			var triggerNames = [];
 			for (var triggerId of triggersIds)	{
 				triggersObj[triggerId] = 0;
@@ -131,19 +131,25 @@ function initFunc () {
 				actionIds.push(actionId);
 			}
 			actionIds.sort();
-			//console.log('triggersIds:' + triggersIds + ' triggersDic:' + JSON.stringify(triggersDic));
-//			var actionNames = [];
-//			for (var actionId of actionIds)	{
-//				actionNames.push(actionsDic[actionId]);
-//			}
 
 			var rows = document.getElementById("rulesTable").rows;
+			var triggerNode = rows[1].cells[formulaCol].children[0];
+			var triggerOptions = triggerNode.children;
+			var actionOptions = rows[1].cells[actionCol].children[0].options;
+			var prevTriggerIds = [];
+			var prevActionIds = [];
+			for (var option of triggerOptions)	{
+				prevTriggerIds.push(option.getAttribute("trigger_id"));
+			}
+			for (var option of actionOptions)	{
+				prevActionIds.push(option.getAttribute("action_id"));
+			}
 			for (var i = 1; i < rows.length; i = i + 1)	{
 				var row = rows[i];
 				var ruleCell = row.cells[formulaCol];
-				fillTriggers(triggerNames, ruleCell);
+				fillTriggers(ruleCell, prevTriggerIds);
 				var actionCell = row.cells[actionCol];
-				fillActions(actionCell);
+				fillActions(actionCell, prevActionIds);
 			}
 		}
 	}
@@ -151,113 +157,77 @@ function initFunc () {
 	xhr.send();
 }
 
-function fillTriggers (ruleCell)	{
-	var triggerPresent = false;
-	var triggerNode;
-	for (triggerNode of ruleCell.children)	{
-		if (triggerNode.nodeName == "BR" || triggerNode.nodeName == "SMALL")	{
-			ruleCell.removeChild(triggerNode);
-		} 
+function fillTriggers (ruleCell, prevIds)	{
+	for (var triggerNode of ruleCell.children)	{
 		if (triggerNode.nodeName != "SELECT" || 
 				!triggerNode.children[0].hasAttribute("trigger_id"))	{
 			continue;
 		}
-		var selectedIndex = triggerNode.selectedIndex;
-		var options = triggerNode.options;
-		var selectedTriggerId = options[selectedIndex].getAttribute("trigger_id");
-		if (!(selectedTriggerId in triggersDic))	{
-			if (triggerNode != ruleCell.children[0])	{
-				ruleCell.removeChild(triggerNode.previousElementSibling);
+		for (var option of triggerNode.options)	{
+			var triggerName = option.innerHTML;
+			var triggerId = option.getAttribute("trigger_id");
+			var selected = option.hasAttribute("selected");
+			if (triggerId in triggersDic)	{
+				option.innerHTML = triggersDic[triggerId];
+				continue;
 			}
-			ruleCell.removeChild(triggerNode.nextElementSibling);
-			ruleCell.removeChild(triggerNode);
-			continue;
+			if (!selected)	{
+				triggerNode.removeChild(option);
+				continue
+			}
+			for (triggerId in triggersDic)	{
+				if (triggersDic[triggerId] == triggerName)	{
+					option.setAttribute("trigger_id", triggerId);
+				}
+			}
 		}
-		triggerPresent = true;
-		triggerNode.innerHTML = "";
-		for (var triggerId of triggersDic)	{
-			var option = document.createElement("option");
-			option.text = triggersDic[triggerId];
-			option.setAttribute("trigger_id", triggerId);
-			if (triggerId == selectedTriggerId) {
-				option.setAttribute("selected", "selected");
-			}
-			triggerNode.appendChild(option);
-		};
-	}
-	if (!triggerPresent)	{
-		var indicatorNode = document.createElement("img");
-		indicatorNode.setAttribute("src", "img\gray16.jpg");
-		ruleCell.insertBefore(indicatorNode, ruleCell.children[0]);
-		triggerNode = document.createElement("select");
-		var selectedTriggerId = Object.keys(triggersDic)[0];
-		for (var triggerId of triggersDic)	{
-			var option = document.createElement("option");
-			option.text = actionsDic[triggerId];
-			option.setAttribute("trigger_id", triggerId);
-			if (triggerId == selectedTriggerId) {
-				option.setAttribute("selected", "selected");
-			}
-			triggerNode.appendChild(option);
-		};
-		ruleCell.insertBefore(triggerNode, indicatorNode);
-	}
-	var nOfTriggers = 0;
-	for (triggerNode of ruleCell.children)	{
-		if (triggerNode.nodeName = "SELECT" && 
-				triggerNode.children[0].hasAttribute("trigger_id"))	{
-			nOfTriggers++;
-			if (nOfTriggers == 5)	{
-				var arrowNode = document.createElement("small");
-				arrowNode.textContent = ">>";
-				var opNode = triggerNode.previousSibling;
-				ruleCell.insertBefore(arrowNode, opNode);
-				ruleCell.insertBefore(arrowNode.cloneNode(true), arrowNode);
-				ruleCell.insertBefore(document.createElement("br"), arrowNode);
+		for (var triggerId in triggersDic)	{
+			if (!prevIds.includes(triggerId))	{
+				console.log("prevIds " + prevIds + " not includes " + triggerId);
+				var option = document.createElement("option");
+				option.setAttribute("trigger_id", triggerId);
+				option.textContent = triggersDic[triggerId];
+				triggerNode.appendChild(option);
 			}
 		}
 	}
 }
 
-function fillActions (actionCell)	{
-	var actionPresent = false;
-	var actionNode;
-	for (actionNode of actionCell.children)	{
+function fillActions (actionCell, prevIds)	{
+	for (var actionNode of actionCell.children)	{
 		if (actionNode.nodeName != "SELECT")	{
 			continue;
 		}
-		var selectedIndex = actionNode.selectedIndex;
-		var options = actionNode.options;
-		var selectedActionId = options[selectedIndex].getAttribute("action_id");
-		if (!(selectedActionId in actionsDic))	{
-			actionCell.removeChild(actionNode);
-			continue;
+		console.log("actions dic:" + JSON.stringify(actionsDic));
+		for (var option of actionNode.options)	{
+			var actionName = option.innerHTML;
+			var actionId = option.getAttribute("action_id");
+			var selected = option.hasAttribute("selected");
+			console.log("name " + actionName + " selected:" + selected);
+			if (actionId in actionsDic)	{
+				console.log("action id " + actionId + " in actionsDic, action name " + actionName);
+				option.innerHTML = actionsDic[actionId];
+				continue;
+			}
+			if (!selected)	{
+				console.log("remove option");
+				actionNode.removeChild(option);
+				continue
+			}
+			for (actionId in actionsDic)	{
+				if (actionsDic[actionId] == actionName)	{
+					option.setAttribute("action_id", actionId);
+				}
+			}
 		}
-		actionPresent = true;
-		actionNode.innerHTML = "";
-		for (var actionId of actionsDic)	{
-			var option = document.createElement("option");
-			option.text = actionsDic[actionId];
-			option.setAttribute("action_id", actionId);
-			if (actionId == selectedActionId) {
-				option.setAttribute("selected", "selected");
+		for (var actionId in actionsDic)	{
+			if (!prevIds.includes(actionId))	{
+				var option = document.createElement("option");
+				option.setAttribute("action_id", actionId);
+				option.textContent = actionsDic[actionId];
+				actionNode.appendChild(option);
 			}
-			actionNode.appendChild(option);
-		};
-	}
-	if (!actionPresent)	{
-		actionNode = document.createElement("select");
-		var selectedActionId = Object.keys(actionsDic)[0];
-		for (var actionId of actionsDic)	{
-			var option = document.createElement("option");
-			option.text = actionsDic[actionId];
-			option.setAttribute("action_id", actionId);
-			if (actionId == selectedActionId) {
-				option.setAttribute("selected", "selected");
-			}
-			actionNode.appendChild(option);
-		};
-		actionCell.insertBefore(actionNode, actionCell.children[0]);
+		}
 	}
 }
 

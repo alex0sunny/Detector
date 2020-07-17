@@ -173,10 +173,12 @@ class myHandler(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             # print('trigger ids' + str(trigger_ids))
-            json_dic = {'triggers': trigger_dic, 'actions': action_names_dic0}
+            json_dic = {'triggers': trigger_dic, 'actions': action_names_dic0.copy()}
             actions_dic = getActions()
+            logger.debug('getActions:' + str(actions_dic))
             sms_dic = actions_dic.get('sms', {})
             sms_dic = {sms_id: sms_dic[sms_id]['name'] for sms_id in sms_dic}
+            logger.debug('sms_dic:' + str(sms_dic) + ' json_dic:' + str(json_dic))
             json_dic['actions'].update(sms_dic)
             logger.debug('actions_dic:' + str(json_dic['actions']))
             self.wfile.write(json.dumps(json_dic).encode())
