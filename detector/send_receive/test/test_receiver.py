@@ -12,6 +12,7 @@ from ctypes import cast, POINTER
 from io import BytesIO
 from time import sleep
 
+import os
 import zmq
 import numpy as np
 from matplotlib import pyplot
@@ -27,11 +28,22 @@ STREAM_IND = 0
 STREAM_NAME = None
 
 
-def signal_receiver(conn_str, station_bin=b'ND01'):
-    show_signal = True
+def signal_receiver(conn_str, station_bin):
+    #sleep(5)
+    show_signal = os.name == 'nt'
 
     context = zmq.Context()
     socket = NjspClient(conn_str, context)
+
+    socket_pub = context.socket(zmq.PUB)
+    conn_str_pub = 'tcp://localhost:' + str(Port.multi.value)
+    socket_pub.connect(conn_str_pub)
+    socket_buf = context.socket(zmq.PUB)
+    socket_buf.connect(conn_str_pub)
+
+    socket_confirm = context.socket(zmq.SUB)
+    socket_confirm.connect('tcp://localhost:' + str(Port.proxy.value))
+    socket_confirm.setsockopt(zmq.SUBSCRIBE, Subscription.confirm.value)
 
     if show_signal:
         pyplot.ion()
@@ -42,11 +54,6 @@ def signal_receiver(conn_str, station_bin=b'ND01'):
     chs_ref = []
 
     params_dic = None
-    # while True:
-    #     header = socket.recv(6)
-    #     if header == b'NJSP\0\0':
-    #         print('header received')
-    #         break
     while True:
         size_bytes = socket.recv(8)
         size = int(size_bytes.decode(), 16)
@@ -70,27 +77,40 @@ def signal_receiver(conn_str, station_bin=b'ND01'):
             streams_dic = json_data['parameters']['streams']
             STREAM_NAME = list(streams_dic.keys())[STREAM_IND]
             params_dic = streams_dic[STREAM_NAME]
+            socket_buf.send(Subscription.parameters.value + size_bytes + raw_data)
             #print('params bytes sent to inner socket:' + str(Subscription.parameters.value + size_bytes + raw_data))
         if 'streams' in json_data:
             #sampling_rate = json_data['streams']['sample_rate']
             starttime = UTCDateTime(json_data['streams'][STREAM_NAME]['timestamp'])
-            logger.debug('received packet, dt:' + str(starttime))
+            #logger.debug('received packet, dt:' + str(starttime))
             chs = json_data['streams'][STREAM_NAME]['samples']
             if not chs_ref:
                 chs_ref = sorted(chs)
+                #units = json_data['signal']['counts']
                 set_source_channels(station_bin.decode(), chs_ref)
             for ch in chs:
                 sample_rate = params_dic['sample_rate']
+                bin_header = ChHeader(station_bin, ch, int(sample_rate), starttime._ns)
                 bin_signal_int = (base64.decodebytes(json_data['streams'][STREAM_NAME]['samples'][ch].encode("ASCII")))
                 k = params_dic['channels'][ch]['counts_in_volt']
+                data = np.frombuffer(bin_signal_int, dtype='int32').astype('float') / k
+                bin_signal = data.tobytes()
+                bin_data = BytesIO(bin_header).read() + bin_signal
+                socket_pub.send(Subscription.intern.value + bin_data)
 
-                data = np.frombuffer(bin_signal_int, dtype='int32').astype('float32') / k
                 tr = Trace()
                 tr.stats.starttime = starttime
                 tr.stats.sampling_rate = sample_rate
                 tr.stats.channel = ch
                 tr.data = data
                 st += tr
+
+            custom_header = CustomHeader()
+            chs_blist = list(map(prep_ch, chs))
+            chs_bin = b''.join(chs_blist)
+            custom_header.channels = cast(chs_bin, POINTER(ChName * 20)).contents
+            custom_header.ns = starttime._ns
+            socket_buf.send(Subscription.signal.value + custom_header + size_bytes + raw_data)
 
             if not check_time:
                 check_time = starttime
@@ -104,5 +124,6 @@ def signal_receiver(conn_str, station_bin=b'ND01'):
                 pyplot.pause(.1)
 
 
-signal_receiver('tcp://localhost:5561')
+signal_receiver('tcp://192.168.0.200:10003', b'ND01')
+
 

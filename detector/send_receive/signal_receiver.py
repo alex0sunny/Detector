@@ -12,6 +12,7 @@ from ctypes import cast, POINTER
 from io import BytesIO
 from time import sleep
 
+import os
 import zmq
 import numpy as np
 from matplotlib import pyplot
@@ -29,7 +30,7 @@ STREAM_NAME = None
 
 def signal_receiver(conn_str, station_bin):
     #sleep(5)
-    show_signal = True
+    show_signal = os.name == 'nt'
 
     context = zmq.Context()
     socket = NjspClient(conn_str, context)
@@ -133,5 +134,4 @@ def signal_receiver(conn_str, station_bin):
                 st.plot(fig=figure)
                 pyplot.show()
                 pyplot.pause(.1)
-
 

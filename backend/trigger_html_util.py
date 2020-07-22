@@ -57,7 +57,7 @@ def getRuleDic():
                     formula_list.append(el.text)
         rule_dic[rule_id]['formula'] = formula_list
         rule_dic[rule_id]['actions'] = \
-            [el.attrib['action_id'] for el in row[actions_col].iter() if 'selected' in el.attrib]
+            [int(el.attrib['action_id']) for el in row[actions_col].iter() if 'selected' in el.attrib]
     return rule_dic
 
 

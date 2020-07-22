@@ -60,7 +60,10 @@ if __name__ == '__main__':
         rule_dic = getRuleDic()
         #print('rule_dic:' + str(rule_dic) + '\naction_names_dic:' + str(action_names_dic))
         rule_actions = {rule: rule_dic[rule]['actions'] for rule in rule_dic}
+        #print('rule_actions:' + str(rule_actions))
         action_rules = to_action_rules(rule_actions)
+        #print('action_rules:' + str(action_rules))
+        #exit(1)
         send_signal_params = action_params['seedlk']
         pem = send_signal_params['pem']
         pet = send_signal_params['pet']
