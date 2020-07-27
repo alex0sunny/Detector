@@ -1,5 +1,6 @@
 from _ctypes import sizeof
 from io import BytesIO
+from time import sleep
 
 from obspy import *
 import numpy as np
@@ -99,6 +100,7 @@ def trigger_picker(ind, station, channel, trigger_type, freqmin, freqmax, init_l
     while True:
         # threading.stack_size(10000000)
         # print('stack size:' + str(threading.stack_size()))
+        sleep(.1)
         raw_data = socket.recv()[1:]
         header = ChHeader()
         header_size = sizeof(ChHeader)

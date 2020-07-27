@@ -52,6 +52,10 @@ def signal_receiver(conn_str, station_bin):
         figure = pyplot.figure()
     st = Stream()
     check_time = None
+    times_dic = OrderedDict()
+    skip_packet = True
+    delta_ns = 10 ** 9
+    limit_ns = 5 * delta_ns
 
     chs_ref = []
 
@@ -95,6 +99,18 @@ def signal_receiver(conn_str, station_bin):
             #sampling_rate = json_data['streams']['sample_rate']
             starttime = UTCDateTime(json_data['streams'][STREAM_NAME]['timestamp'])
             #logger.debug('received packet, dt:' + str(starttime))
+            if skip_packet:
+                times_dic[UTCDateTime()._ns] = starttime._ns
+                while len(times_dic.keys()) > 2 and \
+                        list(times_dic.keys())[-2] - list(times_dic.keys())[0] > limit_ns:
+                    del times_dic[list(times_dic.keys())[0]]
+                if list(times_dic.keys())[-1] - list(times_dic.keys())[0] > limit_ns and \
+                        limit_ns - delta_ns < list(times_dic.values())[-1] - list(times_dic.values())[0] < \
+                        limit_ns + 2 * delta_ns:
+                    skip_packet = False
+                else:
+                    logger.info('skip packet')
+                    continue
             chs = json_data['streams'][STREAM_NAME]['samples']
             if not chs_ref:
                 chs_ref = sorted(chs)

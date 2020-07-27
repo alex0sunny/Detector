@@ -327,16 +327,10 @@ function remove()	{
 }
 
 function addTrigger(refNode)	{
-	//console.log("refNode name:" + refNode.nodeName);
 	var imgNode = refNode.previousElementSibling;
-	//console.log("imgNode name:" + imgNode.nodeName);
 	var triggerNode = imgNode.previousElementSibling;
-	//console.log("triggerNode name:" + triggerNode.nodeName);
-	var opNode = triggerNode.previousElementSibling;
-	//console.log("opNode name:" + opNode.nodeName);
 	var imgNode = imgNode.cloneNode(true);
 	var triggerNode = triggerNode.cloneNode(true);
-	var opNode = opNode.cloneNode(true);
 	
 	var triggersCell = refNode.parentNode;
 	var nodes = triggersCell.children;
@@ -363,7 +357,6 @@ function addTrigger(refNode)	{
 		triggersCell.insertBefore(brNode, node);
 	}
 
-	
 	var selected = false;
 	for (var option of triggerNode.options)	{
 		if (curNames.includes(option.innerHTML) || selected)	{

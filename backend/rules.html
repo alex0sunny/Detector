@@ -1,119 +1,185 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
 <html>
-<head>
-<title>rules table</title>
-</head>
-<body>
-	<table style="width: 100%" id="rulesTable">
-		<tbody>
-			<tr>
-				<th align="left">check</th>
-				<th align="left">rule_id</th>
-				<th align="left">formula</th>
-				<th align="left">val</th>
-				<th align="left">actions</th>
-			</tr>
-			<tr>
-				<td><input type="checkbox" /></td>
-				<td>1</td>
-				<td><select class="trigger"><option trigger_id="1">trigger1</option>
-						<option trigger_id="2">rms11</option>
-						<option trigger_id="3">rms112</option>
-						<option trigger_id="4" selected="selected">slta11</option></select><img
-					src="img\gray16.jpg" /><select class="operation"><option>and</option>
-						<option selected="selected">and not</option>
-						<option>or</option>
-						<option>or not</option></select><select class="trigger"><option
+	<head>
+		<title>rules table</title>
+	</head>
+	<body>
+		<table style="width: 100%" id="rulesTable">
+			<tbody>
+				<tr>
+					<th align="left">check</th>
+					<th align="left">rule_id</th>
+					<th align="left">formula</th>
+					<th align="left">val</th>
+					<th align="left">actions</th>
+				</tr>
+				<tr>
+					<td>
+						<input type="checkbox" />
+					</td>
+					<td>1</td>
+					<td>
+						<select class="trigger">
+							<option trigger_id="1">trigger1</option>
+							<option trigger_id="2">rms11</option>
+							<option trigger_id="3">rms112</option>
+							<option trigger_id="4" selected="selected">slta11</option>
+						</select>
+						<img
+					src="img\gray16.jpg" />
+						<select class="operation">
+							<option>and</option>
+							<option selected="selected">and not</option>
+							<option>or</option>
+							<option>or not</option>
+						</select>
+						<select class="trigger">
+							<option
 							trigger_id="1" selected="selected">trigger1</option>
-						<option trigger_id="2">rms11</option>
-						<option trigger_id="3">rms112</option>
-						<option trigger_id="4">slta11</option></select><img src="img\green16.jpg" />
-				<button type="button" style="font-weight: bold; color: green"
+							<option trigger_id="2">rms11</option>
+							<option trigger_id="3">rms112</option>
+							<option trigger_id="4">slta11</option>
+						</select>
+						<img src="img\green16.jpg" />
+						<button type="button" style="font-weight: bold; color: green"
 						onclick="addTrigger(this)">+</button>
-					<button type="button" style="color: red;"
-						onclick="removeTrigger(this.parentNode)">X</button></td>
-				<td><img src="img\circle-gray.jpg" /></td>
-				<td><select><option action_id="1" selected="selected">relayA</option>
-						<option action_id="2">relayB</option>
-						<option action_id="3">seedlk</option>
-						<option action_id="4">44sms</option></select>
-				<button type="button" style="font-weight: bold; color: green"
+						<button type="button" style="color: red;"
+						onclick="removeTrigger(this.parentNode)">X</button>
+					</td>
+					<td>
+						<img src="img\circle-gray.jpg" />
+					</td>
+					<td>
+						<select>
+							<option action_id="1" selected="selected">relayA</option>
+							<option action_id="2">relayB</option>
+							<option action_id="3">seedlk</option>
+							<option action_id="4">44sms</option>
+						</select>
+						<button type="button" style="font-weight: bold; color: green"
 						onclick="addAction(this)">+</button>
-					<button type="button" style="color: red;"
-						onclick="removeAction(this.parentNode)">X</button></td>
-			</tr>
-			<tr>
-				<td><input type="checkbox" /></td>
-				<td>2</td>
-				<td><select class="trigger"><option trigger_id="1">trigger1</option>
-						<option trigger_id="2">rms11</option>
-						<option trigger_id="3">rms112</option>
-						<option trigger_id="4" selected="selected">slta11</option></select><img
-					src="img\gray16.jpg" /><select class="operation"><option>and</option>
-						<option>and not</option>
-						<option selected="selected">or</option>
-						<option>or not</option></select><select class="trigger"><option
+						<button type="button" style="color: red;"
+						onclick="removeAction(this.parentNode)">X</button>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<input type="checkbox" />
+					</td>
+					<td>2</td>
+					<td>
+						<select class="trigger">
+							<option trigger_id="1">trigger1</option>
+							<option trigger_id="2">rms11</option>
+							<option trigger_id="3">rms112</option>
+							<option trigger_id="4" selected="selected">slta11</option>
+						</select>
+						<img
+					src="img\gray16.jpg" />
+						<select class="operation">
+							<option>and</option>
+							<option>and not</option>
+							<option selected="selected">or</option>
+							<option>or not</option>
+						</select>
+						<select class="trigger">
+							<option
 							trigger_id="1" selected="selected">trigger1</option>
-						<option trigger_id="2">rms11</option>
-						<option trigger_id="3">rms112</option>
-						<option trigger_id="4">slta11</option></select><img src="img\green16.jpg" /><select
-					class="operation"><option>and</option>
-						<option>and not</option>
-						<option selected="selected">or</option>
-						<option>or not</option></select><select class="trigger"><option
+							<option trigger_id="2">rms11</option>
+							<option trigger_id="3">rms112</option>
+							<option trigger_id="4">slta11</option>
+						</select>
+						<img src="img\green16.jpg" />
+						<select
+					class="operation">
+							<option>and</option>
+							<option>and not</option>
+							<option selected="selected">or</option>
+							<option>or not</option>
+						</select>
+						<select class="trigger">
+							<option
 							trigger_id="1">trigger1</option>
-						<option trigger_id="2" selected="selected">rms11</option>
-						<option trigger_id="3">rms112</option>
-						<option trigger_id="4">slta11</option></select><img src="img\gray16.jpg" /><select
-					class="operation"><option>and</option>
-						<option>and not</option>
-						<option selected="selected">or</option>
-						<option>or not</option></select><select class="trigger"><option
+							<option trigger_id="2" selected="selected">rms11</option>
+							<option trigger_id="3">rms112</option>
+							<option trigger_id="4">slta11</option>
+						</select>
+						<img src="img\gray16.jpg" />
+						<select
+					class="operation">
+							<option>and</option>
+							<option>and not</option>
+							<option selected="selected">or</option>
+							<option>or not</option>
+						</select>
+						<select class="trigger">
+							<option
 							trigger_id="1">trigger1</option>
-						<option trigger_id="2">rms11</option>
-						<option trigger_id="3" selected="selected">rms112</option>
-						<option trigger_id="4">slta11</option></select><img src="img\gray16.jpg" /><small>&gt;&gt;</small>
-					<br />
-				<small>&gt;&gt;</small> <select class="operation"><option>and</option>
-						<option>and not</option>
-						<option selected="selected">or</option>
-						<option>or not</option></select><select class="trigger"><option
+							<option trigger_id="2">rms11</option>
+							<option trigger_id="3" selected="selected">rms112</option>
+							<option trigger_id="4">slta11</option>
+						</select>
+						<img src="img\gray16.jpg" />
+						<small>&gt;&gt;</small>
+						<br />
+						<small>&gt;&gt;</small>
+						<select class="operation">
+							<option>and</option>
+							<option>and not</option>
+							<option selected="selected">or</option>
+							<option>or not</option>
+						</select>
+						<select class="trigger">
+							<option
 							trigger_id="1" selected="selected">trigger1</option>
-						<option trigger_id="2">rms11</option>
-						<option trigger_id="3">rms112</option>
-						<option trigger_id="4">slta11</option>
-						<option trigger_id="5">slta112</option></select><img src="img\green16.jpg" />
-				<button type="button" style="font-weight: bold; color: green"
+							<option trigger_id="2">rms11</option>
+							<option trigger_id="3">rms112</option>
+							<option trigger_id="4">slta11</option>
+							<option trigger_id="5">slta112</option>
+						</select>
+						<img src="img\green16.jpg" />
+						<button type="button" style="font-weight: bold; color: green"
 						onclick="addTrigger(this)">+</button>
-					<button type="button" style="color: red;"
-						onclick="removeTrigger(this.parentNode)">X</button></td>
-				<td><img src="img\circle-gray.jpg" /></td>
-				<td><select><option action_id="1">relayA</option>
-						<option action_id="2" selected="selected">relayB</option>
-						<option action_id="3">seedlk</option>
-						<option action_id="4">44sms</option></select><select><option
+						<button type="button" style="color: red;"
+						onclick="removeTrigger(this.parentNode)">X</button>
+					</td>
+					<td>
+						<img src="img\circle-gray.jpg" />
+					</td>
+					<td>
+						<select>
+							<option action_id="1">relayA</option>
+							<option action_id="2" selected="selected">relayB</option>
+							<option action_id="3">seedlk</option>
+							<option action_id="4">44sms</option>
+						</select>
+						<select>
+							<option
 							action_id="1">relayA</option>
-						<option action_id="2">relayB</option>
-						<option action_id="3">seedlk</option>
-						<option action_id="4" selected="selected">44sms</option></select>
-				<button type="button" style="font-weight: bold; color: green"
+							<option action_id="2">relayB</option>
+							<option action_id="3">seedlk</option>
+							<option action_id="4" selected="selected">44sms</option>
+						</select>
+						<button type="button" style="font-weight: bold; color: green"
 						onclick="addAction(this)">+</button>
-					<button type="button" style="color: red;"
-						onclick="removeAction(this.parentNode)">X</button></td>
-			</tr>
-		</tbody>
-	</table>
-	<p style="text-align: left;">
-		<a href="triggers.html">triggers</a> <a href="actions.html">actions</a>
-		<span style="float: right;">
-			<button type="button" onclick="addRule()">add rule</button>
-			<button type="button" onclick="remove()">remove</button>
-			<button type="button" onclick="location.reload(true)">discard</button>
-			<button type="button" onclick="apply()">apply</button>
-		</span>
-	</p>
-	<script src="rules.js">
-		
-	</script>
-</body>
+						<button type="button" style="color: red;"
+						onclick="removeAction(this.parentNode)">X</button>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<p style="text-align: left;">
+			<a href="triggers.html">triggers</a>
+			<a href="actions.html">actions</a>
+			<span style="float: right;">
+				<button type="button" onclick="addRule()">add rule</button>
+				<button type="button" onclick="remove()">remove</button>
+				<button type="button" onclick="location.reload(true)">discard</button>
+				<button type="button" onclick="apply()">apply</button>
+			</span>
+		</p>
+		<script src="rules.js">
+
+		</script>
+	</body>
 </html>
