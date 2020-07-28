@@ -52,6 +52,8 @@ if __name__ == '__main__':
         kwargs_list = []
 
         action_params = getActions()
+        # print('action_params:' + str(action_params))
+        # exit(1)
         action_names_dic = {}
         action_names_dic.update(action_names_dic0)
         sms_dic0 = action_params.get('sms', {})

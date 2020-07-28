@@ -71,21 +71,41 @@ function setValue(elementId)	{
 	node.setAttribute("value", value);
 }
 
+function setCheckedNode(node)	{
+	if (node.checked)	{
+		node.setAttribute("checked", "checked");
+	}	else	{
+		node.removeAttribute("checked");
+	}
+}
+
+function setChecked(elementId)	{
+	setCheckedNode(document.getElementById(elementId));
+}
+
 function prepareRow(row)	{
 	var cells = row.cells;
 	var typeCell = cells[typeCol];
 	var children = typeCell.children;
 	if (children.length > 0)	{
 		var node = children[0];
-		console.log('select node inner html:\n' + node.innerHTML);
+		//console.log('select node inner html:\n' + node.innerHTML);
 		setSelected(node);		
 	}
+	var additionalCell = cells[additionalCol];
+	children = additionalCell.children;
+	if (children.length == 2 && children[1].nodeName == "INPUT")	{
+		setCheckedNode(children[1]);
+	}	
 }
 
 function apply()	{
 	cycleFunc(prepareRow);
 	setValue("PEM");
 	setValue("PET");
+	for (var elementId of ["infiniteA", "infiniteB", "inverseA", "inverseB"])	{
+		setChecked(elementId);
+	}
 	genNames();
 	var xhr = new XMLHttpRequest();
 	var url = "applyActions";

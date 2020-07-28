@@ -92,10 +92,11 @@ def set_source_channels(station, channels, units='V'):
     root.write(fpath)
 
 
-def get_action_data(action_type, root, id_col, address_col, message_col, name_col):
+def get_action_data(action_type, root, id_col, address_col, message_col, name_col, additional_col):
     rows = root.xpath("//tr[./td/select/option[@selected]='" + action_type + "']")
-    return {int(row[id_col].text):
-                {'address': row[address_col].text, 'message': row[message_col].text, 'name': row[name_col].text}
+    return {int(row[id_col].text): {'address': row[address_col].text, 'message': row[message_col].text,
+                                    'name': row[name_col].text,
+                                    'detrigger': 'checked' in row[additional_col][1].attrib}
             for row in rows}
 
 
@@ -107,14 +108,23 @@ def getActions():
     address_col = headers_dic['address']
     message_col = headers_dic['message']
     name_col = headers_dic['name']
+    additional_col = headers_dic['additional']
     for action_type in ['SMS', 'email']:
-        dic = get_action_data(action_type, root, id_col, address_col, message_col, name_col)
-        #print("dic:" + str(dic))
+        dic = get_action_data(action_type, root, id_col, address_col, message_col, name_col, additional_col)
+        # print("dic:" + str(dic))
         if dic:
             actions_dic[action_type.lower()] = dic
     pem = int(root.xpath("//input[@id='PEM']/@value")[0])
     pet = int(root.xpath("//input[@id='PET']/@value")[0])
     actions_dic['seedlk'] = {'pem': pem, 'pet': pet}
+    petA = int(root.xpath("//*[@id='petA']/@value")[0])
+    petB = int(root.xpath("//*[@id='petB']/@value")[0])
+    infiniteA = 'checked' in root.xpath("//*[@id='infiniteA']")[0].attrib
+    infiniteB = 'checked' in root.xpath("//*[@id='infiniteB']")[0].attrib
+    inverseA = 'checked' in root.xpath("//*[@id='inverseA']")[0].attrib
+    inverseB = 'checked' in root.xpath("//*[@id='inverseB']")[0].attrib
+    actions_dic['relay'] = {'relayA': {'infinite': infiniteA, 'pet': petA, 'inverse': inverseA},
+                            'relayB': {'infinite': infiniteB, 'pet': petB, 'inverse': inverseB}}
     # relay1cell = root.xpath("//*[@id='relay1']")[0]
     # relay2cell = root.xpath("//*[@id='relay2']")[0]
     # relays = ['checked' in releCell.attrib for releCell in [relay1cell, relay2cell]]
