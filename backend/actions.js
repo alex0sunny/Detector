@@ -27,6 +27,9 @@ var addressCol = headersObj["address"];
 var messageCol = headersObj["message"];
 var additionalCol = headersObj["additional"];
 
+document.getElementById("petA").disabled = document.getElementById("infiniteA").checked;
+document.getElementById("petB").disabled = document.getElementById("infiniteB").checked;
+
 function cycleFunc(f)	{
 	var retVal = [];
 	var rows = getRows();
@@ -202,4 +205,43 @@ function genNames()	{
 	    cells[nameCol].innerHTML = name;
 	    names.add(name);
     }
+}
+
+function setInputFilter(textbox, inputFilter) {
+	  ["input", "keydown", "keyup", "mousedown", "mouseup", "select", "contextmenu", "drop"]
+	  	.forEach(function(event) {
+	  				textbox.addEventListener(event, function() {
+	  					if (inputFilter(this.value)) {
+	  						this.oldValue = this.value;
+	  						this.oldSelectionStart = this.selectionStart;
+	  						this.oldSelectionEnd = this.selectionEnd;
+	  					} else if (this.hasOwnProperty("oldValue") && this.oldValue != "") {
+	  						this.value = this.oldValue;
+	  						this.setSelectionRange(this.oldSelectionStart, this.oldSelectionEnd);
+	  					} else {
+	  						this.value = "0";
+	  					}
+	  				});
+	  			});
+}
+
+for (var id of ["PEM", "PET", "petA", "petB"])	{
+	var element = document.getElementById(id);
+	setInputFilter(element, 
+				   function(value) { 
+				   		return /^\d*$/.test(value) && (value === "" || parseInt(value) < 100); 
+				   });
+	element.addEventListener("change", function() {
+											if (this.value == "")	{
+												this.value = 0;
+											};
+									   });
+}
+
+function changeCheck(value, petElement)	{
+	if (value)	{
+		petElement.disabled = "disabled";
+	}	else	{
+		petElement.removeAttribute("disabled");
+	}
 }

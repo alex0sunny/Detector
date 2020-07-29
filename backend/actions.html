@@ -32,7 +32,8 @@
 							</div>
 							<div style="position: absolute; right: 0;">
 								<label>infinite:</label>
-								<input id="infiniteA" type="checkbox" checked="checked"/>
+								<input id="infiniteA" type="checkbox" checked="checked" 
+									   onchange="changeCheck(this.checked, document.getElementById('petA'))"/>
 								<br/>
 								<label>inverse:</label>
 								<input id="inverseA" type="checkbox"/>
@@ -57,7 +58,8 @@
 							</div>
 							<div style="position: absolute; right: 0;">
 								<label>infinite:</label>
-								<input id="infiniteB" type="checkbox"/>
+								<input id="infiniteB" type="checkbox" 
+									   onchange="changeCheck(this.checked, document.getElementById('petB'))"/>
 								<br/>
 								<label>inverse:</label>
 								<input id="inverseB" type="checkbox" checked="checked"/>
@@ -110,7 +112,6 @@
 					<td>
 						<select>
 							<option selected="selected">SMS</option>
-							<!-- 							<option>email</option> -->
 						</select>
 					</td>
 					<td contenteditable="true">89012223344</td>
