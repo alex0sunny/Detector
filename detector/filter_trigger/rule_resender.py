@@ -33,7 +33,7 @@ def resend(conn_str, rules, pem, pet):
         rule_index_s = '%02d' % rule_index
         socket_rule.setsockopt(zmq.SUBSCRIBE, Subscription.rule.value + rule_index_s.encode())
 
-    trigger = False
+    trigger = 0
     buf = []
     pet_time = UTCDateTime(0)
     while True:
@@ -51,23 +51,33 @@ def resend(conn_str, rules, pem, pet):
                 logger.debug('rule event')
                 trigger_data = bin_data[3:4]
                 trigger_time = UTCDateTime(int.from_bytes(bin_data[-8:], byteorder='big') / 10**9)
-            if trigger and trigger_data == b'0' or test:
-                trigger = False
-                if test and not trigger_time:
-                    pet_time = None
+            if test:
+                if trigger == 0:
                     logger.info('detrigger test event')
+                    if trigger_time:
+                        pet_time = trigger_time + pet
+                    else:
+                        pet_time = None
+            else:
+                if trigger_data == b'1':
+                    trigger += 1
+                    if buf:
+                        logger.info('buf item dt:' + str(buf[0][0]))
                 else:
-                    pet_time = trigger_time + pet
-                    logger.info('detriggered\ndetrigger time:' + str(trigger_time) + '\npet time:' +
-                                str(trigger_time + pet) + '\ntrigger:' + str(bin_data[1:3]))
-            if not trigger and trigger_data == b'1':
-                trigger = True
+                    if trigger > 0:
+                        trigger -= 1
+                    else:
+                        logger.warning('unexpected detriggering')
+            if trigger == 1 and not test:
                 logger.info('triggered\ntrigger time:' + str(trigger_time) + '\npem time:' +
                             str(trigger_time - pem) + '\ntrigger:' + str(bin_data[1:3]))
-                if buf:
-                    logger.info('buf item dt:' + str(buf[0][0]))
+            if trigger == 0:
+                logger.info('detriggered , test:' + str(test) + '\ndetrigger time:' +
+                            str(trigger_time) + '\npet time:' + str(trigger_time + pet) +
+                            '\ntrigger:' + str(bin_data[1:3]))
             if not buf:
                 logger.warning('buf is empty')
+            logger.debug('trigger:' + str(trigger))
         except zmq.ZMQError:
             pass
 

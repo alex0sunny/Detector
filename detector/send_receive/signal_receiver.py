@@ -53,7 +53,7 @@ def signal_receiver(conn_str, station_bin):
     st = Stream()
     check_time = None
     times_dic = OrderedDict()
-    skip_packet = True
+    skip_packet = False
     delta_ns = 10 ** 9
     limit_ns = 5 * delta_ns
 

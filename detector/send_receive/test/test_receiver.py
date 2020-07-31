@@ -51,7 +51,7 @@ def signal_receiver(conn_str, station_bin):
     st = Stream()
     check_time = None
     times_dic = OrderedDict()
-    skip_packet = True
+    skip_packet = False
     delta_ns = 10 ** 9
     limit_ns = 5 * delta_ns
 
@@ -140,4 +140,4 @@ def signal_receiver(conn_str, station_bin):
                 pyplot.pause(.1)
 
 
-signal_receiver('tcp://192.168.0.200:10003', b'ND02')
+signal_receiver('tcp://192.168.0.189:10001', b'ND02')
