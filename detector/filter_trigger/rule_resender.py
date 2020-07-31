@@ -59,12 +59,15 @@ def resend(conn_str, rules, pem, pet):
                     else:
                         pet_time = None
             else:
+                logger.debug('trigger_data:' + str(trigger_data))
                 if trigger_data == b'1':
                     trigger += 1
                     if buf:
                         logger.info('buf item dt:' + str(buf[0][0]))
                 else:
+                    logger.debug('inner detriggering')
                     if trigger > 0:
+                        logger.debug('decrement trigger counter')
                         trigger -= 1
                     else:
                         logger.warning('unexpected detriggering')
