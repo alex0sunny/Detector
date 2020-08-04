@@ -70,8 +70,10 @@ function setSelected(node) 	{
 
 function setValue(elementId)	{
 	var node = document.getElementById(elementId);
+	//console.log("elementId:" + elementId + " node innerHTML:" + node.innerHTML)
 	var value = node.value;
 	node.setAttribute("value", value);
+	//console.log("setValue node:" + node.innerHTML)
 }
 
 function setCheckedNode(node)	{
@@ -104,8 +106,12 @@ function prepareRow(row)	{
 
 function apply()	{
 	cycleFunc(prepareRow);
-	setValue("PEM");
-	setValue("PET");
+	for (var elementId of ["PEM", "PET", "petA", "petB"])	{
+		setValue(elementId);
+	}
+	//setValue("PEM");
+	//setValue("PET");
+	
 	for (var elementId of ["infiniteA", "infiniteB", "inverseA", "inverseB"])	{
 		setChecked(elementId);
 	}
@@ -139,24 +145,24 @@ function test()	{
 	xhr.open("POST", url, true);
 	xhr.setRequestHeader("Content-Type", "application/html");
 	var sendObj = {ids: ids};
-	if (ids.includes(1))	{
-		var relay1Cell = getRows()[1].cells[additionalCol];
-		var relayNode = relay1Cell.children[1];
-		if (relayNode.checked)	{
-			sendObj["relay1"] = 1;
-		} else	{
-			sendObj["relay1"] = 0;
-		}
-	}
-	if (ids.includes(2))	{
-		var relay2Cell = getRows()[2].cells[additionalCol];
-		var relayNode = relay2Cell.children[1];
-		if (relayNode.checked)	{
-			sendObj["relay2"] = 1;
-		} else	{
-			sendObj["relay2"] = 0;
-		}
-	}
+//	if (ids.includes(1))	{
+//		var relay1Cell = getRows()[1].cells[additionalCol];
+//		var relayNode = relay1Cell.children[1];
+//		if (relayNode.checked)	{
+//			sendObj["relay1"] = 1;
+//		} else	{
+//			sendObj["relay1"] = 0;
+//		}
+//	}
+//	if (ids.includes(2))	{
+//		var relay2Cell = getRows()[2].cells[additionalCol];
+//		var relayNode = relay2Cell.children[1];
+//		if (relayNode.checked)	{
+//			sendObj["relay2"] = 1;
+//		} else	{
+//			sendObj["relay2"] = 0;
+//		}
+//	}
 	console.log(JSON.stringify(sendObj));
 	xhr.send(JSON.stringify(sendObj));
 }

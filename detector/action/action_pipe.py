@@ -14,9 +14,8 @@ class ActionType(Enum):
 def execute_action(action_type, action_message, action_address=None):
     action_dic = {'type': str(action_type.name)}
     if action_type in [ActionType.relay_A, ActionType.relay_B]:
-        action = 'clear'
-        if action_message:
-            action = 'set'
+        action = 'set' if action_message else 'clear'
+        logger.debug('action:' + str(action_type) + ' ' + action)
         action_dic['action'] = action
     if action_type == ActionType.send_SMS:
         action_dic['phone_number'] = action_address

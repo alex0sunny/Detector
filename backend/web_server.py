@@ -215,13 +215,14 @@ class myHandler(BaseHTTPRequestHandler):
             for action_id in ids:
                 action_id_s = '%02d' % action_id
                 bin_message = Subscription.test.value + action_id_s.encode()
-                if action_id in [1, 2]:
-                    if test_dic['relay' + str(action_id)]:
-                        bin_message += b'1'
-                    else:
-                        bin_message += b'0'
-                else:
-                    bin_message += b'1'
+                # if action_id in [1, 2]:
+                #     if test_dic['relay' + str(action_id)]:
+                #         bin_message += b'1'
+                #     else:
+                #         bin_message += b'0'
+                # else:
+                #     bin_message += b'1'
+                logger.info('send bin_message:' + str(bin_message))
                 socket_test.send(bin_message)
             # print('actions test:' + str(ids))
         if self.path == '/load':

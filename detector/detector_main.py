@@ -87,12 +87,17 @@ if __name__ == '__main__':
                     kwargs = {'action_id': action_id, 'rules': rules, 'send_func': send_func,
                               'args': send_func_params}
                     kwargs_list.append({'target': action_process, 'kwargs': kwargs})
-        for action_id in [1, 2]:
+        for action_id, relay_k in zip([1, 2], ['relayA', 'relayB']):
             rules = []
             if action_id in action_rules:
                 rules = action_rules[action_id]
+            #print('pet:' + str(action_params['relay'][relay_k]['pet']))
             kwargs_list.append({'target': action_process,
-                                'kwargs': {'action_id': action_id, 'rules': rules, 'send_func': turn}})
+                                'kwargs': {'action_id': action_id, 'rules': rules, 'send_func': turn,
+                                           'args': {'inverse':  action_params['relay'][relay_k]['inverse']},
+                                           'infinite': action_params['relay'][relay_k]['infinite'],
+                                           'pet': action_params['relay'][relay_k]['pet']}})
+        #exit(1)
 
         for station, conn_data in getSources().items():
             kwargs = {'target': signal_receiver,
