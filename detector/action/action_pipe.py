@@ -20,7 +20,7 @@ def execute_action(action_type, action_message, action_address=None):
     if action_type == ActionType.send_SMS:
         action_dic['phone_number'] = action_address
         action_dic['text'] = action_message
-    actions_str = json.dumps({"actions": [action_dic]})
+    actions_str = json.dumps({'actions': [action_dic]})
     try:
         with open('/var/lib/cloud9/ndas_rt/fifos/trigger', 'w') as p:
             p.write(actions_str + '\n')

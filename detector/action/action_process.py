@@ -6,6 +6,25 @@ from detector.filter_trigger.StaLtaTrigger import logger
 from detector.misc.globals import Port, Subscription
 
 
+def sms_process(action_id, send_func, rules=[], args={}, detrigger=False):
+    if action_id in [1, 2]:
+        print('start process for ' + str(action_id))
+    context = zmq.Context()
+    socket_sub = context.socket(zmq.SUB)
+    socket_sub.connect('tcp://localhost:' + str(Port.proxy.value))
+    action_id_s = '%02d' % action_id
+    socket_sub.setsockopt(zmq.SUBSCRIBE, Subscription.test.value + action_id_s.encode())
+    subscription_part = b'0' if detrigger else b'1'
+    for rule_id in rules:
+        rule_id_s = '%02d' % rule_id
+        socket_sub.setsockopt(zmq.SUBSCRIBE, Subscription.rule.value + rule_id_s.encode() + subscription_part)
+    while True:
+        bin_message = socket_sub.recv()
+        #args['on_off'] = int(bin_message[3:4])
+        #print('args:' + str(args))
+        send_func(**args)
+
+
 def action_process(action_id, send_func, rules=[], args={}, pet=0, infinite=False):
     #logger.debug('start process for action ' + str(action_id))
     context = zmq.Context()

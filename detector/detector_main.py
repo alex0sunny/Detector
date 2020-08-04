@@ -2,7 +2,7 @@ import time
 from multiprocessing import Process, Pool
 from threading import Thread
 
-from detector.action.action_process import action_process
+from detector.action.action_process import action_process, sms_process
 from detector.action.relay_actions import turn
 from detector.action.send_email import send_email
 from detector.action.send_sms import send_sms
@@ -83,10 +83,12 @@ if __name__ == '__main__':
                     if action_id in action_rules:
                         rules = action_rules[action_id]
                     send_func_params = send_params_dic[action_id]
+                    #print('send_func_params:' + str(send_func_params))
                     del send_func_params['name']
+                    detrigger = send_func_params.pop('detrigger')
                     kwargs = {'action_id': action_id, 'rules': rules, 'send_func': send_func,
-                              'args': send_func_params}
-                    kwargs_list.append({'target': action_process, 'kwargs': kwargs})
+                              'args': send_func_params, 'detrigger': detrigger}
+                    kwargs_list.append({'target': sms_process, 'kwargs': kwargs})
         for action_id, relay_k in zip([1, 2], ['relayA', 'relayB']):
             rules = []
             if action_id in action_rules:
