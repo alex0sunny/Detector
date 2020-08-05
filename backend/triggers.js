@@ -96,6 +96,7 @@ function apply() {
 	setSelectedTriggers();
 	setSelectedStations();
 	setLevels();
+	setFilters();
 	var data = JSON.stringify({"apply": 1, "channels":  channels.join(" ")});
 	xhr.send(data);
 }

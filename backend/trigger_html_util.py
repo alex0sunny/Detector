@@ -30,7 +30,7 @@ def getTriggerParams():
                       'use_filter': use_filter}
         for cell_name in ['init_level', 'stop_level']:
             params_map[cell_name] = float(row[header_inds[cell_name]][0].get('value'))
-        excluded_headers = ['check', 'name', 'channel', 'val', 'trigger'] + list(params_map.keys())
+        excluded_headers = ['check', 'name', 'channel', 'val', 'trigger', 'filter'] + list(params_map.keys())
         for header in header_inds.keys():
             if header not in excluded_headers:
                 params_map[header] = int(row[header_inds[header]].text)
