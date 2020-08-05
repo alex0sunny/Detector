@@ -80,7 +80,8 @@ class StaLtaTrigger:
         return ret_val
 
 
-def trigger_picker(ind, station, channel, trigger_type, freqmin, freqmax, init_level, stop_level, sta, lta=0):
+def trigger_picker(ind, station, channel, trigger_type, use_filter, freqmin, freqmax, init_level, stop_level,
+                   sta, lta=0):
     #print('sta:' + str(sta) + ' lta:' + str(lta) + ' ind:' + str(ind))
     trigger_index_s = ('%02d' % ind).encode()
     context = zmq.Context()
@@ -108,9 +109,10 @@ def trigger_picker(ind, station, channel, trigger_type, freqmin, freqmax, init_l
         sampling_rate = header.sampling_rate
         starttime = UTCDateTime(header.ns / 10 ** 9)
         data = np.frombuffer(raw_data[header_size:], dtype='float')
-        if not filter:
-            filter = Filter(sampling_rate, freqmin, freqmax)
-        data = filter.bandpass(data)
+        if use_filter:
+            if not filter:
+                filter = Filter(sampling_rate, freqmin, freqmax)
+            data = filter.bandpass(data)
         if not data_trigger:
             nsta = round(sta * sampling_rate)
             if trigger_type == TriggerType.sta_lta:

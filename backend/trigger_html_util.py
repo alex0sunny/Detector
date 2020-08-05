@@ -24,8 +24,10 @@ def getTriggerParams():
         [station] = [el.text for el in row[header_inds['station']].iter() if 'selected' in el.attrib]
         [channel] = [el.text for el in row[header_inds['channel']].iter() if 'selected' in el.attrib]
         [type_str] = [el.text for el in row[header_inds['trigger']].iter() if 'selected' in el.attrib]
+        use_filter = 'checked' in row[header_inds['filter']][0].attrib
         trigger_type = TriggerType[type_str]
-        params_map = {'station': station, 'channel': channel, 'trigger_type': trigger_type}
+        params_map = {'station': station, 'channel': channel, 'trigger_type': trigger_type,
+                      'use_filter': use_filter}
         for cell_name in ['init_level', 'stop_level']:
             params_map[cell_name] = float(row[header_inds[cell_name]][0].get('value'))
         excluded_headers = ['check', 'name', 'channel', 'val', 'trigger'] + list(params_map.keys())

@@ -396,6 +396,14 @@ function setLevels()	{
 	}
 }
 
+function setFilters()	{
+	var rows = document.getElementById("triggerTable").rows;
+	for (var row of Array.from(rows).slice(1))	{
+		var checkElement = row.cells[headersObj["filter"]].children[0];
+		setCheckedNode(checkElement);
+	}
+}
+
 function setUnits(row)	{
 	var unitsNode  = row.cells[initCol].children[1];
 	var unitsNode2 = row.cells[stopCol].children[1];
@@ -473,4 +481,12 @@ function genNames()	{
 	    cells[nameCol].innerHTML = name;
 	    names.add(name);
     }
+}
+
+function setCheckedNode(node)	{
+	if (node.checked)	{
+		node.setAttribute("checked", "checked");
+	}	else	{
+		node.removeAttribute("checked");
+	}
 }
