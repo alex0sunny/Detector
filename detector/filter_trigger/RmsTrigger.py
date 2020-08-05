@@ -32,6 +32,13 @@ class RmsTrigger:
         return ret_val
 
 
+class LevelTrigger:
+
+    def trigger(self, data):
+        #logger.debug('inside level trigger')
+        return data
+
+
 # class RmsTrigger:
 #
 #     def __init__(self, n):

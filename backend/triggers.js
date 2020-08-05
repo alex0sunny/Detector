@@ -400,7 +400,7 @@ function setUnits(row)	{
 	var unitsNode  = row.cells[initCol].children[1];
 	var unitsNode2 = row.cells[stopCol].children[1];
 	var units = "";
-	if (row.cells[triggerCol].children[0].value == "RMS")	{
+	if (row.cells[triggerCol].children[0].value != "sta_lta")	{
 		units = "V";
 		var stationCell = row.cells[stationCol];
 		var station = getStation(stationCell);
@@ -424,11 +424,13 @@ function remove()	{
 }
 
 function genName(station, channel, trigger, name, names)	{
-	console.log("name:" + name)
+	console.log("name:" + name);
 	if (!name)	{
 		if (trigger == "RMS")	{
 			name = "rms";
-		}	else	{
+		}	else if (trigger == "level")	{
+			name = "levl";
+		}	else {
 			name = "slta";
 		}
 		//console.log("name, first part:" + name);

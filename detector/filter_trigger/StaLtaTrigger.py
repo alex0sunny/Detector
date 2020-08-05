@@ -8,7 +8,7 @@ import zmq
 
 import logging
 
-from detector.filter_trigger.RmsTrigger import RmsTrigger
+from detector.filter_trigger.RmsTrigger import RmsTrigger, LevelTrigger
 from detector.filter_trigger.trigger_types import TriggerType
 from detector.misc.globals import Port, Subscription
 from detector.misc.header_util import prep_name, ChHeader, prep_ch
@@ -118,6 +118,9 @@ def trigger_picker(ind, station, channel, trigger_type, freqmin, freqmax, init_l
                 data_trigger = StaLtaTrigger(nsta, nlta)
             if trigger_type == TriggerType.RMS:
                 data_trigger = RmsTrigger(nsta)
+            if trigger_type == TriggerType.level:
+                data_trigger = LevelTrigger()
+                #print('init_level:' + str(init_level) + ' stop_level:' + str(stop_level))
         trigger_data = data_trigger.trigger(data)
         # data_square = data ** 2
         # nsta = data_trigger.triggerCore.nsta
@@ -125,8 +128,14 @@ def trigger_picker(ind, station, channel, trigger_type, freqmin, freqmax, init_l
         # if len(data_square) > nsta:
         #     logger.debug('avr nsta square:' + str(np.average(data_square[-nsta:])))
 
-        activ_data = trigger_data > init_level
-        deactiv_data = trigger_data < stop_level
+        if init_level >= stop_level:
+            activ_data = trigger_data > init_level
+            deactiv_data = trigger_data < stop_level
+        else:
+            activ_data = trigger_data < init_level
+            deactiv_data = trigger_data > stop_level
+        # if trigger_type == TriggerType.level:
+        #     logger.debug('max data:' + str(max(trigger_data)) + ' init_level:' + str(init_level))
         date_time = starttime
         #events_list = []
         message_start = Subscription.trigger.value + trigger_index_s

@@ -183,9 +183,12 @@ function remove()	{
     }
 }
 
-function genName(phoneNum, name, names)	{
+function genName(phoneNum, name, names, detrigger)	{
 	if (!name)	{
 		name = phoneNum.substring(phoneNum.length - 2, phoneNum.length) + "sms";
+		if (detrigger)	{
+			name += "-";
+		}
 	}
 	if (names.has(name))	{
 		var newName;
@@ -207,7 +210,8 @@ function genNames()	{
 		var cells = row.cells;
 	    var name = cells[nameCol].textContent.trim();
 	    var phoneNum = cells[addressCol].textContent.trim();
-	    name = genName(phoneNum, name, names);
+	    var detrigger = cells[additionalCol].children[1].checked;
+	    name = genName(phoneNum, name, names, detrigger);
 	    cells[nameCol].innerHTML = name;
 	    names.add(name);
     }
