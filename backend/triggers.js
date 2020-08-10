@@ -7,7 +7,7 @@ var headersObj = new Object();
     }
 }
 //console.log('headersObj:' + JSON.stringify(headersObj));
-var checkCol = headersObj["check"];
+var checkCol = headersObj["del"];
 var stationCol = headersObj["station"];
 var channelCol = headersObj["channel"];
 var valCol = headersObj["val"];
@@ -17,6 +17,8 @@ var triggerCol = headersObj["trigger"];
 var initCol = headersObj["init_level"];
 var stopCol = headersObj["stop_level"];
 var sessionId = Math.floor(Math.random() * 1000000) + 1;
+var staCol = headersObj["sta"];
+var ltaCol = headersObj["lta"];
 
 initPage();
 
@@ -24,6 +26,8 @@ var stationsData;
 
 function initPage() {
 	var xhr = new XMLHttpRequest();
+	var headerRow = document.getElementById("triggerTable").rows[0];
+	headerRow.children[staCol].innerHTML += "<br/>(len)";
 	xhr.open("POST", "initTrigger", true);
 	xhr.setRequestHeader("Content-Type", "application/json");
 	xhr.onreadystatechange = function () {
@@ -54,10 +58,13 @@ function initPage() {
 }
 
 function apply_save() {
+	var headerRow = document.getElementById("triggerTable").rows[0];
+	headerRow.children[staCol].innerHTML = "sta";
 	genNames();
     apply();
     sendHTML();
     setTimeout(nullifyVals, 3000);
+    headerRow.children[staCol].innerHTML += "<br/>(len)";  
     //console.log('timer started');
 }
 
@@ -80,7 +87,8 @@ function apply() {
 	for (var j = 1; j < rows.length; j++) {
 		var row = rows[j];
 		var channelCell = row.cells[channelCol];
-//		console.log('inner html:' + channelCell.innerHTML);
+		var nameCell = row.cells[nameCol];
+		//console.log('nameCell:' + nameCell.innerHTML);
 //		console.log('channel cell child:' + channelCell.children[0].innerHTML);
 //		console.log('option html:' + channelCell.children[0].options[0].innerHTML);
 		var options = channelCell.children[0].options;
@@ -91,7 +99,6 @@ function apply() {
 		var valCell = row.cells[valCol];
 		//valCell.innerHTML = 0;
 	};
-//	console.log('channels:' + channels.toString());
 	setSelectedChannels(channels);
 	setSelectedTriggers();
 	setSelectedStations();
@@ -107,6 +114,7 @@ function sendHTML() {
 	xhr.open("POST", url, true);
 	xhr.setRequestHeader("Content-Type", "application/html");
 	var pageHTML = "<html>\n" + document.documentElement.innerHTML + "\n</html>";
+	//console.log("pageHTML:" + pageHTML);
 	var data = JSON.stringify({"html": pageHTML, "sessionId":  sessionId});
 	xhr.send(data);
 }
@@ -390,7 +398,7 @@ function stationChange(node)	{
 function setLevels()	{
 	var rows = document.getElementById("triggerTable").rows;
 	for (var row of Array.from(rows).slice(1))	{
-		for (var header of ["init_level", "stop_level"])	{
+		for (var header of ["init_level", "stop_level", "sta", "lta", "name", "freqmin", "freqmax"])	{
 			var inputElement = row.cells[headersObj[header]].children[0];
 			inputElement.setAttribute("value", inputElement.value);
 		}
@@ -409,7 +417,14 @@ function setUnits(row)	{
 	var unitsNode  = row.cells[initCol].children[1];
 	var unitsNode2 = row.cells[stopCol].children[1];
 	var units = "";
-	if (row.cells[triggerCol].children[0].value != "sta_lta")	{
+	var stalta_trigger = row.cells[triggerCol].children[0].value == "sta_lta";
+	var ltaNode = row.cells[ltaCol].children[0];
+	if (stalta_trigger)	{
+		//console.log("stalta");
+		ltaNode.style.display = "inline";
+	}	else	{
+		//console.log("not stalta");
+		ltaNode.style.display = "none";
 		units = "V";
 		var stationCell = row.cells[stationCol];
 		var station = getStation(stationCell);
@@ -421,20 +436,10 @@ function setUnits(row)	{
 	unitsNode2.innerHTML = units;
 }
 
-function remove()	{
-	var table = document.getElementById("triggerTable");
-	var rows = table.rows;
-	for (var row of Array.from(rows).slice(1))	{
-	    var checkBox = row.cells[checkCol].children[0];
-	    if (checkBox.checked == true && rows.length > 2)	{
-	    	table.children[0].removeChild(row);
-	    }
-    }
-}
-
 function genName(station, channel, trigger, name, names)	{
-	console.log("name:" + name);
+	//console.log("name:" + name);
 	if (!name)	{
+		//console.log("name is empty, generate name");
 		if (trigger == "RMS")	{
 			name = "rms";
 		}	else if (trigger == "level")	{
@@ -442,11 +447,9 @@ function genName(station, channel, trigger, name, names)	{
 		}	else {
 			name = "slta";
 		}
-		//console.log("name, first part:" + name);
-		name += channel.substring(channel.length - 1, channel.length).toUpperCase();
-		//console.log("name, second part:" + name);
 		name += station.substring(station.length - 1, station.length).toUpperCase();
-		//console.log("name, third part:" + name);
+		name += channel.substring(channel.length - 1, channel.length).toUpperCase();
+		//console.log("generated candidate name:" + name);
 	}
 	if (names.has(name))	{
 		//console.log("names has name " + name);
@@ -470,7 +473,8 @@ function genNames()	{
 	var rows = document.getElementById("triggerTable").rows;
 	for (var row of Array.from(rows).slice(1))	{
 		var cells = row.cells;
-	    var name = cells[nameCol].textContent.trim();
+	    var name = cells[nameCol].children[0].value;
+	    //console.log("name:" + name);
 //	    if (!name) {
 //	    	console.log("name is false");
 //	    }
@@ -479,7 +483,10 @@ function genNames()	{
 	    var channel = cells[channelCol].children[0].value;
 	    var trigger = cells[triggerCol].children[0].value;
 	    name = genName(station, channel, trigger, name, names);
-	    cells[nameCol].innerHTML = name;
+	    //console.log("set attribute:" + name);
+	    cells[nameCol].children[0].value = name;
+	    //document.getElementById("triggerTable").rows[i].cells[nameCol].children[0].setAttribute("value", name);
+	    //console.log("after setting attribute:" + cells[nameCol].innerHTML);
 	    names.add(name);
     }
 }
@@ -489,5 +496,13 @@ function setCheckedNode(node)	{
 		node.setAttribute("checked", "checked");
 	}	else	{
 		node.removeAttribute("checked");
+	}
+}
+
+function removeTrigger(row)	{
+	var table = document.getElementById("triggerTable");
+	var rows = Array.from(table.rows).slice(1);
+	if (rows.length > 1)	{
+		table.children[0].removeChild(row);
 	}
 }

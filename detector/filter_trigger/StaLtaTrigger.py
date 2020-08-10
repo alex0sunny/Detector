@@ -8,6 +8,8 @@ import zmq
 
 import logging
 
+from obspy.signal.trigger import classic_sta_lta
+
 from detector.filter_trigger.RmsTrigger import RmsTrigger, LevelTrigger
 from detector.filter_trigger.trigger_types import TriggerType
 from detector.misc.globals import Port, Subscription
@@ -63,10 +65,24 @@ class StaLtaTriggerCore:
         return next_sta / next_lta
 
 
+class SltaTriggerCore:
+
+    def __init__(self, nsta, nlta):
+        if nlta <= nsta:
+            raise Exception('incorrect nlta:' + str(nlta) + ' nsta:' + str(nsta))
+        self.nsta = nsta
+        self.nlta = nlta
+        self.buf = np.require(np.zeros(nlta), dtype='float')
+
+    def trigger(self, data):
+        self.buf = np.append(self.buf[-self.nlta:], data)
+        return classic_sta_lta(self.buf, self.nsta, self.nlta)[-data.size:]
+
+
 class StaLtaTrigger:
 
     def __init__(self, nsta, nlta):
-        self.triggerCore = StaLtaTriggerCore(nsta, nlta)
+        self.triggerCore = SltaTriggerCore(nsta, nlta)
         self.bufsize = 0
 
     def trigger(self, data):

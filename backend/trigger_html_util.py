@@ -21,20 +21,31 @@ def getTriggerParams():
     rows = root.xpath('/html/body/table/tbody/tr')[1:]
     params_list = []
     for row in rows:
-        [station] = [el.text for el in row[header_inds['station']].iter() if 'selected' in el.attrib]
-        [channel] = [el.text for el in row[header_inds['channel']].iter() if 'selected' in el.attrib]
-        [type_str] = [el.text for el in row[header_inds['trigger']].iter() if 'selected' in el.attrib]
-        use_filter = 'checked' in row[header_inds['filter']][0].attrib
-        trigger_type = TriggerType[type_str]
-        params_map = {'station': station, 'channel': channel, 'trigger_type': trigger_type,
-                      'use_filter': use_filter}
-        for cell_name in ['init_level', 'stop_level']:
-            params_map[cell_name] = float(row[header_inds[cell_name]][0].get('value'))
-        excluded_headers = ['check', 'name', 'channel', 'val', 'trigger', 'filter'] + list(params_map.keys())
-        for header in header_inds.keys():
-            if header not in excluded_headers:
-                params_map[header] = int(row[header_inds[header]].text)
-        params_map['name'] = row[header_inds['name']].text
+        params_map = {}
+        for col in ['station', 'channel', 'trigger']:
+            [params_map[col]] = \
+                [el.text for el in row[header_inds[col]].iter() if 'selected' in el.attrib]
+        params_map['trigger_type'] = TriggerType[params_map.pop('trigger')]
+        params_map['use_filter'] = 'checked' in row[header_inds['filter']][0].attrib
+        for cell_name in ['name', 'sta', 'lta', 'init_level', 'stop_level', 'freqmin', 'freqmax']:
+            col_type = str if cell_name == 'name' else float if cell_name in ['stop_level', 'init_level'] \
+                else int
+            params_map[cell_name] = col_type(row[header_inds[cell_name]][0].get('value'))
+        params_map['ind'] = int(row[header_inds['ind']].text.strip())
+        # [station] = [el.text for el in row[header_inds['station']].iter() if 'selected' in el.attrib]
+        # [channel] = [el.text for el in row[header_inds['channel']].iter() if 'selected' in el.attrib]
+        # [type_str] = [el.text for el in row[header_inds['trigger']].iter() if 'selected' in el.attrib]
+        # use_filter = 'checked' in row[header_inds['filter']][0].attrib
+        # trigger_type = TriggerType[type_str]
+        # params_map = {'station': station, 'channel': channel, 'trigger_type': trigger_type,
+        #               'use_filter': use_filter}
+        # for cell_name in ['init_level', 'stop_level']:
+        #     params_map[cell_name] = float(row[header_inds[cell_name]][0].get('value'))
+        # excluded_headers = ['check', 'name', 'channel', 'val', 'trigger', 'filter'] + list(params_map.keys())
+        # for header in header_inds.keys():
+        #     if header not in excluded_headers:
+        #         params_map[header] = int(row[header_inds[header]].text)
+        # params_map['name'] = row[header_inds['name']].text
         params_list.append(params_map)
     return params_list
 
