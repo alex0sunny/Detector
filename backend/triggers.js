@@ -24,10 +24,37 @@ initPage();
 
 var stationsData;
 
+function checkInt(value) { 
+		return /^\d*$/.test(value) && (value === "" || parseInt(value) < 100); 
+}
+
+function checkFloat(value) { 
+	return /^-?\d*[.,]?\d*$/.test(value) && (value === "" || parseFloat(value) < 100); 
+}
+
+function setInputFilter(textbox, inputFilter) {
+	  ["input", "keydown", "keyup", "mousedown", "mouseup", "select", "contextmenu", "drop"]
+	  	.forEach(function(event) {
+	  				textbox.addEventListener(event, function() {
+	  					if (inputFilter(this.value)) {
+	  						this.oldValue = this.value;
+	  						this.oldSelectionStart = this.selectionStart;
+	  						this.oldSelectionEnd = this.selectionEnd;
+	  					} else if (this.hasOwnProperty("oldValue") && this.oldValue != "") {
+	  						this.value = this.oldValue;
+	  						this.setSelectionRange(this.oldSelectionStart, this.oldSelectionEnd);
+	  					} else {
+	  						this.value = "0";
+	  					}
+	  				});
+	  			});
+}
+
 function initPage() {
 	var xhr = new XMLHttpRequest();
 	var headerRow = document.getElementById("triggerTable").rows[0];
 	headerRow.children[staCol].innerHTML += "<br/>(len)";
+	headerRow.children[indexCol].style.display = "none";
 	xhr.open("POST", "initTrigger", true);
 	xhr.setRequestHeader("Content-Type", "application/json");
 	xhr.onreadystatechange = function () {
@@ -39,6 +66,7 @@ function initPage() {
 		    stations.sort();
 			var rows = document.getElementById("triggerTable").rows;
 			for (var row of Array.from(rows).slice(1))	{
+				row.cells[indexCol].style.display = "none";
 				var channelCell = row.cells[channelCol];
 				var stationCell = row.cells[stationCol];
 				var station = getStation(stationCell);
@@ -48,6 +76,17 @@ function initPage() {
 					var channels = stationsData[station]["channels"];
 					setChannelsCell(channels, channelCell);
 				}
+				var staNode = row.cells[staCol].children[0];
+				var ltaNode = row.cells[ltaCol].children[0];
+				var initNode = row.cells[initCol].children[0];
+				var stopNode = row.cells[stopCol].children[0];
+				setInputFilter(staNode, checkInt);
+				setInputFilter(ltaNode, checkInt);
+				setInputFilter(initNode, checkFloat);
+				setInputFilter(stopNode, checkFloat);
+				for (var numNode of [staNode, ltaNode, initNode, stopNode])	{
+					numNode.addEventListener( "change", function() {if (this.value == "") {this.value = 0;};} );
+				};
 			}
 		}
 	};
@@ -506,3 +545,4 @@ function removeTrigger(row)	{
 		table.children[0].removeChild(row);
 	}
 }
+

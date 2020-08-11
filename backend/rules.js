@@ -144,8 +144,10 @@ function initFunc () {
 			for (var option of actionOptions)	{
 				prevActionIds.push(option.getAttribute("action_id"));
 			}
+			rows[0].cells[ruleIdCol].style.display = "none";
 			for (var i = 1; i < rows.length; i = i + 1)	{
 				var row = rows[i];
+				row.cells[ruleIdCol].style.display = "none";
 				var ruleCell = row.cells[formulaCol];
 				fillTriggers(ruleCell, prevTriggerIds);
 				var actionCell = row.cells[actionCol];

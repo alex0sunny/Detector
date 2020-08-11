@@ -11,6 +11,11 @@ var checkCol = headersObj["check"];
 var indexCol = headersObj["ind"];
 var stationCol = headersObj["station"];
 
+var rows = document.getElementById("sourcesTable").rows;
+for (var row of Array.from(rows))	{
+	row.cells[indexCol].style.display = "none";
+}
+
 function apply_save() {
 	genNames()
     sendHTML();

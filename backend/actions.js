@@ -40,6 +40,14 @@ function cycleFunc(f)	{
     }
     return retVal;
 }
+
+function fhide(row)	{
+	row.cells[actionIdCol].style.display = "none";
+}
+
+
+fhide(getRows()[0]);
+cycleFunc(fhide);
   
 function add() {
 	var table = getTable();
@@ -101,7 +109,7 @@ function prepareRow(row)	{
 	children = additionalCell.children;
 	if (children.length == 2 && children[1].nodeName == "INPUT")	{
 		setCheckedNode(children[1]);
-	}	
+	}
 }
 
 function apply()	{
@@ -116,6 +124,12 @@ function apply()	{
 		setChecked(elementId);
 	}
 	genNames();
+	for (var row of Array.from(getRows()).slice(4))	{
+		for (var colName of [nameCol, addressCol, messageCol])	{
+			var inputElement = row.cells[colName].children[0];
+			inputElement.setAttribute("value", inputElement.value);
+		}
+	}
 	var xhr = new XMLHttpRequest();
 	var url = "applyActions";
 	xhr.open("POST", url, true);
@@ -208,11 +222,11 @@ function genNames()	{
 	var rows = getRows();
 	for (var row of Array.from(rows).slice(4))	{
 		var cells = row.cells;
-	    var name = cells[nameCol].textContent.trim();
-	    var phoneNum = cells[addressCol].textContent.trim();
+	    var name = cells[nameCol].children[0].value.trim();
+	    var phoneNum = cells[addressCol].children[0].value.trim();
 	    var detrigger = cells[additionalCol].children[1].checked;
 	    name = genName(phoneNum, name, names, detrigger);
-	    cells[nameCol].innerHTML = name;
+	    cells[nameCol].children[0].value = name;
 	    names.add(name);
     }
 }
