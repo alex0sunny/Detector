@@ -1,23 +1,44 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
-<html><head><title>signal sources</title></head><body>
-	<table style="width: 100%" id="sourcesTable"><tbody><tr><th align="left">check</th>
-				<th align="left">station</th>
-				<th align="left">host</th>
-				<th align="left">port</th>
-				<th align="left">channels</th>
-				<th align="left">units</th>
-			</tr><tr><td><input type="checkbox"/></td>
-				<td contenteditable="true">ND01</td>
-				<td contenteditable="true">localhost</td>
-				<td contenteditable="true">10003</td>
-				<td>CHE CHN CHZ</td>
-				<td>V</td>
-			</tr></tbody></table><p align="right">
-		<button type="add" onclick="addSource()">add source</button>
-		<button type="button" onclick="remove()">remove</button>
-		<button type="button" onclick="location.reload(true)">discard</button>
-		<button type="button" onclick="apply_save()">apply</button>
-	</p>
-	<script src="sources.js">
-		
-	</script></body></html>
+<html>
+	<head>
+		<title>signal sources</title>
+	</head>
+	<body>
+		<table style="width: 100%" id="sourcesTable">
+			<tbody>
+				<tr>
+					<th align="left">del</th>
+					<th align="left">station</th>
+					<th align="left">host</th>
+					<th align="left">port</th>
+					<th align="left">channels</th>
+					<th align="left">units</th>
+				</tr>
+				<tr>
+					<td>
+						<button type="button" style="color: red;" onclick="removeSource(this.parentNode.parentNode)">X</button>
+					</td>
+					<td>
+						<input value="ND01" size="4"/>
+					</td>
+					<td>
+						<input value="localhost" size="10"/>
+					</td>
+					<td>
+						<input value="10003" type="numeric" size="6"/>
+					</td>
+					<td>CHE CHN CHZ</td>
+					<td>V</td>
+				</tr>
+			</tbody>
+		</table>
+		<p align="right">
+			<button type="add" onclick="addSource()">add source</button>
+			<button type="button" onclick="location.reload(true)">discard</button>
+			<button type="button" onclick="apply_save()">apply</button>
+		</p>
+		<script src="sources.js">
+
+		</script>
+	</body>
+</html>

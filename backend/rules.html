@@ -7,7 +7,7 @@
 		<table style="width: 100%" id="rulesTable">
 			<tbody>
 				<tr>
-					<th align="left">check</th>
+					<th align="left">del</th>
 					<th align="left">rule_id</th>
 					<th align="left">formula</th>
 					<th align="left">val</th>
@@ -15,7 +15,7 @@
 				</tr>
 				<tr>
 					<td>
-						<input type="checkbox"/>
+						<button type="button" style="color: red;" onclick="removeRule(this.parentNode.parentNode)">X</button>
 					</td>
 					<td>3</td>
 					<td>
@@ -49,7 +49,7 @@
 				</tr>
 				<tr>
 					<td>
-						<input type="checkbox"/>
+						<button type="button" style="color: red;" onclick="removeRule(this.parentNode.parentNode)">X</button>
 					</td>
 					<td>4</td>
 					<td>
@@ -88,7 +88,6 @@
 			<a href="actions.html">actions</a>
 			<span style="float: right;">
 				<button type="button" onclick="addRule()">add rule</button>
-				<button type="button" onclick="remove()">remove</button>
 				<button type="button" onclick="location.reload(true)">discard</button>
 				<button type="button" onclick="apply()">apply</button>
 			</span>

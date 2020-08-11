@@ -99,8 +99,6 @@ if __name__ == '__main__':
                                            'args': {'inverse':  action_params['relay'][relay_k]['inverse']},
                                            'infinite': action_params['relay'][relay_k]['infinite'],
                                            'pet': action_params['relay'][relay_k]['pet']}})
-        #exit(1)
-
         for station, conn_data in getSources().items():
             kwargs = {'target': signal_receiver,
                       'kwargs': {'conn_str': 'tcp://' + conn_data['host'] + ':' + str(conn_data['port']),

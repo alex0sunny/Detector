@@ -12,7 +12,7 @@ var triggersDic;
 
 var actionsDic;
 
-var checkCol = headersObj["check"];
+var checkCol = headersObj["del"];
 var ruleIdCol = headersObj["rule_id"];
 var formulaCol = headersObj["formula"];
 var ruleValCol = headersObj["val"];
@@ -317,15 +317,12 @@ function getRulesObj()	{
     return rulesObj;
 }
 
-function remove()	{
+function removeRule(row)	{
 	var table = document.getElementById("rulesTable");
-	var rows = table.rows;
-	for (var row of Array.from(rows).slice(1))	{
-    	var checkBox = row.cells[checkCol].children[0];
-    	if (checkBox.checked == true && rows.length > 2)	{
-	    		table.children[0].removeChild(row);
-    	}
-    }
+	var rows = Array.from(table.rows).slice(1);
+	if (rows.length > 1)	{
+		table.children[0].removeChild(row);
+	}
 }
 
 function addTrigger(refNode)	{

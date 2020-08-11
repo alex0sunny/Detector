@@ -7,9 +7,11 @@ var headersObj = new Object();
     }
 }
 
-var checkCol = headersObj["check"];
+var checkCol = headersObj["del"];
 var indexCol = headersObj["ind"];
 var stationCol = headersObj["station"];
+var hostCol = headersObj["host"];
+var portCol = headersObj["port"];
 
 var rows = document.getElementById("sourcesTable").rows;
 for (var row of Array.from(rows))	{
@@ -17,7 +19,14 @@ for (var row of Array.from(rows))	{
 }
 
 function apply_save() {
-	genNames()
+	genNames();
+	var rows = document.getElementById("sourcesTable").rows;
+	for (var row of Array.from(rows).slice(1))	{
+		for (var col of [stationCol, hostCol, portCol])	{
+			var valNode = row.cells[col].children[0];
+			valNode.setAttribute("value", valNode.value);
+		}
+	}
     sendHTML();
 }
 
@@ -36,19 +45,8 @@ function addSource() {
     var rows = table.rows;
     var len = rows.length
     var row = rows[len - 1].cloneNode(true);
-    row.cells[stationCol].innerHTML = "";
+    row.cells[stationCol].children[0].setAttribute("value", "");
     table.children[0].appendChild(row);
-}
-
-function remove()	{
-	var table = document.getElementById("sourcesTable");
-	var rows = table.rows;
-	for (var row of Array.from(rows).slice(1))	{
-    	var checkBox = row.cells[checkCol].children[0];
-    	if (checkBox.checked == true && rows.length > 2)	{
-	    		table.children[0].removeChild(row);
-    	}
-    }
 }
 
 function genName(name, names)	{
@@ -73,9 +71,17 @@ function genNames()	{
 	var rows = document.getElementById("sourcesTable").rows;
 	for (var row of Array.from(rows).slice(1))	{
 		var cells = row.cells;
-	    var station = cells[stationCol].textContent.trim();
+	    var station = cells[stationCol].children[0].getAttribute("value").trim();
 	    station = genName(station, stations);
-	    cells[stationCol].innerHTML = station;
+	    cells[stationCol].children[0].value = station;
 	    stations.add(station);
     }
+}
+
+function removeSource(row)	{
+	var table = document.getElementById("sourcesTable");
+	var rows = Array.from(table.rows).slice(1);
+	if (rows.length > 1)	{
+		table.children[0].removeChild(row);
+	}
 }

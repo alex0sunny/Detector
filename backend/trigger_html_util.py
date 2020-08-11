@@ -86,10 +86,10 @@ def getSources():
     src_dic = {}
     for row in rows:
         # logger.debug('row:' + etree.tostring(row).decode())
-        station = row[station_col].text.strip()
+        station = row[station_col][0].attrib['value'].strip()
         src_dic[station] = {}
-        src_dic[station]['host'] = row[host_col].text.strip()
-        src_dic[station]['port'] = int(row[port_col].text.strip())
+        src_dic[station]['host'] = row[host_col][0].attrib['value'].strip()
+        src_dic[station]['port'] = int(row[port_col][0].attrib['value'].strip())
         src_dic[station]['channels'] = row[channels_col].text.split(' ')
         src_dic[station]['units'] = row[units_col].text.strip()
     return src_dic
