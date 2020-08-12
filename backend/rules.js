@@ -307,7 +307,7 @@ function getRulesObj()	{
     	var ruleId = parseInt(row.cells[ruleIdCol].innerHTML);
 	    var src = row.cells[ruleValCol].children[0].getAttribute("src");
 	    var ruleVal;
-	    if (src == "img\\circle-green.jpg")	{
+	    if (src == "img\\circle-red.jpg")	{
 	    	ruleVal = 1;
 	    }	else	{
 	    	ruleVal = 0;
