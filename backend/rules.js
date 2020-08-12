@@ -69,7 +69,7 @@ function updateRules(rulesObj)	{
        	//console.log('ruleId:' + ruleId + ' ruleVal:' + rulesObj[ruleId]);
       	if (ruleId in rulesObj)	{
       		if (rulesObj[ruleId])	{
-      			src = "img\\circle-green.jpg";
+      			src = "img\\circle-red.jpg";
       		}	else	{
       			src = "img\\circle-gray.jpg";
       		}

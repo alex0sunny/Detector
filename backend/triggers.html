@@ -8,7 +8,7 @@
 			<tbody>
 				<tr>
 					<th align="left">del</th>
-					<th align="left">ind</th>
+					<th style="display: none;" align="left">ind</th>
 					<th align="left">name</th>
 					<th align="left">station</th>
 					<th align="left">channel</th>
@@ -26,7 +26,7 @@
 					<td>
 						<button type="button" style="color: red;" onclick="removeTrigger(this.parentNode.parentNode)">X</button>
 					</td>
-					<td>1</td>
+					<td style="display: none;">1</td>
 					<td>
 						<input value="slta14" size="6"/>
 					</td>
@@ -52,7 +52,7 @@
 						<input type="numeric" value="1" size="2" style="text-align: right;"/>
 					</td>
 					<td contenteditable="true">
-						<input type="numeric" value="4" size="2" style="text-align: right;"/>
+						<input type="numeric" value="4" size="2" style="text-align: right; display: inline;"/>
 					</td>
 					<td>
 						<input type="numeric" value="3" size="5" style="text-align: right;"/>
@@ -79,7 +79,7 @@
 					<td>
 						<button type="button" style="color: red;" onclick="removeTrigger(this.parentNode.parentNode)">X</button>
 					</td>
-					<td>2</td>
+					<td style="display: none;">2</td>
 					<td>
 						<input value="slta14_" size="6"/>
 					</td>
@@ -106,7 +106,7 @@
 						<input type="numeric" value="1" size="2" style="text-align: right;"/>
 					</td>
 					<td>
-						<input type="numeric" value="4" size="2" style="text-align: right;"/>
+						<input type="numeric" value="4" size="2" style="text-align: right; display: inline;"/>
 					</td>
 					<td>
 						<input type="numeric" value="3" size="5" style="text-align: right;"/>
@@ -133,7 +133,7 @@
 					<td>
 						<button type="button" style="color: red;" onclick="removeTrigger(this.parentNode.parentNode)">X</button>
 					</td>
-					<td>3</td>
+					<td style="display: none;">3</td>
 					<td>
 						<input value="slta310" size="6"/>
 					</td>
@@ -160,7 +160,7 @@
 						<input type="numeric" value="5" size="2" style="text-align: right;"/>
 					</td>
 					<td>
-						<input type="numeric" value="20" size="2" style="text-align: right;"/>
+						<input type="numeric" value="20" size="2" style="text-align: right; display: inline;"/>
 					</td>
 					<td>
 						<input type="numeric" value="3" size="5" style="text-align: right;"/>
@@ -187,7 +187,7 @@
 					<td>
 						<button type="button" style="color: red;" onclick="removeTrigger(this.parentNode.parentNode)">X</button>
 					</td>
-					<td>4</td>
+					<td style="display: none;">4</td>
 					<td>
 						<input value="lev14" size="6"/>
 					</td>
@@ -214,7 +214,7 @@
 						<input type="numeric" value="1" size="2" style="text-align: right;"/>
 					</td>
 					<td>
-						<input type="numeric" value="5" size="2" style="text-align: right;"/>
+						<input type="numeric" value="5" size="2" style="text-align: right; display: inline;"/>
 					</td>
 					<td>
 						<input type="numeric" value="5" size="5" style="text-align: right;"/>
@@ -241,7 +241,7 @@
 					<td>
 						<button type="button" style="color: red;" onclick="removeTrigger(this.parentNode.parentNode)">X</button>
 					</td>
-					<td>5</td>
+					<td style="display: none;">5</td>
 					<td>
 						<input value="slta114" size="6"/>
 					</td>
@@ -268,7 +268,7 @@
 						<input type="numeric" value="1" size="2" style="text-align: right;"/>
 					</td>
 					<td>
-						<input type="numeric" value="2" size="2" style="text-align: right;"/>
+						<input type="numeric" value="2" size="2" style="text-align: right; display: inline;"/>
 					</td>
 					<td>
 						<input type="numeric" value="3" size="5" style="text-align: right;"/>
@@ -295,7 +295,7 @@
 					<td>
 						<button type="button" style="color: red;" onclick="removeTrigger(this.parentNode.parentNode)">X</button>
 					</td>
-					<td>6</td>
+					<td style="display: none;">6</td>
 					<td>
 						<input value="slta115" size="6"/>
 					</td>
@@ -322,7 +322,7 @@
 						<input type="numeric" value="1" size="2" style="text-align: right;"/>
 					</td>
 					<td>
-						<input type="numeric" value="4" size="2" style="text-align: right;"/>
+						<input type="numeric" value="4" size="2" style="text-align: right; display: inline;"/>
 					</td>
 					<td>
 						<input type="numeric" value="3" size="5" style="text-align: right;"/>
@@ -349,7 +349,7 @@
 					<td>
 						<button type="button" style="color: red;" onclick="removeTrigger(this.parentNode.parentNode)">X</button>
 					</td>
-					<td>7</td>
+					<td style="display: none;">7</td>
 					<td>
 						<input value="levl1E" size="6"/>
 					</td>
@@ -376,7 +376,7 @@
 						<input type="numeric" value="1" size="2" style="text-align: right;"/>
 					</td>
 					<td>
-						<input type="numeric" value="4" size="2" style="text-align: right;"/>
+						<input type="numeric" value="4" size="2" style="text-align: right; display: none;"/>
 					</td>
 					<td>
 						<input type="numeric" value="1" size="5" style="text-align: right;"/>
@@ -402,6 +402,7 @@
 			</tbody>
 		</table>
 		<p style="text-align: left;">
+			<a href="index.html">main</a>
 			<a href="rules.html">rules</a>
 			<span style="float: right;">
 				<button type="button" onclick="addTrigger()">add trigger</button>

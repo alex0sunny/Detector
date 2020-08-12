@@ -108,7 +108,7 @@ def set_source_channels(station, channels, units='V'):
 def get_action_data(action_type, root, id_col, address_col, message_col, name_col, additional_col):
     rows = root.xpath("//tr[./td/select/option[@selected]='" + action_type + "']")
     return {int(row[id_col].text): {'address': row[address_col][0].get('value'),
-                                    'message': row[message_col][0].get('value'),
+                                    'message': row[message_col][0].text.strip(),
                                     'name': row[name_col][0].get('value'),
                                     'detrigger': 'checked' in row[additional_col][1].attrib}
             for row in rows}

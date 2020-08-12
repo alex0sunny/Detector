@@ -56,7 +56,7 @@ function add() {
     var row = rows[len - 1].cloneNode(true);
     var ind = parseInt(row.cells[actionIdCol].innerHTML) + 1;
     row.cells[actionIdCol].innerHTML = ind;
-    row.cells[nameCol].innerHTML = "";
+    row.cells[nameCol].children[0].setAttribute("value", "");
     table.children[0].appendChild(row);
 }
 
