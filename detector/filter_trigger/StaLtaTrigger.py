@@ -96,28 +96,77 @@ class StaLtaTrigger:
         return ret_val
 
 
+class TriggerWrapper:
+
+    def __init__(self, context, trigger_id, trigger_type, sampling_rate, use_filter, freqmin, freqmax,
+                 init_level, stop_level, sta=0, lta=0):
+        self.trigger_index_s = ('%02d' % trigger_id).encode()
+        self.trigger_type = trigger_type
+        self.sampling_rate = sampling_rate
+        self.init_level = init_level
+        self.stop_level = stop_level
+        self.trigger_on = False
+        if use_filter:
+            self.filter = Filter(sampling_rate, freqmin, freqmax)
+        else:
+            self.filter = None
+        nsta = round(sta * sampling_rate)
+        nlta = round(lta * sampling_rate)
+        self.data_trigger = None
+        if trigger_type == TriggerType.sta_lta:
+            self.data_trigger = StaLtaTrigger(nsta, nlta)
+        if trigger_type == TriggerType.RMS:
+            self.data_trigger = RmsTrigger(nsta)
+        if trigger_type == TriggerType.level:
+            self.data_trigger = LevelTrigger()
+        self.socket_trigger = context.socket(zmq.PUB)
+        self.socket_trigger.connect('tcp://localhost:' + str(Port.multi.value))
+
+    def pick(self, starttime, data):
+        if self.filter:
+            data = self.filter.bandpass(data)
+        trigger_data = self.data_trigger.trigger(data)
+        if self.init_level >= self.stop_level:
+            activ_data = trigger_data > self.init_level
+            deactiv_data = trigger_data < self.stop_level
+        else:
+            activ_data = trigger_data < self.init_level
+            deactiv_data = trigger_data > self.stop_level
+        date_time = starttime
+        message_start = Subscription.trigger.value + self.trigger_index_s
+        for a, d in zip(activ_data, deactiv_data):
+            if self.trigger_on and d:
+                self.socket_trigger.send(message_start + b'0' + date_time._ns.to_bytes(8, byteorder='big'))
+                self.socket_trigger.send(message_start + b'0' + date_time._ns.to_bytes(8, byteorder='big'))
+                logger.debug('detriggered, trigger id:' + str(self.trigger_index_s))
+                self.trigger_on = False
+            if not self.trigger_on and a:
+                self.socket_trigger.send(message_start + b'1' + date_time._ns.to_bytes(8, byteorder='big'))
+                self.socket_trigger.send(message_start + b'1' + date_time._ns.to_bytes(8, byteorder='big'))
+                logger.debug('triggered, trigger id:' + str(self.trigger_index_s))
+                self.trigger_on = True
+            date_time += 1.0 / self.sampling_rate
+
+
+
 def trigger_picker(ind, station, channel, trigger_type, use_filter, freqmin, freqmax, init_level, stop_level,
                    sta, lta=0):
-    #print('sta:' + str(sta) + ' lta:' + str(lta) + ' ind:' + str(ind))
-    trigger_index_s = ('%02d' % ind).encode()
+    #trigger_index_s = ('%02d' % ind).encode()
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
     socket.connect('tcp://localhost:' + str(Port.proxy.value))
     station_bin = prep_name(station)
     socket.setsockopt(zmq.SUBSCRIBE, Subscription.intern.value + station_bin + prep_ch(channel))
-    #print('trigger ' + str(ind) + ' subscription:' + str(Subscription.intern.value + station_bin + prep_ch(channel)))
 
-    socket_trigger = context.socket(zmq.PUB)
-    socket_trigger.connect('tcp://localhost:' + str(Port.multi.value))
-    # events_list = []
+    #socket_trigger = context.socket(zmq.PUB)
+    #socket_trigger.connect('tcp://localhost:' + str(Port.multi.value))
 
-    data_trigger = None
-    trigger_on = False
-    filter = None
+    #data_trigger = None
+    #trigger_on = False
+    #filter = None
+    trigger_wrapper = None
     while True:
-        # threading.stack_size(10000000)
-        # print('stack size:' + str(threading.stack_size()))
-        sleep(.1)
+        #sleep(.1)
         raw_data = socket.recv()[1:]
         header = ChHeader()
         header_size = sizeof(ChHeader)
@@ -125,54 +174,8 @@ def trigger_picker(ind, station, channel, trigger_type, use_filter, freqmin, fre
         sampling_rate = header.sampling_rate
         starttime = UTCDateTime(header.ns / 10 ** 9)
         data = np.frombuffer(raw_data[header_size:], dtype='float')
-        if use_filter:
-            if not filter:
-                filter = Filter(sampling_rate, freqmin, freqmax)
-            data = filter.bandpass(data)
-        if not data_trigger:
-            nsta = round(sta * sampling_rate)
-            if trigger_type == TriggerType.sta_lta:
-                nlta = round(lta * sampling_rate)
-                data_trigger = StaLtaTrigger(nsta, nlta)
-            if trigger_type == TriggerType.RMS:
-                data_trigger = RmsTrigger(nsta)
-            if trigger_type == TriggerType.level:
-                data_trigger = LevelTrigger()
-                #print('init_level:' + str(init_level) + ' stop_level:' + str(stop_level))
-        trigger_data = data_trigger.trigger(data)
-        # data_square = data ** 2
-        # nsta = data_trigger.triggerCore.nsta
-        # logger.debug('max relation:' + str(np.max(trigger_data)) + ', avr data square:' + str(np.average(data_square)))
-        # if len(data_square) > nsta:
-        #     logger.debug('avr nsta square:' + str(np.average(data_square[-nsta:])))
-
-        if init_level >= stop_level:
-            activ_data = trigger_data > init_level
-            deactiv_data = trigger_data < stop_level
-        else:
-            activ_data = trigger_data < init_level
-            deactiv_data = trigger_data > stop_level
-        # if trigger_type == TriggerType.level:
-        #     logger.debug('max data:' + str(max(trigger_data)) + ' init_level:' + str(init_level))
-        date_time = starttime
-        #events_list = []
-        message_start = Subscription.trigger.value + trigger_index_s
-        for a, d in zip(activ_data, deactiv_data):
-            if trigger_on and d:
-                socket_trigger.send(message_start + b'0' + date_time._ns.to_bytes(8, byteorder='big'))
-                socket_trigger.send(message_start + b'0' + date_time._ns.to_bytes(8, byteorder='big'))
-                logger.debug('detriggered, ch:' + channel + ' trigger id:' + str(trigger_index_s))
-                #              '\ndata:\n' + str(data) + '\ntrigger_data:\n' + str(trigger_data))
-                # events_list.append({'channel': channel, 'dt': date_time, 'trigger': False})
-                trigger_on = False
-            if not trigger_on and a:
-                socket_trigger.send(message_start + b'1' + date_time._ns.to_bytes(8, byteorder='big'))
-                socket_trigger.send(message_start + b'1' + date_time._ns.to_bytes(8, byteorder='big'))
-                logger.debug('triggered, ch:' + channel + ' trigger id:' + str(trigger_index_s))
-                #              '\ndata:\n' + str(data) + '\ntrigger_data:\n' + str(trigger_data))
-                #events_list.append({'channel': channel, 'dt': date_time, 'trigger': True})
-                trigger_on = True
-            date_time += 1.0 / sampling_rate
-        # if events_list:
-        #     print('events_list:' + str(events_list))
+        if not trigger_wrapper:
+            trigger_wrapper = TriggerWrapper(context, ind, trigger_type, sampling_rate, use_filter, freqmin,
+                                             freqmax, init_level, stop_level, sta, lta)
+        trigger_wrapper.pick(starttime, data)
 
