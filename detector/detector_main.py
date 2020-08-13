@@ -99,17 +99,29 @@ if __name__ == '__main__':
                                            'args': {'inverse':  action_params['relay'][relay_k]['inverse']},
                                            'infinite': action_params['relay'][relay_k]['infinite'],
                                            'pet': action_params['relay'][relay_k]['pet']}})
-        for station, conn_data in getSources().items():
-            kwargs = {'target': signal_receiver,
-                      'kwargs': {'conn_str': 'tcp://' + conn_data['host'] + ':' + str(conn_data['port']),
-                                 'station_bin': station.encode()}}
-            kwargs_list.append(kwargs)
-
+        triggers_params = {}
         for params in paramsList:
             #params.update({'init_level': 2, 'stop_level': 1})
             trigger_params = params.copy()
             del trigger_params['name']
-            kwargs_list.append({'target': trigger_picker, 'kwargs': trigger_params})
+            trigger_params['trigger_id'] = trigger_params.pop('ind')
+            station = trigger_params['station']
+            channel = trigger_params['channel']
+            if station not in triggers_params:
+                triggers_params[station] = {channel: []}
+            elif channel not in triggers_params[station]:
+                triggers_params[station][channel] = []
+            del trigger_params['station']
+            del trigger_params['channel']
+            triggers_params[station][channel].append(trigger_params)
+            #kwargs_list.append({'target': trigger_picker, 'kwargs': trigger_params})
+        for station, conn_data in getSources().items():
+            kwargs = {'target': signal_receiver,
+                      'kwargs': {'conn_str': 'tcp://' + conn_data['host'] + ':' + str(conn_data['port']),
+                                 'station_bin': station.encode(),
+                                 'triggers_params': triggers_params[station]}}
+            kwargs_list.append(kwargs)
+
         # for kwargs in kwargs_list:
         #     print('\nkwargs:\n' + str(kwargs))
         # exit(1)

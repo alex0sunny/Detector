@@ -19,7 +19,8 @@ from matplotlib import pyplot
 from obspy import UTCDateTime, Stream, Trace
 
 from backend.trigger_html_util import set_source_channels
-from detector.filter_trigger.StaLtaTrigger import logger
+from detector.filter_trigger.StaLtaTrigger import logger, TriggerWrapper
+from detector.filter_trigger.trigger_types import TriggerType
 from detector.misc.globals import Port, Subscription
 from detector.misc.header_util import prep_ch, CustomHeader, ChName, ChHeader
 from detector.send_receive.njsp_client import NjspClient
@@ -28,8 +29,7 @@ STREAM_IND = 0
 STREAM_NAME = None
 
 
-def signal_receiver(conn_str, station_bin):
-    #sleep(5)
+def signal_receiver(conn_str, station_bin, triggers_params):
     show_signal = os.name == 'nt'
 
     context = zmq.Context()
@@ -47,6 +47,8 @@ def signal_receiver(conn_str, station_bin):
 
     confirmed = None
 
+    trigger_objs_dic = None
+
     if show_signal:
         pyplot.ion()
         figure = pyplot.figure()
@@ -60,11 +62,9 @@ def signal_receiver(conn_str, station_bin):
     chs_ref = []
 
     params_dic = None
-    # while True:
-    #     header = socket.recv(6)
-    #     if header == b'NJSP\0\0':
-    #         print('header received')
-    #         break
+
+    #trigger_wrapper = TriggerWrapper(context, 1, TriggerType.sta_lta, 1000, True, 100, 300, 3, 1, 1, 4)
+
     while True:
         size_bytes = socket.recv(8)
         size = int(size_bytes.decode(), 16)
@@ -116,17 +116,27 @@ def signal_receiver(conn_str, station_bin):
                 chs_ref = sorted(chs)
                 #units = json_data['signal']['counts']
                 set_source_channels(station_bin.decode(), chs_ref)
+            sample_rate = params_dic['sample_rate']
+            if trigger_objs_dic is None:
+                trigger_objs_dic = {}
+                for ch, trigger_params_list in triggers_params.items():
+                    if ch not in trigger_objs_dic:
+                        trigger_objs_dic[ch] = []
+                    for trigger_params in trigger_params_list:
+                        trigger_params['sampling_rate'] = int(sample_rate)
+                        trigger_params['context'] = context
+                        trigger_objs_dic[ch].append(TriggerWrapper(**trigger_params))
             for ch in chs:
-                sample_rate = params_dic['sample_rate']
                 bin_header = ChHeader(station_bin, ch, int(sample_rate), starttime._ns)
                 bin_signal_int = (base64.decodebytes(json_data['streams'][STREAM_NAME]['samples'][ch].encode("ASCII")))
                 k = params_dic['channels'][ch]['counts_in_volt']
                 data = np.frombuffer(bin_signal_int, dtype='int32').astype('float') / k
-                # if ch == 'ch1':
-                #     logger.debug('max_data:' + str(max(data)))
-                bin_signal = data.tobytes()
-                bin_data = BytesIO(bin_header).read() + bin_signal
-                socket_pub.send(Subscription.intern.value + bin_data)
+                if ch in trigger_objs_dic:
+                    for trigger_obj in trigger_objs_dic[ch]:
+                        trigger_obj.pick(starttime, data)
+                # bin_signal = data.tobytes()
+                # bin_data = BytesIO(bin_header).read() + bin_signal
+                # socket_pub.send(Subscription.intern.value + bin_data)
 
                 tr = Trace()
                 tr.stats.starttime = starttime
