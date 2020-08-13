@@ -456,7 +456,10 @@ function setUnits(row)	{
 	var unitsNode  = row.cells[initCol].children[1];
 	var unitsNode2 = row.cells[stopCol].children[1];
 	var units = "";
-	var stalta_trigger = row.cells[triggerCol].children[0].value == "sta_lta";
+	var trigger_value = row.cells[triggerCol].children[0].value;
+	var stalta_trigger = trigger_value == "sta_lta";
+	var level_trigger = trigger_value == "level";
+	var staNode = row.cells[staCol].children[0];
 	var ltaNode = row.cells[ltaCol].children[0];
 	if (stalta_trigger)	{
 		//console.log("stalta");
@@ -470,6 +473,12 @@ function setUnits(row)	{
 		if (station in stationsData)	{
 			units = stationsData[station]["units"];
 		}
+	}
+	if (level_trigger)	{
+		console.log("level trigger");
+		staNode.style.display = "none";
+	}	else	{
+		staNode.style.display = "inline";
 	}
 	unitsNode.innerHTML  = units;
 	unitsNode2.innerHTML = units;
