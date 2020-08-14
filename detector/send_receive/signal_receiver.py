@@ -55,7 +55,7 @@ def signal_receiver(conn_str, station_bin, triggers_params):
     st = Stream()
     check_time = None
     times_dic = OrderedDict()
-    skip_packet = False
+    skip_packet = True
     delta_ns = 10 ** 9
     limit_ns = 5 * delta_ns
 

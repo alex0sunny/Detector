@@ -1,13 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
-<html>
-	<head>
-		<title>triggers table</title>
-	</head>
-	<body>
-		<table style="width: 100%" id="triggerTable">
-			<tbody>
-				<tr>
-					<th align="left">del</th>
+<html><head><title>triggers table</title></head><body>
+		<table style="width: 100%" id="triggerTable"><tbody><tr><th align="left">del</th>
 					<th style="display: none;" align="left">ind</th>
 					<th align="left">name</th>
 					<th align="left">station</th>
@@ -21,387 +14,203 @@
 					<th align="left">freqmin</th>
 					<th align="left">freqmax</th>
 					<th align="left">val</th>
-				</tr>
-				<tr>
-					<td>
+				</tr><tr><td>
 						<button type="button" style="color: red;" onclick="removeTrigger(this.parentNode.parentNode)">X</button>
 					</td>
 					<td style="display: none;">1</td>
 					<td>
-						<input value="slta14" size="6"/>
-					</td>
+						<input value="slta14" size="6"/></td>
 					<td>
-						<select onchange="stationChange(this)">
-							<option selected="selected">ND01</option>
-						</select>
-					</td>
+						<select onchange="stationChange(this)"><option selected="selected">ND01</option></select></td>
 					<td>
-						<select>
-							<option selected="selected">CHE</option>
-							<option>CHN</option>
-							<option>CHZ</option>
-						</select>
-					</td>
+						<select><option selected="selected">ch1</option><option>ch2</option><option>ch3</option><option>CHE</option></select></td>
 					<td>
-						<select onchange="setUnits(this.parentNode.parentNode)">
-							<option selected="selected">sta_lta</option>
-							<option>RMS</option>
-						</select>
-					</td>
+						<select onchange="setUnits(this.parentNode.parentNode)"><option selected="selected">sta_lta</option><option>RMS</option></select></td>
 					<td>
-						<input type="numeric" value="1" size="2" style="text-align: right;"/>
-					</td>
+						<input type="numeric" value="1" size="2" style="text-align: right;"/></td>
 					<td contenteditable="true">
-						<input type="numeric" value="4" size="2" style="text-align: right; display: inline;"/>
-					</td>
+						<input type="numeric" value="4" size="2" style="text-align: right; display: inline;"/></td>
 					<td>
-						<input type="numeric" value="3" size="5" style="text-align: right;"/>
-						<output/>
-					</td>
+						<input type="numeric" value="3" size="5" style="text-align: right;"/><output/></td>
 					<td>
-						<input type="numeric" value="1" size="5" style="text-align: right;"/>
-						<output/>
-					</td>
+						<input type="numeric" value="1" size="5" style="text-align: right;"/><output/></td>
 					<td>
-						<input type="checkbox" checked="checked"/>
-					</td>
+						<input type="checkbox" checked="checked"/></td>
 					<td>
-						<input type="numeric" value="100" size="2" style="text-align: right;"/>
-					</td>
+						<input type="numeric" value="100" size="2" style="text-align: right;"/></td>
 					<td>
-						<input type="numeric" value="300" size="2" style="text-align: right;"/>
-					</td>
+						<input type="numeric" value="300" size="2" style="text-align: right;"/></td>
 					<td>
-						<img src="img\circle-gray.jpg"/>
-					</td>
-				</tr>
-				<tr>
-					<td>
+						<img src="img\circle-gray.jpg"/></td>
+				</tr><tr><td>
 						<button type="button" style="color: red;" onclick="removeTrigger(this.parentNode.parentNode)">X</button>
 					</td>
 					<td style="display: none;">2</td>
 					<td>
-						<input value="slta14_" size="6"/>
-					</td>
+						<input value="slta14_" size="6"/></td>
 					<td>
-						<select onchange="stationChange(this)">
-							<option selected="selected">ND01</option>
-						</select>
-					</td>
+						<select onchange="stationChange(this)"><option selected="selected">ND01</option></select></td>
 					<td>
-						<select>
-							<option>CHE</option>
-							<option selected="selected">CHN</option>
-							<option>CHZ</option>
-						</select>
-					</td>
+						<select><option selected="selected">ch1</option><option>ch2</option><option>ch3</option><option>CHN</option></select></td>
 					<td>
-						<select onchange="setUnits(this.parentNode.parentNode)">
-							<option selected="selected">sta_lta</option>
-							<option>RMS</option>
-							<option>level</option>
-						</select>
-					</td>
+						<select onchange="setUnits(this.parentNode.parentNode)"><option selected="selected">sta_lta</option><option>RMS</option><option>level</option></select></td>
 					<td>
-						<input type="numeric" value="1" size="2" style="text-align: right;"/>
-					</td>
+						<input type="numeric" value="1" size="2" style="text-align: right;"/></td>
 					<td>
-						<input type="numeric" value="4" size="2" style="text-align: right; display: inline;"/>
-					</td>
+						<input type="numeric" value="4" size="2" style="text-align: right; display: inline;"/></td>
 					<td>
-						<input type="numeric" value="3" size="5" style="text-align: right;"/>
-						<output/>
-					</td>
+						<input type="numeric" value="3" size="5" style="text-align: right;"/><output/></td>
 					<td>
-						<input type="numeric" value="1" size="5" style="text-align: right;"/>
-						<output/>
-					</td>
+						<input type="numeric" value="1" size="5" style="text-align: right;"/><output/></td>
 					<td>
-						<input type="checkbox" checked="checked"/>
-					</td>
+						<input type="checkbox" checked="checked"/></td>
 					<td>
-						<input type="numeric" value="100" size="2" style="text-align: right;"/>
-					</td>
+						<input type="numeric" value="100" size="2" style="text-align: right;"/></td>
 					<td>
-						<input type="numeric" value="300" size="2" style="text-align: right;"/>
-					</td>
+						<input type="numeric" value="300" size="2" style="text-align: right;"/></td>
 					<td>
-						<img src="img\circle-gray.jpg"/>
-					</td>
-				</tr>
-				<tr>
-					<td>
+						<img src="img\circle-gray.jpg"/></td>
+				</tr><tr><td>
 						<button type="button" style="color: red;" onclick="removeTrigger(this.parentNode.parentNode)">X</button>
 					</td>
 					<td style="display: none;">3</td>
 					<td>
-						<input value="slta310" size="6"/>
-					</td>
+						<input value="slta310" size="6"/></td>
 					<td>
-						<select onchange="stationChange(this)">
-							<option selected="selected">ND01</option>
-						</select>
-					</td>
+						<select onchange="stationChange(this)"><option selected="selected">ND01</option></select></td>
 					<td>
-						<select>
-							<option>CHE</option>
-							<option>CHN</option>
-							<option selected="selected">CHZ</option>
-						</select>
-					</td>
+						<select><option selected="selected">ch1</option><option>ch2</option><option>ch3</option><option>CHZ</option></select></td>
 					<td>
-						<select onchange="setUnits(this.parentNode.parentNode)">
-							<option selected="selected">sta_lta</option>
-							<option>RMS</option>
-							<option>level</option>
-						</select>
-					</td>
+						<select onchange="setUnits(this.parentNode.parentNode)"><option selected="selected">sta_lta</option><option>RMS</option><option>level</option></select></td>
 					<td>
-						<input type="numeric" value="5" size="2" style="text-align: right;"/>
-					</td>
+						<input type="numeric" value="5" size="2" style="text-align: right;"/></td>
 					<td>
-						<input type="numeric" value="20" size="2" style="text-align: right; display: inline;"/>
-					</td>
+						<input type="numeric" value="20" size="2" style="text-align: right; display: inline;"/></td>
 					<td>
-						<input type="numeric" value="3" size="5" style="text-align: right;"/>
-						<output/>
-					</td>
+						<input type="numeric" value="3" size="5" style="text-align: right;"/><output/></td>
 					<td>
-						<input type="numeric" value="1" size="5" style="text-align: right;"/>
-						<output/>
-					</td>
+						<input type="numeric" value="1" size="5" style="text-align: right;"/><output/></td>
 					<td>
-						<input type="checkbox" checked="checked"/>
-					</td>
+						<input type="checkbox" checked="checked"/></td>
 					<td>
-						<input type="numeric" value="100" size="2" style="text-align: right;"/>
-					</td>
+						<input type="numeric" value="100" size="2" style="text-align: right;"/></td>
 					<td>
-						<input type="numeric" value="300" size="2" style="text-align: right;"/>
-					</td>
+						<input type="numeric" value="300" size="2" style="text-align: right;"/></td>
 					<td>
-						<img src="img\circle-gray.jpg"/>
-					</td>
-				</tr>
-				<tr>
-					<td>
+						<img src="img\circle-gray.jpg"/></td>
+				</tr><tr><td>
 						<button type="button" style="color: red;" onclick="removeTrigger(this.parentNode.parentNode)">X</button>
 					</td>
 					<td style="display: none;">4</td>
 					<td>
-						<input value="lev14" size="6"/>
-					</td>
+						<input value="lev14" size="6"/></td>
 					<td>
-						<select onchange="stationChange(this)">
-							<option selected="selected">ND01</option>
-						</select>
-					</td>
+						<select onchange="stationChange(this)"><option selected="selected">ND01</option></select></td>
 					<td>
-						<select>
-							<option selected="selected">CHE</option>
-							<option>CHN</option>
-							<option>CHZ</option>
-						</select>
-					</td>
+						<select><option selected="selected">ch1</option><option>ch2</option><option>ch3</option><option>CHE</option></select></td>
 					<td>
-						<select onchange="setUnits(this.parentNode.parentNode)">
-							<option selected="selected">sta_lta</option>
-							<option>RMS</option>
-							<option>level</option>
-						</select>
-					</td>
+						<select onchange="setUnits(this.parentNode.parentNode)"><option selected="selected">sta_lta</option><option>RMS</option><option>level</option></select></td>
 					<td>
-						<input type="numeric" value="1" size="2" style="text-align: right;"/>
-					</td>
+						<input type="numeric" value="1" size="2" style="text-align: right;"/></td>
 					<td>
-						<input type="numeric" value="5" size="2" style="text-align: right; display: inline;"/>
-					</td>
+						<input type="numeric" value="5" size="2" style="text-align: right; display: inline;"/></td>
 					<td>
-						<input type="numeric" value="5" size="5" style="text-align: right;"/>
-						<output/>
-					</td>
+						<input type="numeric" value="5" size="5" style="text-align: right;"/><output/></td>
 					<td>
-						<input type="numeric" value="1" size="5" style="text-align: right;"/>
-						<output/>
-					</td>
+						<input type="numeric" value="1" size="5" style="text-align: right;"/><output/></td>
 					<td>
-						<input type="checkbox" checked="checked"/>
-					</td>
+						<input type="checkbox" checked="checked"/></td>
 					<td>
-						<input type="numeric" value="100" size="2" style="text-align: right;"/>
-					</td>
+						<input type="numeric" value="100" size="2" style="text-align: right;"/></td>
 					<td>
-						<input type="numeric" value="300" size="2" style="text-align: right;"/>
-					</td>
+						<input type="numeric" value="300" size="2" style="text-align: right;"/></td>
 					<td>
-						<img src="img\circle-gray.jpg"/>
-					</td>
-				</tr>
-				<tr>
-					<td>
+						<img src="img\circle-gray.jpg"/></td>
+				</tr><tr><td>
 						<button type="button" style="color: red;" onclick="removeTrigger(this.parentNode.parentNode)">X</button>
 					</td>
 					<td style="display: none;">5</td>
 					<td>
-						<input value="slta114" size="6"/>
-					</td>
+						<input value="slta114" size="6"/></td>
 					<td>
-						<select onchange="stationChange(this)">
-							<option selected="selected">ND01</option>
-						</select>
-					</td>
+						<select onchange="stationChange(this)"><option selected="selected">ND01</option></select></td>
 					<td>
-						<select>
-							<option>CHE</option>
-							<option selected="selected">CHN</option>
-							<option>CHZ</option>
-						</select>
-					</td>
+						<select><option selected="selected">ch1</option><option>ch2</option><option>ch3</option><option>CHN</option></select></td>
 					<td>
-						<select onchange="setUnits(this.parentNode.parentNode)">
-							<option selected="selected">sta_lta</option>
-							<option>RMS</option>
-							<option>level</option>
-						</select>
-					</td>
+						<select onchange="setUnits(this.parentNode.parentNode)"><option selected="selected">sta_lta</option><option>RMS</option><option>level</option></select></td>
 					<td>
-						<input type="numeric" value="1" size="2" style="text-align: right;"/>
-					</td>
+						<input type="numeric" value="1" size="2" style="text-align: right;"/></td>
 					<td>
-						<input type="numeric" value="2" size="2" style="text-align: right; display: inline;"/>
-					</td>
+						<input type="numeric" value="2" size="2" style="text-align: right; display: inline;"/></td>
 					<td>
-						<input type="numeric" value="3" size="5" style="text-align: right;"/>
-						<output/>
-					</td>
+						<input type="numeric" value="3" size="5" style="text-align: right;"/><output/></td>
 					<td>
-						<input type="numeric" value="1" size="5" style="text-align: right;"/>
-						<output/>
-					</td>
+						<input type="numeric" value="1" size="5" style="text-align: right;"/><output/></td>
 					<td>
-						<input type="checkbox" checked="checked"/>
-					</td>
+						<input type="checkbox" checked="checked"/></td>
 					<td>
-						<input type="numeric" value="100" size="2" style="text-align: right;"/>
-					</td>
+						<input type="numeric" value="100" size="2" style="text-align: right;"/></td>
 					<td>
-						<input type="numeric" value="300" size="2" style="text-align: right;"/>
-					</td>
+						<input type="numeric" value="300" size="2" style="text-align: right;"/></td>
 					<td>
-						<img src="img\circle-gray.jpg"/>
-					</td>
-				</tr>
-				<tr>
-					<td>
+						<img src="img\circle-gray.jpg"/></td>
+				</tr><tr><td>
 						<button type="button" style="color: red;" onclick="removeTrigger(this.parentNode.parentNode)">X</button>
 					</td>
 					<td style="display: none;">6</td>
 					<td>
-						<input value="slta115" size="6"/>
-					</td>
+						<input value="slta115" size="6"/></td>
 					<td>
-						<select onchange="stationChange(this)">
-							<option selected="selected">ND01</option>
-						</select>
-					</td>
+						<select onchange="stationChange(this)"><option selected="selected">ND01</option></select></td>
 					<td>
-						<select>
-							<option>CHE</option>
-							<option>CHN</option>
-							<option selected="selected">CHZ</option>
-						</select>
-					</td>
+						<select><option selected="selected">ch1</option><option>ch2</option><option>ch3</option><option>CHZ</option></select></td>
 					<td>
-						<select onchange="setUnits(this.parentNode.parentNode)">
-							<option selected="selected">sta_lta</option>
-							<option>RMS</option>
-							<option>level</option>
-						</select>
-					</td>
+						<select onchange="setUnits(this.parentNode.parentNode)"><option selected="selected">sta_lta</option><option>RMS</option><option>level</option></select></td>
 					<td>
-						<input type="numeric" value="1" size="2" style="text-align: right;"/>
-					</td>
+						<input type="numeric" value="1" size="2" style="text-align: right;"/></td>
 					<td>
-						<input type="numeric" value="4" size="2" style="text-align: right; display: inline;"/>
-					</td>
+						<input type="numeric" value="4" size="2" style="text-align: right; display: inline;"/></td>
 					<td>
-						<input type="numeric" value="3" size="5" style="text-align: right;"/>
-						<output/>
-					</td>
+						<input type="numeric" value="3" size="5" style="text-align: right;"/><output/></td>
 					<td>
-						<input type="numeric" value="1" size="5" style="text-align: right;"/>
-						<output/>
-					</td>
+						<input type="numeric" value="1" size="5" style="text-align: right;"/><output/></td>
 					<td>
-						<input type="checkbox" checked="checked"/>
-					</td>
+						<input type="checkbox" checked="checked"/></td>
 					<td>
-						<input type="numeric" value="100" size="2" style="text-align: right;"/>
-					</td>
+						<input type="numeric" value="100" size="2" style="text-align: right;"/></td>
 					<td>
-						<input type="numeric" value="300" size="2" style="text-align: right;"/>
-					</td>
+						<input type="numeric" value="300" size="2" style="text-align: right;"/></td>
 					<td>
-						<img src="img\circle-gray.jpg"/>
-					</td>
-				</tr>
-				<tr>
-					<td>
+						<img src="img\circle-gray.jpg"/></td>
+				</tr><tr><td>
 						<button type="button" style="color: red;" onclick="removeTrigger(this.parentNode.parentNode)">X</button>
 					</td>
 					<td style="display: none;">7</td>
 					<td>
-						<input value="levl1E" size="6"/>
-					</td>
+						<input value="levl1E" size="6"/></td>
 					<td>
-						<select onchange="stationChange(this)">
-							<option selected="selected">ND01</option>
-						</select>
-					</td>
+						<select onchange="stationChange(this)"><option selected="selected">ND01</option></select></td>
 					<td>
-						<select>
-							<option selected="selected">CHE</option>
-							<option>CHN</option>
-							<option>CHZ</option>
-						</select>
-					</td>
+						<select><option selected="selected">ch1</option><option>ch2</option><option>ch3</option><option>CHE</option></select></td>
 					<td>
-						<select onchange="setUnits(this.parentNode.parentNode)">
-							<option>sta_lta</option>
-							<option>RMS</option>
-							<option selected="selected">level</option>
-						</select>
-					</td>
+						<select onchange="setUnits(this.parentNode.parentNode)"><option>sta_lta</option><option>RMS</option><option selected="selected">level</option></select></td>
 					<td>
-						<input type="numeric" value="1" size="2" style="text-align: right;"/>
-					</td>
+						<input type="numeric" value="1" size="2" style="text-align: right;"/></td>
 					<td>
-						<input type="numeric" value="4" size="2" style="text-align: right; display: none;"/>
-					</td>
+						<input type="numeric" value="4" size="2" style="text-align: right; display: none;"/></td>
 					<td>
-						<input type="numeric" value="1" size="5" style="text-align: right;"/>
-						<output>V</output>
-					</td>
+						<input type="numeric" value="1" size="5" style="text-align: right;"/><output>V</output></td>
 					<td>
-						<input type="numeric" value=".1" size="5" style="text-align: right;"/>
-						<output>V</output>
-					</td>
+						<input type="numeric" value=".1" size="5" style="text-align: right;"/><output>V</output></td>
 					<td>
-						<input type="checkbox"/>
-					</td>
+						<input type="checkbox"/></td>
 					<td>
-						<input type="numeric" value="100" size="2" style="text-align: right;"/>
-					</td>
+						<input type="numeric" value="100" size="2" style="text-align: right;"/></td>
 					<td>
-						<input type="numeric" value="300" size="2" style="text-align: right;"/>
-					</td>
+						<input type="numeric" value="300" size="2" style="text-align: right;"/></td>
 					<td>
-						<img src="img\circle-gray.jpg"/>
-					</td>
-				</tr>
-			</tbody>
-		</table>
-		<p style="text-align: left;">
+						<img src="img\circle-gray.jpg"/></td>
+				</tr></tbody></table><p style="text-align: left;">
 			<a href="index.html">main</a>
 			<a href="rules.html">rules</a>
 			<span style="float: right;">
@@ -413,6 +222,4 @@
 		</p>
 		<script src="triggers.js">
 
-		</script>
-	</body>
-</html>
+		</script></body></html>

@@ -132,20 +132,39 @@ class TriggerWrapper:
         else:
             activ_data = trigger_data < self.init_level
             deactiv_data = trigger_data > self.stop_level
+
         date_time = starttime
         message_start = Subscription.trigger.value + self.trigger_index_s
-        for a, d in zip(activ_data, deactiv_data):
-            if self.trigger_on and d:
-                self.socket_trigger.send(message_start + b'0' + date_time._ns.to_bytes(8, byteorder='big'))
-                self.socket_trigger.send(message_start + b'0' + date_time._ns.to_bytes(8, byteorder='big'))
-                logger.debug('detriggered, trigger id:' + str(self.trigger_index_s))
-                self.trigger_on = False
-            if not self.trigger_on and a:
-                self.socket_trigger.send(message_start + b'1' + date_time._ns.to_bytes(8, byteorder='big'))
-                self.socket_trigger.send(message_start + b'1' + date_time._ns.to_bytes(8, byteorder='big'))
-                logger.debug('triggered, trigger id:' + str(self.trigger_index_s))
-                self.trigger_on = True
-            date_time += 1.0 / self.sampling_rate
+        while True:
+            if self.trigger_on:
+                seek_ar = np.where(deactiv_data)[0]
+            else:
+                seek_ar = np.where(activ_data)[0]
+            if seek_ar.size == 0:
+                break
+            offset = seek_ar[0]
+            activ_data = activ_data[offset:]
+            deactiv_data = deactiv_data[offset:]
+            date_time += offset / self.sampling_rate
+            self.trigger_on = not self.trigger_on
+            if self.trigger_on:
+                btrig = b'1'
+            else:
+                btrig = b'0'
+            logger.debug('triggered, trigger id:' + str(self.trigger_index_s) + ' ' + str(btrig))
+            self.socket_trigger.send(message_start + btrig + date_time._ns.to_bytes(8, byteorder='big'))
+        # for a, d in zip(activ_data, deactiv_data):
+        #     if self.trigger_on and d:
+        #         self.socket_trigger.send(message_start + b'0' + date_time._ns.to_bytes(8, byteorder='big'))
+        #         self.socket_trigger.send(message_start + b'0' + date_time._ns.to_bytes(8, byteorder='big'))
+        #         logger.debug('detriggered, trigger id:' + str(self.trigger_index_s))
+        #         self.trigger_on = False
+        #     if not self.trigger_on and a:
+        #         self.socket_trigger.send(message_start + b'1' + date_time._ns.to_bytes(8, byteorder='big'))
+        #         self.socket_trigger.send(message_start + b'1' + date_time._ns.to_bytes(8, byteorder='big'))
+        #         logger.debug('triggered, trigger id:' + str(self.trigger_index_s))
+        #         self.trigger_on = True
+        #     date_time += 1.0 / self.sampling_rate
 
 
 
