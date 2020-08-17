@@ -19,6 +19,9 @@ var stopCol = headersObj["stop_level"];
 var sessionId = Math.floor(Math.random() * 1000000) + 1;
 var staCol = headersObj["sta"];
 var ltaCol = headersObj["lta"];
+var filterCol = headersObj["filter"];
+var freqminCol = headersObj["freqmin"];
+var freqmaxCol = headersObj["freqmax"];
 
 initPage();
 
@@ -72,6 +75,7 @@ function initPage() {
 				var station = getStation(stationCell);
 				setStationsCell(stations, stationCell);
 				setUnits(row);
+				setFrequencesVisibility(row);
 				if (station in stationsData)	{
 					var channels = stationsData[station]["channels"];
 					setChannelsCell(channels, channelCell);
@@ -447,7 +451,7 @@ function setLevels()	{
 function setFilters()	{
 	var rows = document.getElementById("triggerTable").rows;
 	for (var row of Array.from(rows).slice(1))	{
-		var checkElement = row.cells[headersObj["filter"]].children[0];
+		var checkElement = row.cells[filterCol].children[0];
 		setCheckedNode(checkElement);
 	}
 }
@@ -482,6 +486,23 @@ function setUnits(row)	{
 	}
 	unitsNode.innerHTML  = units;
 	unitsNode2.innerHTML = units;
+	var filterNode = row.cells[filterCol].children[0];
+	if (filterNode.checked)	{
+		
+	}
+}
+
+function setFrequencesVisibility(row)	{
+	var filterNode = row.cells[filterCol].children[0];
+	var freqminNode = row.cells[freqminCol].children[0];
+	var freqmaxNode = row.cells[freqmaxCol].children[0];
+	if (filterNode.checked)	{
+		freqmaxNode.style.display = "inline";
+		freqminNode.style.display = "inline";
+	}	else	{
+		freqmaxNode.style.display = "none";
+		freqminNode.style.display = "none";
+	}
 }
 
 function genName(station, channel, trigger, name, names)	{
