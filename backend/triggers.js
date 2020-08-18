@@ -382,7 +382,7 @@ function addTrigger() {
     var row = rows[len - 1].cloneNode(true);
     var ind = parseInt(row.cells[indexCol].innerHTML) + 1;
     row.cells[indexCol].innerHTML = ind;
-    row.cells[nameCol].children[0].setAttribute("value", "");
+    row.cells[nameCol].children[0].value = "";
     table.children[0].appendChild(row);
 }
 
