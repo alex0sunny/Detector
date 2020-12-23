@@ -183,7 +183,6 @@ class myHandler(BaseHTTPRequestHandler):
             logger.debug('actions_dic:' + str(json_dic['actions']))
             self.wfile.write(json.dumps(json_dic).encode())
         if self.path == '/apply':
-            socket_backend.send(b'AP')
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
@@ -203,6 +202,7 @@ class myHandler(BaseHTTPRequestHandler):
             save_triggers(html)
             sockets_trigger = get_sockets_data(session_id)
             update_triggers_sockets(conn_str_sub, context, sockets_trigger)
+            socket_backend.send(b'AP')
         if self.path == '/saveSources':
             save_sources(post_data_str)
             socket_backend.send(b'AP')
