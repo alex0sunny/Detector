@@ -35,11 +35,11 @@ def signal_receiver(conn_str, station_bin):
     context = zmq.Context()
     socket = NjspClient(conn_str, context)
 
-    socket_pub = context.socket(zmq.PUB)
+    #socket_pub = context.socket(zmq.PUB)
     conn_str_pub = 'tcp://localhost:' + str(Port.multi.value)
-    socket_pub.connect(conn_str_pub)
-    socket_buf = context.socket(zmq.PUB)
-    socket_buf.connect(conn_str_pub)
+    #socket_pub.connect(conn_str_pub)
+    #socket_buf = context.socket(zmq.PUB)
+    #socket_buf.connect(conn_str_pub)
 
     socket_confirm = context.socket(zmq.SUB)
     socket_confirm.connect('tcp://localhost:' + str(Port.proxy.value))
@@ -81,7 +81,7 @@ def signal_receiver(conn_str, station_bin):
             streams_dic = json_data['parameters']['streams']
             STREAM_NAME = list(streams_dic.keys())[STREAM_IND]
             params_dic = streams_dic[STREAM_NAME]
-            socket_buf.send(Subscription.parameters.value + size_bytes + raw_data)
+            #socket_buf.send(Subscription.parameters.value + size_bytes + raw_data)
             # print('params bytes sent to inner socket:' + str(Subscription.parameters.value + size_bytes + raw_data))
         if 'streams' in json_data:
             # sampling_rate = json_data['streams']['sample_rate']
@@ -112,7 +112,7 @@ def signal_receiver(conn_str, station_bin):
                 data = np.frombuffer(bin_signal_int, dtype='int32').astype('float') / k
                 bin_signal = data.tobytes()
                 bin_data = BytesIO(bin_header).read() + bin_signal
-                socket_pub.send(Subscription.intern.value + bin_data)
+                #socket_pub.send(Subscription.intern.value + bin_data)
 
                 tr = Trace()
                 tr.stats.starttime = starttime
@@ -126,7 +126,7 @@ def signal_receiver(conn_str, station_bin):
             chs_bin = b''.join(chs_blist)
             custom_header.channels = cast(chs_bin, POINTER(ChName * 20)).contents
             custom_header.ns = starttime._ns
-            socket_buf.send(Subscription.signal.value + custom_header + size_bytes + raw_data)
+            #socket_buf.send(Subscription.signal.value + custom_header + size_bytes + raw_data)
 
             if not check_time:
                 check_time = starttime
@@ -140,4 +140,4 @@ def signal_receiver(conn_str, station_bin):
                 pyplot.pause(.1)
 
 
-signal_receiver('tcp://192.168.0.189:10001', b'ND02')
+signal_receiver(f'tcp://localhost:{Port.signal_resend.value}', b'ND01')

@@ -108,7 +108,7 @@ def resend(conn_str, rules, pem, pet):
         bdata = resent_data[header_size:]
         # logger.debug('binary data received')
         #logger.debug('dt:' + str(UTCDateTime(dt)) + ' bdata len:' + str(len(bdata)))
-        if not pet_time:
+        if not pet_time or trigger:
             #logger.debug('pet time is None')
             pet_time = dt + pet
         if dt < pet_time or trigger:
