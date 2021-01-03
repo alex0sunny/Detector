@@ -10,9 +10,15 @@ from time import sleep
 
 import zmq
 
-logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
+import os
+
+logpath = os.path.dirname(os.path.dirname(os.path.dirname(__file__))) + '/trigger.log'
+loglevel = logging.DEBUG
+
+logging.basicConfig(filename=logpath, filemode='w',
+                    format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
                            '%(message)s',
-                    level=logging.DEBUG)
+                    level=loglevel)
 logger = logging.getLogger('globals')
 
 logging.getLogger("matplotlib").setLevel(logging.WARNING)

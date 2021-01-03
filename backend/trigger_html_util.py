@@ -226,7 +226,7 @@ def post_triggers(json_triggers, sockets_trigger):
             try:
                 mes = socket_trigger.recv(zmq.NOBLOCK)
                 triggers[i] = int(mes[3:4])
-                # logger.info('triggering detected, message:' + str(mes))
+                #logger.info('triggering detected, message:' + str(mes))
             except zmq.ZMQError:
                 pass
         else:

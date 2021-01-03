@@ -12,12 +12,13 @@ from obspy.signal.trigger import classic_sta_lta
 
 from detector.filter_trigger.RmsTrigger import RmsTrigger, LevelTrigger
 from detector.filter_trigger.trigger_types import TriggerType
-from detector.misc.globals import Port, Subscription
+from detector.misc.globals import Port, Subscription, logpath, loglevel
 from detector.misc.header_util import prep_name, ChHeader, prep_ch
 from detector.filter_trigger.filter_bandpass import Filter
 
-logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d %(message)s',
-                    level=logging.INFO)
+logging.basicConfig(filename=logpath, filemode='w',
+                    format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d %(message)s',
+                    level=loglevel)
 logger = logging.getLogger('detector')
 
 logging.getLogger("matplotlib").setLevel(logging.WARNING)

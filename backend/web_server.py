@@ -9,12 +9,12 @@ import backend
 from backend.trigger_html_util import save_pprint_trig, getTriggerParams, save_triggers, update_sockets, post_triggers, \
     save_sources, save_rules, update_rules, apply_sockets_rule, save_actions, \
     update_triggers_sockets, getActions, getRuleDic, getSources
-from detector.misc.globals import Port, Subscription, action_names_dic0
+from detector.misc.globals import Port, Subscription, action_names_dic0, logger
 
-logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
-                           '%(message)s',
-                    level=logging.DEBUG)
-logger = logging.getLogger('detector')
+# logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
+#                            '%(message)s',
+#                     level=logging.DEBUG)
+# logger = logging.getLogger('backend')
 
 
 PORT_NUMBER = 8001
@@ -126,7 +126,6 @@ class myHandler(BaseHTTPRequestHandler):
 
     # Handler for the POST requests
     def do_POST(self):
-        # logger.debug('inside post')
         # logger.debug(self.path)
         # print(self.rfile.read())
         content_length = int(self.headers['Content-Length'])  # <--- Gets the size of data
@@ -229,17 +228,19 @@ class myHandler(BaseHTTPRequestHandler):
             print('load')
 
 
-try:
-    # Create a web server and define the handler to manage the
-    # incoming request
-    server = HTTPServer(('', PORT_NUMBER), myHandler)
-    print
-    'Started httpserver on port ', PORT_NUMBER
+def trigger_web():
+    try:
+        # Create a web server and define the handler to manage the
+        # incoming request
+        server = HTTPServer(('', PORT_NUMBER), myHandler)
+        print
+        'Started httpserver on port ', PORT_NUMBER
 
-    # Wait forever for incoming htto requests
-    server.serve_forever()
+        # Wait forever for incoming htto requests
+        server.serve_forever()
 
-except KeyboardInterrupt:
-    print
-    '^C received, shutting down the web server'
-    server.socket.close()
+    except KeyboardInterrupt:
+        print
+        '^C received, shutting down the web server'
+        server.socket.close()
+

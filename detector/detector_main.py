@@ -2,6 +2,7 @@ import time
 from multiprocessing import Process, Pool
 from threading import Thread
 
+from backend.web_server import trigger_web
 from detector.action.action_process import action_process, sms_process
 from detector.action.relay_actions import turn
 from detector.action.send_email import send_email
@@ -49,7 +50,7 @@ if __name__ == '__main__':
         paramsList = getTriggerParams()
         trigger_dic = {params['ind']: params['name'] for params in paramsList}
 
-        kwargs_list = []
+        kwargs_list = [{'target': trigger_web, 'kwargs': {}}]
 
         action_params = getActions()
         # print('action_params:' + str(action_params))
