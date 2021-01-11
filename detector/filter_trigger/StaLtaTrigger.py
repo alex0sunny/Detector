@@ -73,11 +73,16 @@ class SltaTriggerCore:
             raise Exception('incorrect nlta:' + str(nlta) + ' nsta:' + str(nsta))
         self.nsta = nsta
         self.nlta = nlta
-        self.buf = np.require(np.zeros(nlta), dtype='float')
+        self.buf = np.require(np.zeros(0), dtype='float')
+        self.npts = 0
 
     def trigger(self, data):
         self.buf = np.append(self.buf[-self.nlta:], data)
-        return classic_sta_lta(self.buf, self.nsta, self.nlta)[-data.size:]
+        if self.buf.size > self.nlta:
+            out = classic_sta_lta(self.buf, self.nsta, self.nlta)[-data.size:]
+        else:
+            out = np.require(np.zeros(data.size), dtype='float')
+        return out
 
 
 class StaLtaTrigger:

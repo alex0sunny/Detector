@@ -71,9 +71,12 @@ def send_signal(st, conn_str, units='V'):
         for json_data in json_datas:
             data_len = len(json_data)
             size_bytes = ('%08x' % data_len).encode()
+            # json_dic = json.loads(json_data)
+            # time_sec = list(json_dic['streams'].items())[0][1]['timestamp']
+            # print('time:' + str(UTCDateTime(time_sec)))
             sender.send(size_bytes + json_data)
             time.sleep(.01)
-        time.sleep(.1)
+        time.sleep(1)
 
 
 base_path = os.path.split(inspect.getfile(misc))[0] + '/'
@@ -89,7 +92,7 @@ sources_dic = getSources()
 print(sources_dic)
 stations = list(sources_dic.keys())
 kwargs_list = [{'target': send_signal,
-                'kwargs': {'st': st,
+                'kwargs': {'st': st100[:3],
                            'conn_str': 'tcp://*:' + str(sources_dic[stations[0]]['port'])}}]#,
                #{'target': send_signal,
                 #'kwargs': {'st': st100[:3], 'units': 'A',

@@ -183,7 +183,7 @@ function myTimer() {
 //	            typeof(Object.values(pageMap.triggers)[0]));
 	xhr.onreadystatechange = function () {
 		if (xhr.readyState === 4 && xhr.status === 200) {
-		    //console.log('response:' + xhr.responseText);
+		    console.log('response:' + xhr.responseText);
 			var json = JSON.parse(xhr.responseText);
 //			console.log('json vals:' + Object.values(json));
 //			console.log('trigger keys:' + Object.keys(json.triggers));
@@ -194,6 +194,7 @@ function myTimer() {
 	};
 	pageMap["sessionId"] = sessionId;
 	var data = JSON.stringify(pageMap);
+	console.log('data to send:' + data);
 	xhr.send(data);
 }
 

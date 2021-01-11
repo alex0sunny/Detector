@@ -29,7 +29,7 @@ class Filter:
                    "above Nyquist ({}). Applying a high-pass instead.").format(
                 self.freqmax, self.fe)
             logger.warning(msg)
-            warnings.warn(msg)
+            #warnings.warn(msg)
             return highpass(data, freq=self.freqmin, df=self.sampling_rate, corners=self.corners,
                             zerophase=self.zerophase)
         if self.low > 1:
