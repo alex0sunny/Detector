@@ -22,51 +22,44 @@ PORT_NUMBER = 8001
 web_dir = os.path.dirname(__file__)
 os.chdir(web_dir)
 
-context = zmq.Context()
-socket_backend = context.socket(zmq.PUB)
-socket_backend.connect('tcp://localhost:' + str(Port.backend.value))
 
-socket_test = context.socket(zmq.PUB)
-socket_test.connect('tcp://localhost:' + str(Port.multi.value))
-
-conn_str_sub = 'tcp://localhost:' + str(Port.proxy.value)
-
-sockets_data_dic = {}
-
-
-def create_sockets_data():
+def create_sockets_data(conn_str_sub, context):
     sockets_trigger = {}
     for trigger_param in getTriggerParams():
         update_sockets(trigger_param['ind'], conn_str_sub, context, sockets_trigger)
     return sockets_trigger
 
 
-def get_sockets_data(session_id):
+def get_sockets_data(session_id, conn_str_sub, context, sockets_data_dic):
     if session_id not in sockets_data_dic:
-        sockets_data_dic[session_id] = create_sockets_data()
+        sockets_data_dic[session_id] = create_sockets_data(conn_str_sub, context)
     return sockets_data_dic[session_id]
 
 
 rule_sockets_dic = {}
 
 
-def create_rule_sockets():
+def create_rule_sockets(conn_str_sub, context):
     rule_sockets = {}
-    trigger_dic = {params['ind']: params['name'] for params in getTriggerParams()}
     for rule_id in sorted(getRuleDic().keys()):
         update_sockets(rule_id, conn_str_sub, context, rule_sockets, subscription=Subscription.rule.value)
     return rule_sockets
 
 
-def get_rule_sockets(session_id):
+def get_rule_sockets(session_id, conn_str_sub, context):
     if session_id not in rule_sockets_dic:
-        rule_sockets_dic[session_id] = create_rule_sockets()
+        rule_sockets_dic[session_id] = create_rule_sockets(conn_str_sub, context)
     return rule_sockets_dic[session_id]
 
 
 # This class will handles any incoming request from
 # the browser
-class myHandler(BaseHTTPRequestHandler):
+class CustomHandler(BaseHTTPRequestHandler):
+
+    def __init__(self, *args, **kwargs):
+        # BaseHTTPRequestHandler calls do_GET **inside** __init__ !!!
+        # So we have to call super().__init__ after setting attributes.
+        super().__init__(*args, **kwargs)
 
     def log_message(self, format, *args):
         return
@@ -143,7 +136,8 @@ class myHandler(BaseHTTPRequestHandler):
             session_id = json_dic['sessionId']
             # logger.debug('session id:' + str(session_id))
             json_triggers = json_dic['triggers']
-            sockets_trigger = get_sockets_data(session_id)
+            sockets_trigger = get_sockets_data(session_id, self.server.conn_str_sub, self.server.context,
+                                               self.server.sockets_data_dic)
             json_map = post_triggers(json_triggers, sockets_trigger)
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
@@ -154,9 +148,10 @@ class myHandler(BaseHTTPRequestHandler):
             session_id = json_dic['sessionId']
             # logger.debug('session id:' + str(session_id))
             json_triggers = json_dic['triggers']
-            sockets_trigger = get_sockets_data(session_id)
+            sockets_trigger = get_sockets_data(session_id, self.server.conn_str_sub, self.server.context,
+                                               self.server.sockets_data_dic)
             json_map = post_triggers(json_triggers, sockets_trigger)
-            sockets_rule = get_rule_sockets(session_id)
+            sockets_rule = get_rule_sockets(session_id, self.server.conn_str_sub, self.server.context)
             rules_dic = json_dic['rules']
             rules_dic = update_rules(rules_dic, sockets_rule)
             json_map['rules'] = rules_dic
@@ -191,23 +186,24 @@ class myHandler(BaseHTTPRequestHandler):
             session_id = json_dic['sessionId']
             html = json_dic['html']
             save_rules(html)
-            sockets_rule = get_rule_sockets(session_id)
-            apply_sockets_rule(conn_str_sub, context, sockets_rule)
-            socket_backend.send(b'AP')
+            sockets_rule = get_rule_sockets(session_id, self.server.conn_str_sub, self.server.context)
+            apply_sockets_rule(self.server.conn_str_sub, self.server.context, sockets_rule)
+            self.server.socket_backend.send(b'AP')
         if self.path == '/save':
             json_dic = json.loads(post_data_str)
             session_id = json_dic['sessionId']
             html = json_dic['html']
             save_triggers(html)
-            sockets_trigger = get_sockets_data(session_id)
-            update_triggers_sockets(conn_str_sub, context, sockets_trigger)
-            socket_backend.send(b'AP')
+            sockets_trigger = get_sockets_data(session_id, self.server.conn_str_sub, self.server.context,
+                                               self.server.sockets_data_dic)
+            update_triggers_sockets(self.server.conn_str_sub, self.server.context, sockets_trigger)
+            self.server.socket_backend.send(b'AP')
         if self.path == '/saveSources':
             save_sources(post_data_str)
-            socket_backend.send(b'AP')
+            self.server.socket_backend.send(b'AP')
         if self.path == '/applyActions':
             save_actions(post_data_str)
-            socket_backend.send(b'AP')
+            self.server.socket_backend.send(b'AP')
         if self.path == '/testActions':
             test_dic = json.loads(post_data_str)
             ids = test_dic['ids']
@@ -222,17 +218,33 @@ class myHandler(BaseHTTPRequestHandler):
                 # else:
                 #     bin_message += b'1'
                 logger.info('send bin_message:' + str(bin_message))
-                socket_test.send(bin_message)
+                self.server.socket_test.send(bin_message)
             # print('actions test:' + str(ids))
         if self.path == '/load':
             print('load')
+
+
+class CustomHTTPServer(HTTPServer):
+
+    def __init__(self, *args, **kwargs):
+        HTTPServer.__init__(self, *args, **kwargs)
+        self.context = zmq.Context()
+        self.socket_backend = self.context.socket(zmq.PUB)
+        self.socket_backend.connect('tcp://localhost:' + str(Port.backend.value))
+
+        self.socket_test = self.context.socket(zmq.PUB)
+        self.socket_test.connect('tcp://localhost:' + str(Port.multi.value))
+
+        self.conn_str_sub = 'tcp://localhost:' + str(Port.proxy.value)
+
+        self.sockets_data_dic = {}
 
 
 def trigger_web():
     try:
         # Create a web server and define the handler to manage the
         # incoming request
-        server = HTTPServer(('', PORT_NUMBER), myHandler)
+        server = CustomHTTPServer(('', PORT_NUMBER), CustomHandler)
         print
         'Started httpserver on port ', PORT_NUMBER
 
