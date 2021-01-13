@@ -20,7 +20,7 @@ import zmq
 
 from detector.send_receive.triggers_proxy import triggers_proxy
 
-use_thread = False
+use_thread = True
 
 
 def fps(kwargs_list, use_thread):
@@ -45,12 +45,14 @@ if __name__ == '__main__':
     socket_backend.bind('tcp://*:' + str(Port.backend.value))
     socket_backend.setsockopt(zmq.SUBSCRIBE, b'AP')
 
+    Process(target=trigger_web).start()
+
     while True:
 
         paramsList = getTriggerParams()
         trigger_dic = {params['ind']: params['name'] for params in paramsList}
 
-        kwargs_list = [{'target': trigger_web, 'kwargs': {}}]
+        kwargs_list = []
 
         action_params = getActions()
         # print('action_params:' + str(action_params))
