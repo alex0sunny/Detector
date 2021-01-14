@@ -23,6 +23,15 @@ var filterCol = headersObj["filter"];
 var freqminCol = headersObj["freqmin"];
 var freqmaxCol = headersObj["freqmax"];
 
+//var needsUpdate = false;
+
+// this will force reload on every visit
+window.onbeforeunload = function() { 
+	console.log('before unload');
+	//needsUpdate = true; 
+};
+
+console.log("init page");
 initPage();
 
 var stationsData;
@@ -195,6 +204,7 @@ function myTimer() {
 	pageMap["sessionId"] = sessionId;
 	var data = JSON.stringify(pageMap);
 	console.log('data to send:' + data);
+//	console.log('needsUpdate:' + needsUpdate);
 	xhr.send(data);
 }
 

@@ -54,7 +54,7 @@ function updateTriggers (triggersObj, ruleCell) {
 				src = "img\\gray16.jpg";
 			}
 			node.setAttribute("src", src);
-		} 
+		}
 	}
 }
 
@@ -75,7 +75,7 @@ function updateRules(rulesObj)	{
       		}
       		imgNode.setAttribute("src", src);
       	}
-    }	
+    }
 }
 
 function updateFunc () {
@@ -125,7 +125,7 @@ function initFunc () {
 				triggersObj[triggerId] = 0;
 				triggerNames.push(triggersDic[triggerId]);
 			}
-			
+
 			var actionIds = [];
 			for (actionId in actionsDic)	{
 				actionIds.push(actionId);
@@ -149,7 +149,7 @@ function initFunc () {
 				var row = rows[i];
 				row.cells[ruleIdCol].style.display = "none";
 				var ruleCell = row.cells[formulaCol];
-				fillTriggers(ruleCell, prevTriggerIds);
+				fillTriggers(ruleCell);
 				var actionCell = row.cells[actionCol];
 				fillActions(actionCell, prevActionIds);
 			}
@@ -159,39 +159,35 @@ function initFunc () {
 	xhr.send();
 }
 
-function fillTriggers (ruleCell, prevIds)	{
+function fillTriggers (ruleCell)	{
 	for (var triggerNode of ruleCell.children)	{
-		if (triggerNode.nodeName != "SELECT" || 
+		if (triggerNode.nodeName != "SELECT" ||
 				!triggerNode.children[0].hasAttribute("trigger_id"))	{
 			continue;
 		}
-		for (var option of triggerNode.options)	{
-			var triggerName = option.innerHTML;
-			var triggerId = option.getAttribute("trigger_id");
-			var selected = option.hasAttribute("selected");
-			if (triggerId in triggersDic)	{
-				option.innerHTML = triggersDic[triggerId];
-				continue;
-			}
-			if (!selected)	{
-				triggerNode.removeChild(option);
-				continue
-			}
-			for (triggerId in triggersDic)	{
-				if (triggersDic[triggerId] == triggerName)	{
-					option.setAttribute("trigger_id", triggerId);
-				}
-			}
-		}
+		var selectedOption = triggerNode.options[triggerNode.selectedIndex];
+		//console.log('selected option:' + selectedOption.outerHTML);
+		selectedOption = selectedOption.cloneNode(true);
+		//console.log('cloned option:' + selectedOption.outerHTML);
+		var selectedId = selectedOption.getAttribute("trigger_id");
+		//console.log('selected id:' + selectedId);
+		triggerNode.innerHTML = '';
+		var idPresent = false;
 		for (var triggerId in triggersDic)	{
-			if (!prevIds.includes(triggerId))	{
-				console.log("prevIds " + prevIds + " not includes " + triggerId);
-				var option = document.createElement("option");
-				option.setAttribute("trigger_id", triggerId);
-				option.textContent = triggersDic[triggerId];
-				triggerNode.appendChild(option);
+			var optionNode = document.createElement("option");
+			optionNode.text = triggersDic[triggerId];
+			optionNode.setAttribute("trigger_id", triggerId);
+			if (triggerId == selectedId) {
+				optionNode.setAttribute("selected", "selected");
+				idPresent = true;
 			}
+			triggerNode.appendChild(optionNode);
 		}
+		//console.log('triggerNode before append:' + triggerNode.innerHTML);
+		if (!idPresent)	{
+			triggerNode.appendChild(selectedOption);
+		}
+		//console.log('triggerNode after append:' + triggerNode.innerHTML);
 	}
 }
 
@@ -200,35 +196,26 @@ function fillActions (actionCell, prevIds)	{
 		if (actionNode.nodeName != "SELECT")	{
 			continue;
 		}
-		console.log("actions dic:" + JSON.stringify(actionsDic));
-		for (var option of actionNode.options)	{
-			var actionName = option.innerHTML;
-			var actionId = option.getAttribute("action_id");
-			var selected = option.hasAttribute("selected");
-			console.log("name " + actionName + " selected:" + selected);
-			if (actionId in actionsDic)	{
-				console.log("action id " + actionId + " in actionsDic, action name " + actionName);
-				option.innerHTML = actionsDic[actionId];
-				continue;
-			}
-			if (!selected)	{
-				console.log("remove option");
-				actionNode.removeChild(option);
-				continue
-			}
-			for (actionId in actionsDic)	{
-				if (actionsDic[actionId] == actionName)	{
-					option.setAttribute("action_id", actionId);
-				}
-			}
-		}
+		var selectedOption = actionNode.options[actionNode.selectedIndex];
+		//console.log('selected option:' + selectedOption.outerHTML);
+		selectedOption = selectedOption.cloneNode(true);
+		//console.log('cloned option:' + selectedOption.outerHTML);
+		var selectedId = selectedOption.getAttribute("action_id");
+		//console.log('selected id:' + selectedId);
+		actionNode.innerHTML = '';
+		var idPresent = false;
 		for (var actionId in actionsDic)	{
-			if (!prevIds.includes(actionId))	{
-				var option = document.createElement("option");
-				option.setAttribute("action_id", actionId);
-				option.textContent = actionsDic[actionId];
-				actionNode.appendChild(option);
+			var optionNode = document.createElement("option");
+			optionNode.text = actionsDic[actionId];
+			optionNode.setAttribute("action_id", actionId);
+			if (actionId == selectedId) {
+				optionNode.setAttribute("selected", "selected");
+				idPresent = true;
 			}
+			actionNode.appendChild(optionNode);
+		}
+		if (!idPresent)	{
+			actionNode.appendChild(selectedOption);
 		}
 	}
 }
