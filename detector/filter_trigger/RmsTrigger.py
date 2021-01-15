@@ -12,7 +12,7 @@ class RmsTrigger:
         self.buf = np.require(np.zeros(n), dtype='float')
 
     def trigger(self, data):
-        #logger.debug('data:\n' + str(data))
+        #logger.debug(f'\nmax data:{max(abs(data))}\nmin data:{min(abs(data))}')
         if data.size >= self.n:
             res1 = self.trigger(data[:self.n - 1])
             res2 = self.trigger(data[self.n - 1:])

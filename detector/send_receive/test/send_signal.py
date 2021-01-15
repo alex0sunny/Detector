@@ -92,7 +92,7 @@ sources_dic = getSources()
 print(sources_dic)
 stations = list(sources_dic.keys())
 kwargs_list = [{'target': send_signal,
-                'kwargs': {'st': st100[:3],
+                'kwargs': {'st': st[:3],
                            'conn_str': 'tcp://*:' + str(sources_dic[stations[0]]['port'])}}]#,
                #{'target': send_signal,
                 #'kwargs': {'st': st100[:3], 'units': 'A',

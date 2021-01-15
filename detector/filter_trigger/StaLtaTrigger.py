@@ -130,7 +130,11 @@ class TriggerWrapper:
 
     def pick(self, starttime, data):
         if self.filter:
-            data = self.filter.bandpass(data)
+            try:
+                data = self.filter.bandpass(data)
+            except Exception as ex:
+                logger.error(str(ex) + '\ndisable filter')
+                self.filter = None
         trigger_data = self.data_trigger.trigger(data)
         if self.init_level >= self.stop_level:
             activ_data = trigger_data > self.init_level
@@ -146,6 +150,7 @@ class TriggerWrapper:
                 seek_ar = np.where(deactiv_data)[0]
             else:
                 seek_ar = np.where(activ_data)[0]
+                #logger.debug(f'trigger off, seek_ar:{seek_ar}')
             if seek_ar.size == 0:
                 break
             offset = seek_ar[0]
