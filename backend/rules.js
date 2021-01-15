@@ -177,7 +177,7 @@ function fillTriggers (ruleCell)	{
 			var optionNode = document.createElement("option");
 			optionNode.text = triggersDic[triggerId];
 			optionNode.setAttribute("trigger_id", triggerId);
-			if (triggerId == selectedId) {
+			if (triggerId == selectedId || selectedOption.text == triggersDic[triggerId]) {
 				optionNode.setAttribute("selected", "selected");
 				idPresent = true;
 			}
@@ -208,7 +208,7 @@ function fillActions (actionCell, prevIds)	{
 			var optionNode = document.createElement("option");
 			optionNode.text = actionsDic[actionId];
 			optionNode.setAttribute("action_id", actionId);
-			if (actionId == selectedId) {
+			if (actionId == selectedId || selectedOption.text == actionsDic[actionId]) {
 				optionNode.setAttribute("selected", "selected");
 				idPresent = true;
 			}

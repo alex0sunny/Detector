@@ -184,7 +184,7 @@ function test()	{
 function remove()	{
 	var table = getTable();
 	var rows = getRows();
-    for (var i = 1; i < rows.length; i++)	{
+    for (var i = rows.length - 1; i > 0; i--)	{
     	var row = rows[i];
 		actionId = parseInt(row.cells[actionIdCol].innerHTML);
 		if (actionId <= 3)	{
