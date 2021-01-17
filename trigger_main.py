@@ -17,7 +17,7 @@ from detector.misc.misc_util import to_action_rules
 from detector.send_receive.signal_receiver import signal_receiver
 from detector.send_receive.triggers_proxy import triggers_proxy
 
-use_thread = True
+use_thread = False
 
 
 def fps(kwargs_list, use_thread):
