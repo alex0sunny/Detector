@@ -28,7 +28,7 @@ class Port(Enum):
     signal = 10003
     signal_route = 5559
     internal_resend = 5560
-    signal_resend = 10010
+    signal_resend = 10001
     multi = 5562
     proxy = 5563
     backend = 5564
