@@ -5,8 +5,7 @@ from io import BytesIO
 import zmq
 from obspy import *
 
-from detector.filter_trigger.StaLtaTrigger import logger
-from detector.misc.globals import Port, Subscription
+from detector.misc.globals import Port, Subscription, logger
 from detector.misc.header_util import CustomHeader
 from detector.send_receive.njsp_server import NjspServer
 from detector.send_receive.tcp_server import TcpServer
@@ -37,6 +36,7 @@ def resend(conn_str, rules, pem, pet):
     buf = []
     pet_time = UTCDateTime(0)
     while True:
+        #logger.debug('resender loop')
         try:
             bin_data = socket_rule.recv(zmq.NOBLOCK)
             test = bin_data[:1] == Subscription.test.value
@@ -116,18 +116,18 @@ def resend(conn_str, rules, pem, pet):
             # if buf:
             #     logger.debug('clear buf, trigger:' + str(trigger))
             while buf:
-                #logger.debug('send data to output from buf')
+                logger.debug('send data to output from buf, dt:' + str(buf[0][0]))
                 socket_server.send(buf[0][1])
                 # logger.debug('buf item dt:' + str(buf[0][0]))
                 buf = buf[1:]
-            # logger.debug('send regular data, dt' + str(dt))
+            logger.debug('send regular data, dt' + str(dt))
             #logger.debug('send data to output')
             socket_server.send(bdata)
         else:
-            # logger.debug('append to buf with dt:' + str(dt))
+            #logger.debug('append to buf with dt:' + str(dt))
             buf.append((dt, bdata))
         if buf:
-            # logger.debug('buf[0]:' + str(buf[0]) + '\nbuf[0][0]:' + str(buf[0][0]))
+            #logger.debug('buf start:' + str(buf[0][0]))
             dt_begin = buf[0][0]
             while dt_begin < dt - pem and buf[3:]:
                 # logger.debug('delete from buf with dt:' + str(buf[0][0]) + '\ncurrent pem:' +
