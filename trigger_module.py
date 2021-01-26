@@ -65,7 +65,7 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
                         pass
                     continue
                 elif not self.errors:
-                    self.errors.append('No stations online')
+                    self.errors.append('connection error')
                     self.message = self.errors[-1]
                     # self._print('no data')
 
