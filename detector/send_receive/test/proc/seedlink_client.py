@@ -12,6 +12,7 @@ st = Stream()
 
 
 def handle_data(trace):
+    print('trace received:' + str(trace))
     global st
     st += trace
     endtime = st[-1].stats.endtime
@@ -47,7 +48,7 @@ while True:
     st_vis.sort().merge()
     endtime = st_vis[-1].stats.endtime
     st_vis.trim(endtime - 60)
-    print('plot stream %s' % st)
+    #print('plot stream %s' % st)
     pyplot.clf()
     st_vis.plot(fig=figure)
     pyplot.show()

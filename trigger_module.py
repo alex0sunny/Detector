@@ -1,4 +1,4 @@
-import os
+import os, sys, zmq
 from com_main_module import COMMON_MAIN_MODULE_CLASS
 from time import sleep, time
 from subprocess import Popen, PIPE
@@ -20,9 +20,11 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
         }
 
         web_ui_dir = os.path.join(os.path.dirname(__file__), "web_ui")
-        self._print('Initializing trigger module...')
+        # self._print('Initializing trigger module...')
         super().__init__(standalone, config_params, logger_config, web_ui_dir=web_ui_dir)
-        self._print('config:\n' + str(self.get_config()) + '\n')
+        config = self.get_config()
+        # self._print('config:\n' + str(config) + '\n')
+        sys.path.append(config['trigger_dir'])
 
     def main(self):
         config = self.get_config()
@@ -41,14 +43,37 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
         while not self.shutdown_event.is_set():
             # set message
             self.message = 'Starting trigger module...'
-            sleep(1)
+            # sleep(1)
+            context = zmq.Context()
+            socket_sub = context.socket(zmq.SUB)
+            from detector.misc.globals import Port, Subscription
+            socket_sub.connect('tcp://localhost:' + str(Port.proxy.value))
+            socket_sub.setsockopt(zmq.SUBSCRIBE, Subscription.signal.value)
+
             # read new packets in loop, abort if connection fails or shutdown event is set
             while not self.shutdown_event.is_set():
+                if socket_sub.poll(3000) and self.errors:
+                    self.errors = []
+                    self.message = 'running'
+                    # self._print('data received')
+                    try:
+                        # self._print('flush socket')
+                        while True:
+                            socket_sub.recv(zmq.NOBLOCK)
+                    except zmq.ZMQError:
+                        # self._print('socket flushed')
+                        pass
+                    continue
+                elif not self.errors:
+                    self.errors.append('No stations online')
+                    self.message = self.errors[-1]
+                    # self._print('no data')
+
                 # self._print(f'executing module time:{time()} errors:{self.get_errors_list()}')
                 # self.errors.append('my error')
                 if self.errors:
                     self.message = self.get_errors_list()[-1]
-                sleep(1)
+                # sleep(1)
 
         # p.send_signal(SIGTERM)
         os.killpg(os.getpgid(p.pid), SIGTERM)
