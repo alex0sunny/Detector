@@ -1,7 +1,7 @@
 # import base64
 # import json
 #
-# from obspy import UTCDateTime
+from obspy import UTCDateTime
 #
 # from detector.filter.StaLtaTrigger import logger
 # from detector.misc.header_util import pack_ch_header
@@ -15,8 +15,6 @@ from time import sleep
 import os
 import zmq
 import numpy as np
-from matplotlib import pyplot
-from obspy import UTCDateTime, Stream, Trace
 
 from backend.trigger_html_util import set_source_channels
 from detector.filter_trigger.StaLtaTrigger import logger, TriggerWrapper
@@ -30,7 +28,7 @@ STREAM_NAME = None
 
 
 def signal_receiver(conn_str, station_bin, triggers_params):
-    show_signal = os.name == 'nt'
+    show_signal = False # os.name == 'nt'
 
     context = zmq.Context()
     socket = NjspClient(conn_str, context)
@@ -50,9 +48,11 @@ def signal_receiver(conn_str, station_bin, triggers_params):
     trigger_objs_dic = None
 
     if show_signal:
+        from matplotlib import pyplot
+        from obspy import Stream, Trace
         pyplot.ion()
         figure = pyplot.figure()
-    st = Stream()
+        st = Stream()
     check_time = None
     times_dic = OrderedDict()
     skip_packet = True
@@ -109,7 +109,7 @@ def signal_receiver(conn_str, station_bin, triggers_params):
                         limit_ns + 2 * delta_ns:
                     skip_packet = False
                 else:
-                    logger.info('skip packet')
+                    logger.debug('skip packet')
                     continue
             chs = json_data['streams'][STREAM_NAME]['samples']
             if not chs_ref:
@@ -138,12 +138,13 @@ def signal_receiver(conn_str, station_bin, triggers_params):
                 # bin_data = BytesIO(bin_header).read() + bin_signal
                 # socket_pub.send(Subscription.intern.value + bin_data)
 
-                tr = Trace()
-                tr.stats.starttime = starttime
-                tr.stats.sampling_rate = sample_rate
-                tr.stats.channel = ch
-                tr.data = data
-                st += tr
+                if show_signal:
+                    tr = Trace()
+                    tr.stats.starttime = starttime
+                    tr.stats.sampling_rate = sample_rate
+                    tr.stats.channel = ch
+                    tr.data = data
+                    st += tr
 
             custom_header = CustomHeader()
             chs_blist = list(map(prep_ch, chs))
