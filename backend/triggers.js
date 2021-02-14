@@ -179,9 +179,9 @@ function nullifyVals()	{
 	}
 }
 
-var myVar = setInterval(myTimer, 1000);
+setTimeout(updateFunc, 1000);
 
-function myTimer() {
+function updateFunc() {
 	//document.getElementById("counter").stepUp(1);
 	var xhr = new XMLHttpRequest();
 	var url = "trigger";
@@ -191,6 +191,7 @@ function myTimer() {
 //	console.log('key type:' + typeof(Object.keys(pageMap.triggers)[0]) + ' val type:' +
 //	            typeof(Object.values(pageMap.triggers)[0]));
 	xhr.onreadystatechange = function () {
+	    //console.log('onreadystatechange, readyState:' + xhr.readyState + ' status:' + xhr.status);
 		if (xhr.readyState === 4 && xhr.status === 200) {
 		    console.log('response:' + xhr.responseText);
 			var json = JSON.parse(xhr.responseText);
@@ -199,6 +200,9 @@ function myTimer() {
 //			console.log('trigger vals:' + Object.values(json.triggers));
 			var triggers = json.triggers;
 			setTriggerVals(triggers);
+		}
+		if (xhr.readyState === 4) {
+		    setTimeout(updateFunc, 1000);
 		}
 	};
 	pageMap["sessionId"] = sessionId;
