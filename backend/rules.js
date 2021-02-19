@@ -18,9 +18,9 @@ var formulaCol = headersObj["formula"];
 var ruleValCol = headersObj["val"];
 var actionCol = headersObj["actions"];
 
-var timerVar = setInterval(updateFunc, 1000);
+setTimeout(updateFunc, 1000);
 
-var triggersObj = {"1": 0, "2": 0, "4": 0};
+var triggersObj = {};
 
 var rulesObj = getRulesObj();
 
@@ -81,26 +81,33 @@ function updateRules(rulesObj)	{
 function updateFunc () {
 	var xhr = new XMLHttpRequest();
 	xhr.open("POST", "rule", true);
+	xhr.timeout = 10000;
 	xhr.setRequestHeader("Content-Type", "application/json");
 	xhr.onreadystatechange = function () {
-		if (xhr.readyState === 4 && xhr.status === 200) {
-		    //console.log('response:' + xhr.responseText);
-			respObj = JSON.parse(xhr.responseText);
-			triggersObj = respObj['triggers'];
-			rulesObj = respObj['rules'];
-			//console.log('rulesObj from server:' + JSON.stringify(rulesObj));
-			updateRules(rulesObj);
-			var rows = document.getElementById("rulesTable").rows;
-			for (var i = 1; i < rows.length; i = i + 1)	{
-				var row = rows[i];
-				var ruleCell = row.cells[formulaCol];
-				updateTriggers(triggersObj, ruleCell);
-			}
+		if (xhr.readyState === 4) {
+		    if (xhr.status === 200)    {
+                console.log('response:' + xhr.responseText);
+                respObj = JSON.parse(xhr.responseText);
+                triggersObj = respObj['triggers'];
+                rulesObj = respObj['rules'];
+                //console.log('rulesObj from server:' + JSON.stringify(rulesObj));
+                updateRules(rulesObj);
+                var rows = document.getElementById("rulesTable").rows;
+                for (var i = 1; i < rows.length; i = i + 1)	{
+                    var row = rows[i];
+                    var ruleCell = row.cells[formulaCol];
+                    updateTriggers(triggersObj, ruleCell);
+                }
+            }   else    {
+                nullifyVals();
+            }
+            setTimeout(updateFunc, 1000);
 		}
 	};
 	var rulesObj = getRulesObj();
 	//console.log('rulesObj:' + JSON.stringify(rulesObj));
 	var data = {triggers: triggersObj, sessionId: sessionId, rules: rulesObj};
+	console.log('data to send:' + JSON.stringify(data));
 	xhr.send(JSON.stringify(data));
 }
 
@@ -282,6 +289,12 @@ function nullifyVals()	{
 	for (var i = 1; i < rows.length; i++) {
 		var imgNode = rows[i].cells[ruleValCol].children[0];
 		imgNode.setAttribute("src", "img\\circle-gray.jpg");
+		ruleCell = rows[i].cells[formulaCol];
+		for (var triggerImgNode of ruleCell.children)	{
+		    if (triggerImgNode.nodeName == "IMG" && triggerImgNode.hasAttribute("src"))  {
+		        triggerImgNode.setAttribute("src", "img\\gray16.jpg");
+		    }
+		}
 	}
 }
 
