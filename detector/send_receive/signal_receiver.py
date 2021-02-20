@@ -28,7 +28,7 @@ STREAM_NAME = None
 
 
 def signal_receiver(conn_str, station_bin, triggers_params):
-    show_signal = False # os.name == 'nt'
+    show_signal = False     #   os.name == 'nt'
 
     context = zmq.Context()
     socket = NjspClient(conn_str, context)
@@ -109,7 +109,7 @@ def signal_receiver(conn_str, station_bin, triggers_params):
                         limit_ns + 2 * delta_ns:
                     skip_packet = False
                 else:
-                    logger.debug('skip packet')
+                    logger.info('skip packet')
                     continue
             chs = json_data['streams'][STREAM_NAME]['samples']
             if not chs_ref:

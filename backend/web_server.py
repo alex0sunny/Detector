@@ -1,8 +1,11 @@
 import json
 import zmq
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from os.path import curdir, sep
 import os
+
+from obspy import UTCDateTime
+
 from backend.trigger_html_util import save_pprint_trig, getTriggerParams, save_triggers, update_sockets, post_triggers, \
     save_sources, save_rules, update_rules, apply_sockets_rule, save_actions, \
     update_triggers_sockets, getActions, getRuleDic, getSources
@@ -121,10 +124,10 @@ def web_server():
         def do_POST(self):
             # logger.debug('inside post')
             # logger.debug(self.path)
-            # print(self.rfile.read())
             content_length = int(self.headers['Content-Length'])  # <--- Gets the size of data
             post_data = self.rfile.read(content_length)  # <--- Gets the data itself
             post_data_str = post_data.decode()
+            print(f'{UTCDateTime()} POST {post_data_str}')
             if self.path == '/initTrigger':
                 stations_dic = getSources()
                 self.send_response(200)
@@ -225,7 +228,7 @@ def web_server():
     try:
         # Create a web server and define the handler to manage the
         # incoming request
-        server = HTTPServer(('', PORT_NUMBER), myHandler)
+        server = ThreadingHTTPServer(('', PORT_NUMBER), myHandler)
         print
         'Started httpserver on port ', PORT_NUMBER
 

@@ -1,27 +1,16 @@
 from _ctypes import sizeof
 from io import BytesIO
-from time import sleep
 
-from obspy import *
 import numpy as np
 import zmq
-
-import logging
-
+from obspy import *
 from obspy.signal.trigger import classic_sta_lta
 
 from detector.filter_trigger.RmsTrigger import RmsTrigger, LevelTrigger
-from detector.filter_trigger.trigger_types import TriggerType
-from detector.misc.globals import Port, Subscription, logpath, loglevel
-from detector.misc.header_util import prep_name, ChHeader, prep_ch
 from detector.filter_trigger.filter_bandpass import Filter
-
-logging.basicConfig(filename=logpath, filemode='w',
-                    format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d %(message)s',
-                    level=loglevel)
-logger = logging.getLogger('detector')
-
-logging.getLogger("matplotlib").setLevel(logging.WARNING)
+from detector.filter_trigger.trigger_types import TriggerType
+from detector.misc.globals import Port, Subscription, logger
+from detector.misc.header_util import prep_name, ChHeader, prep_ch
 
 
 # from detector.test.signal_generator import SignalGenerator

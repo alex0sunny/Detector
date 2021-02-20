@@ -8,15 +8,9 @@ var headersObj = new Object();
 }
 
 var checkCol = headersObj["del"];
-var indexCol = headersObj["ind"];
 var stationCol = headersObj["station"];
 var hostCol = headersObj["host"];
 var portCol = headersObj["port"];
-
-var rows = document.getElementById("sourcesTable").rows;
-for (var row of Array.from(rows))	{
-	row.cells[indexCol].style.display = "none";
-}
 
 function apply_save() {
 	genNames();
