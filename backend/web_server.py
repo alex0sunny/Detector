@@ -127,7 +127,7 @@ def web_server():
             content_length = int(self.headers['Content-Length'])  # <--- Gets the size of data
             post_data = self.rfile.read(content_length)  # <--- Gets the data itself
             post_data_str = post_data.decode()
-            print(f'{UTCDateTime()} POST {post_data_str}')
+            #print(f'{UTCDateTime()} POST {post_data_str}')
             if self.path == '/initTrigger':
                 stations_dic = getSources()
                 self.send_response(200)
