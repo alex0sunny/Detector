@@ -26,9 +26,9 @@ var freqmaxCol = headersObj["freqmax"];
 //var needsUpdate = false;
 
 // this will force reload on every visit
-window.onbeforeunload = function() { 
+window.onbeforeunload = function() {
 	console.log('before unload');
-	//needsUpdate = true; 
+	//needsUpdate = true;
 };
 
 console.log("init page");
@@ -36,12 +36,12 @@ initPage();
 
 var stationsData;
 
-function checkInt(value) { 
-		return /^\d*$/.test(value) && (value === "" || parseInt(value) < 100); 
+function checkInt(value) {
+		return /^\d*$/.test(value) && (value === "" || parseInt(value) < 100);
 }
 
-function checkFloat(value) { 
-	return /^-?\d*[.,]?\d*$/.test(value) && (value === "" || parseFloat(value) < 100); 
+function checkFloat(value) {
+	return /^-?\d*[.,]?\d*$/.test(value) && (value === "" || parseFloat(value) < 100);
 }
 
 function setInputFilter(textbox, inputFilter) {
@@ -116,7 +116,7 @@ function apply_save() {
     apply();
     sendHTML();
     setTimeout(nullifyVals, 3000);
-    headerRow.children[staCol].innerHTML += "<br/>(len)";  
+    headerRow.children[staCol].innerHTML += "<br/>(len)";
     //console.log('timer started');
 }
 
@@ -185,7 +185,7 @@ function updateFunc() {
 	var xhr = new XMLHttpRequest();
 	var url = "trigger";
 	xhr.open("POST", url, true);
-	xhr.timeout = 10000;
+	//xhr.timeout = 10000;
 	xhr.setRequestHeader("Content-Type", "application/json");
 	var pageMap = getFromHtml();
 	xhr.onreadystatechange = function () {
@@ -197,6 +197,7 @@ function updateFunc() {
                 setTriggerVals(triggers);
             } else  {
                 nullifyVals();
+                location.reload();
             }
             setTimeout(updateFunc, 1000);
 		}
@@ -352,7 +353,7 @@ function setSelectedTriggers() {
 				var option = options[j];
 				if (j == options.selectedIndex) {
 					option.setAttribute("selected", "selected");
-				} 
+				}
 				else {
 					option.removeAttribute("selected");
 				}
@@ -498,7 +499,7 @@ function setUnits(row)	{
 	unitsNode2.innerHTML = units;
 	var filterNode = row.cells[filterCol].children[0];
 	if (filterNode.checked)	{
-		
+
 	}
 }
 

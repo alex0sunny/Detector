@@ -1,5 +1,5 @@
 var headersObj = new Object();
-{	
+{
 	var row = document.getElementById("rulesTable").rows[0];
     var headerCells = row.children;
     for (var i = 0; i < headerCells.length; i++)  {
@@ -17,8 +17,6 @@ var ruleIdCol = headersObj["rule_id"];
 var formulaCol = headersObj["formula"];
 var ruleValCol = headersObj["val"];
 var actionCol = headersObj["actions"];
-
-setTimeout(updateFunc, 1000);
 
 var triggersObj = {};
 
@@ -81,7 +79,7 @@ function updateRules(rulesObj)	{
 function updateFunc () {
 	var xhr = new XMLHttpRequest();
 	xhr.open("POST", "rule", true);
-	xhr.timeout = 10000;
+	//xhr.timeout = 10000;
 	xhr.setRequestHeader("Content-Type", "application/json");
 	xhr.onreadystatechange = function () {
 		if (xhr.readyState === 4) {
@@ -100,6 +98,7 @@ function updateFunc () {
                 }
             }   else    {
                 nullifyVals();
+                location.reload();
             }
             setTimeout(updateFunc, 1000);
 		}
@@ -160,6 +159,7 @@ function initFunc () {
 				var actionCell = row.cells[actionCol];
 				fillActions(actionCell, prevActionIds);
 			}
+			setTimeout(updateFunc, 1000);
 		}
 	}
 	console.log('triggers obj:' + triggersObj);
@@ -252,7 +252,7 @@ function setSelected(node) 	{
 				option.removeAttribute("selected");
 			}
 		}
-	}	
+	}
 }
 
 function apply()	{
@@ -330,7 +330,7 @@ function addTrigger(refNode)	{
 	var triggerNode = imgNode.previousElementSibling;
 	var imgNode = imgNode.cloneNode(true);
 	var triggerNode = triggerNode.cloneNode(true);
-	
+
 	var triggersCell = refNode.parentNode;
 	var nodes = triggersCell.children;
 	var node;
@@ -342,7 +342,7 @@ function addTrigger(refNode)	{
 			curNames.push(curTriggerNode.value);
 		}
 	}
-	var nOfTriggers = curNames.length; 
+	var nOfTriggers = curNames.length;
 	if (nOfTriggers > 7)	{
 		return;
 	}
@@ -394,7 +394,7 @@ function removeTrigger(triggersCell)	{
 		i = i - 1;
 		if (nodes[i].nodeName == "IMG")	{
 			break;
-		} 
+		}
 	}
 }
 
