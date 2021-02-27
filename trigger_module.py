@@ -12,6 +12,18 @@ from backend.trigger_html_util import save_pprint_trig, getTriggerParams, \
     update_triggers_sockets, getActions, getRuleDic, getSources
 from detector.misc.globals import Port, Subscription, action_names_dic0, logger
 
+from threading import Thread
+
+from detector.action.action_process import action_process, sms_process
+from detector.action.relay_actions import turn
+from detector.action.send_email import send_email
+from detector.action.send_sms import send_sms
+from detector.filter_trigger.rule import rule_picker
+from detector.filter_trigger.rule_resender import resend
+from detector.misc.misc_util import to_action_rules
+from detector.send_receive.signal_receiver import signal_receiver
+from detector.send_receive.triggers_proxy import triggers_proxy
+
 context = zmq.Context()
 socket_backend = context.socket(zmq.PUB)
 socket_backend.connect('tcp://localhost:' + str(Port.backend.value))
@@ -126,7 +138,7 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
                 socket_backend.send(b'AP')
             if path == 'save':
                 session_id = request_dic['sessionId']
-                html = json_dic['html']
+                html = request_dic['html']
                 save_triggers(html)
                 sockets_trigger = get_sockets_data(session_id)
                 update_triggers_sockets(conn_str_sub, context, sockets_trigger)
