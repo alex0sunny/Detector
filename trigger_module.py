@@ -27,8 +27,13 @@ from detector.send_receive.triggers_proxy import triggers_proxy
 
 
 def fps(kwargs_list):
+    ps = []
     for kwargs in kwargs_list:
-        Thread(**kwargs).start()
+        p = Thread(**kwargs)
+        p.start()
+        ps.append(p)
+    for p in ps:
+        p.join()
 
 
 context = zmq.Context()
@@ -178,7 +183,7 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
             self.set_config(config)
             self.config.error = None
 
-        self.message = 'starting...'
+        self.message = 'Starting...'
 
         context = zmq.Context()
 
@@ -280,25 +285,41 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
                 starting = True
                 sleep(1)
                 threads_proc.terminate()
-                self.message = 'restarting...'
+                self.errors = []
+                self.message = 'Restarting...'
             else:
-                # logger.debug('poll signal')
+                if self.errors:
+                    logger.debug('poll signal while error')
+                if starting:
+                    # clear stale data
+                    try:
+                        while True:
+                            socket_check.recv(zmq.NOBLOCK)
+                    except zmq.ZMQError:
+                        pass
                 if socket_check.poll(20000 if starting else 3000):
                     if self.errors:
+                        logger.debug('successfully polled while error')
+                    try:
+                        while True:
+                            socket_check.recv(zmq.NOBLOCK)
+                    except zmq.ZMQError:
+                        pass
+                    if self.errors:
                         self.errors = []
+                        self.messsage = 'Running'
                 else:
-                    logger.warning('signal poll timeout')
-                    if not self.errors:
-                        self.errors.append('connection error')
-                        self.message = self.errors[-1]
-                if starting:
-                    self.message = 'running'
+                    logger.warning(f'signal poll timeout, starting:{starting}')
+                    self.errors = ['Connection error']
+                    self.message = self.errors[-1]
+                if starting and not self.errors:
+                    self.message = 'Running'
                 starting = False
 
         threads_proc.terminate()
         context.close()
         logger.debug('trigger module terminated')
-        self.message = 'stopped'  # unnecessary?
+        self.message = 'Stopped'  # unnecessary?
 
         self.module_alive = False
         # self.set_config(self.get_config())
