@@ -202,7 +202,7 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
             from detector.misc.globals import Port, Subscription
             socket_sub.connect('tcp://localhost:' + str(Port.proxy.value))
             socket_sub.setsockopt(zmq.SUBSCRIBE, Subscription.signal.value)
-
+            
             # read new packets in loop, abort if connection fails or shutdown event is set
             while not self.shutdown_event.is_set():
                 if self.restarting:
