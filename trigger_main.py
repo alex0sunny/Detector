@@ -45,7 +45,7 @@ if __name__ == '__main__':
     socket_backend.bind('tcp://*:' + str(Port.backend.value))
     socket_backend.setsockopt(zmq.SUBSCRIBE, b'AP')
 
-    Thread(target=web_server).start()
+    #Thread(target=web_server).start()
 
     while True:
 
