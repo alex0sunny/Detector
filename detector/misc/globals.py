@@ -12,7 +12,12 @@ import zmq
 
 import os
 
-logpath = os.path.dirname(os.path.dirname(os.path.dirname(__file__))) + '/trigger.log'
+if os.name == 'nt':
+    logpath = os.path.dirname(os.path.dirname(
+        os.path.dirname(__file__))) + '/trigger.log'
+else:
+    logpath = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
+        os.path.dirname(__file__))))) + '/logs/trigger.log'
 loglevel = logging.DEBUG
 
 logging.basicConfig(filename=logpath, filemode='w',
