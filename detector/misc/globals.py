@@ -12,7 +12,13 @@ import zmq
 
 import os
 
-logpath = os.path.dirname(os.path.dirname(os.path.dirname(__file__))) + '/trigger.log'
+if os.name == 'nt':
+    logpath = os.path.dirname(os.path.dirname(
+        os.path.dirname(__file__))) + '/trigger.log'
+else:
+    logpath = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
+        os.path.dirname(__file__))))) + '/logs/trigger.log'
+
 loglevel = logging.DEBUG
 
 logging.basicConfig(filename=logpath, filemode='w',
@@ -47,6 +53,7 @@ class Subscription(Enum):
     test    = bytes([6])
     parameters = bytes([7])
     confirm = bytes([8])
+    backend = bytes([9])
 
 
 class CustomThread(Thread):
@@ -83,6 +90,10 @@ class CustomThread(Thread):
             logger.info('raise ZMQError')
             self.raise_exception(zmq.ZMQError)
             sleep(.1)
+            logger.info('raise OSError')
+            self.raise_exception(OSError)
+            sleep(.1)
+
         self.join()
 
 
