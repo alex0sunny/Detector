@@ -9,9 +9,17 @@ logger = logging.getLogger('')
 
 context = zmq.Context()
 socket = context.socket(zmq.STREAM)
-socket.connect("tcp://127.0.0.1:5555")
+socket.connect("tcp://192.168.0.226:10001")
 while True:
     logger.info('try to open connection')
+    if not socket.poll(3000):
+        logger.warning('socket poll timeout')
+        socket.close()
+        context.destroy()
+        context = zmq.Context()
+        socket = context.socket(zmq.STREAM)
+        socket.connect("tcp://192.168.0.226:10001")
+        continue
     net_id = socket.recv()
     empty = socket.recv()
     logger.info('connection opened')

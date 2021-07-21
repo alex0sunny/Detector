@@ -122,14 +122,14 @@ def stream_to_bin(st):
     return bin_stats + data_multiplexed.tobytes()
 
 
-def stream_to_json(st, units='V'):
+def stream_to_dic(st, units='V'):
     stats = st[0].stats
     station = stats.station
     stamp_ns = stats.starttime._ns
     samples_dic = {}
     for tr in st:
-        data_decoded = base64.encodebytes(tr.data.tobytes()).decode('ASCII')
-        samples_dic[tr.stats.channel] = data_decoded
+        # data_decoded = base64.encodebytes(tr.data.tobytes()).decode('ASCII')
+        samples_dic[tr.stats.channel] = tr.data.tobytes()
     data_packet = {
         'streams': {
             station: {
@@ -138,7 +138,13 @@ def stream_to_json(st, units='V'):
             }
         }
     }
-    return json.dumps(OrderedDict(data_packet))
+    return OrderedDict(data_packet)
+
+
+def stream_to_json(st, units='V'):
+    dic = stream_to_dic(st, units)
+    return json.dumps(dic)
+
 
 
 def bin_to_stream(bin_data):

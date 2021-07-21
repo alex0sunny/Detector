@@ -5,6 +5,8 @@ from obspy import *
 from obspy.clients.seedlink.easyseedlink import *
 from matplotlib import pyplot
 
+from obspy.clients.seedlink.basic_client import Client
+
 
 pyplot.ion()
 figure = pyplot.figure()
@@ -22,7 +24,8 @@ def handle_data(trace):
 
 
 #client = create_client('rtserve.iris.washington.edu', on_data=handle_data)
-client = create_client('192.168.0.226', on_data=handle_data)
+#client = create_client('192.168.0.226', on_data=handle_data)
+client = create_client('193.232.109.121', on_data=handle_data)
 #client = create_client('81.26.81.45', on_data=handle_data)
 print(client.get_info('streams'))
 print()
@@ -30,7 +33,7 @@ print(client.get_info('ALL'))
 
 #client.select_stream('IU', 'ANMO', 'BH?')
 #client.select_stream('KS', 'SHAR', 'S2?')
-client.select_stream('RU', 'ND01', 'DN?')
+client.select_stream('RU', 'ND01', 'BH?')
 
 
 def f_receiver():

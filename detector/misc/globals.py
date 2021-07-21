@@ -29,6 +29,9 @@ logger = logging.getLogger('globals')
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
 
+ENCODING = 'cp1250'
+
+
 class Port(Enum):
     signal = 10003
     signal_route = 5559

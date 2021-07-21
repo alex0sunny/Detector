@@ -240,4 +240,4 @@ def web_server():
         '^C received, shutting down the web server'
         server.socket.close()
 
-#web_server()
+web_server()

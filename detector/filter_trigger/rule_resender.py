@@ -1,5 +1,6 @@
+import base64
+import json
 from _ctypes import sizeof
-from ctypes import memmove, addressof
 from io import BytesIO
 
 import zmq
@@ -7,8 +8,7 @@ from obspy import *
 
 from detector.misc.globals import Port, Subscription, logger
 from detector.misc.header_util import CustomHeader
-from detector.send_receive.njsp_server import NjspServer
-from detector.send_receive.tcp_server import TcpServer
+from detector.send_receive.njsp.njsp import NJSP_STREAMSERVER
 
 
 def resend(conn_str, rules, pem, pet):
@@ -23,7 +23,11 @@ def resend(conn_str, rules, pem, pet):
     socket_confirm = context.socket(zmq.PUB)
     socket_confirm.connect('tcp://localhost:' + str(Port.multi.value))
     
-    socket_server = NjspServer(conn_str, context)
+    str_parts = conn_str.split(':')[-2:]
+    host = str_parts[0][2:]
+    port = int(str_parts[-1])
+    logger.debug('create stream_server, host:%s, port %d' % (host, port))
+    stream_server = None
 
     socket_rule = context.socket(zmq.SUB)
     socket_rule.connect(conn_str_sub)
@@ -93,8 +97,14 @@ def resend(conn_str, rules, pem, pet):
         if raw_data[:1] == Subscription.parameters.value:
             logger.debug('parameters received in resender')
             #exit(1)
-            parameters_bytes = raw_data[1:]
-            socket_server.set_params(parameters_bytes)
+            init_packet = json.loads(raw_data[1:].decode())
+            if stream_server is None:
+                stream_server = NJSP_STREAMSERVER((host, port), init_packet)
+            stream_name = list(init_packet['parameters']['streams'].keys())[0]
+            if stream_name not in \
+                    stream_server.init_packet['parameters']['streams']:
+                stream_server.init_packet['parameters']['streams'][stream_name] = \
+                    init_packet['parameters']['streams'][stream_name]
             continue
         resent_data = raw_data[1:]
         custom_header = CustomHeader()
@@ -106,6 +116,13 @@ def resend(conn_str, rules, pem, pet):
         #logger.debug('dt:' + str(dt))
         # logger.debug('wait binary data')
         bdata = resent_data[header_size:]
+        json_data = json.loads(bdata.decode())
+        streams = json_data['streams']
+        stream_name = list(streams.keys())[0]
+        data_dic = streams[stream_name]['samples']
+        for ch in data_dic:
+            ch_data = data_dic[ch]
+            data_dic[ch] = base64.decodebytes(ch_data.encode())
         # logger.debug('binary data received')
         #logger.debug('dt:' + str(UTCDateTime(dt)) + ' bdata len:' + str(len(bdata)))
         if not pet_time or trigger:
@@ -117,15 +134,18 @@ def resend(conn_str, rules, pem, pet):
             #     logger.debug('clear buf, trigger:' + str(trigger))
             while buf:
                 logger.debug('send data to output from buf, dt:' + str(buf[0][0]))
-                socket_server.send(buf[0][1])
+                if stream_server:
+                    stream_server.broadcast_data(buf[0][1])
+                #stream_server.send(buf[0][1])
                 # logger.debug('buf item dt:' + str(buf[0][0]))
                 buf = buf[1:]
             logger.debug('send regular data, dt' + str(dt))
             #logger.debug('send data to output')
-            socket_server.send(bdata)
+            if stream_server:
+                stream_server.broadcast_data(json_data)
         else:
             #logger.debug('append to buf with dt:' + str(dt))
-            buf.append((dt, bdata))
+            buf.append((dt, json_data))
         if buf:
             #logger.debug('buf start:' + str(buf[0][0]))
             dt_begin = buf[0][0]

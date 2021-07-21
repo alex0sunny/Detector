@@ -5,7 +5,7 @@ from threading import Thread
 import zmq
 
 from backend.trigger_html_util import getTriggerParams, getSources, getActions, getRuleDic
-from backend.web_server import web_server
+#from backend.web_server import web_server
 from detector.action.action_process import action_process, sms_process
 from detector.action.relay_actions import turn
 from detector.action.send_email import send_email

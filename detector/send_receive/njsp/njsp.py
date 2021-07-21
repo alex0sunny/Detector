@@ -1,22 +1,20 @@
-import base64
-import collections
-import json
-import queue
-import select
-import socket
-import threading
+import json, base64, threading, socket, select, collections, queue, time
 
 
 class NJSP:
-    def __init__(self, name=None):
-        self.NJSP_PROTOCOL_VERIOSN = 1.0
-        self.NJSP_PACKET_BUFFER_SIZE = 100
+    def __init__(self, print_fxn=print, name=None):
+        if name != None:
+            self.name = '[NJSP][%s] ' % name
+        else:
+            self.name = '[NJSP] '
+        self._print = lambda msg: print_fxn(self.name + msg)
+        self.NJSP_PROTOCOL_VERIOSN = 1.1
+        self.NJSP_PACKET_BUFFER_SIZE = 50
         self.NJSP_MAX_CLIENTS = 3
         self.NJSP_PROTOCOL_IDENTIFIER = b'NJSP\0\0'
         self.NJSP_HEADER_LENGTH = 8
         self.ENCODING = "ASCII"
         self.DATA_FORMAT = "signed_int32_base64"
-        self.name = name
         self.error = False
         self.init_packet = None
 
@@ -32,6 +30,7 @@ class NJSP:
     def decode_json(self, payload):
         try:
             retval = json.loads(payload.decode(self.ENCODING))
+            # if 'status' in retval: print(json.dumps(retval, indent=4, sort_keys=True))
             if 'streams' in retval:
                 for stream_name, stream in retval['streams'].items():
                     if 'samples' in stream:
@@ -61,8 +60,9 @@ class NJSP:
 
     def load_init_packet(self, dict_obj):
         proto_err = True
-        data_fmt_err = True
+        data_fmt_err = False
         streams_err = True
+        sample_rate_err = False
         if 'parameters' in dict_obj:
             if 'protocol_version' in dict_obj['parameters']:
                 if dict_obj['parameters']['protocol_version'] == self.NJSP_PROTOCOL_VERIOSN:
@@ -71,35 +71,29 @@ class NJSP:
                 dict_obj['parameters'].update({'protocol_version': self.NJSP_PROTOCOL_VERIOSN})
                 proto_err = False
             if 'welcome_msg' not in dict_obj['parameters']: dict_obj['parameters'][
-                'welcome_msg'] = 'Welcome to NJSP v.1.0'
+                'welcome_msg'] = 'Welcome to NJSP v.%f' % self.NJSP_PROTOCOL_VERIOSN
             if 'streams' in dict_obj['parameters']:
                 if len(dict_obj['parameters']['streams']) > 0:
                     streams_err = False
                     for stream in dict_obj['parameters']['streams'].values():
                         if 'data_format' in stream:
-                            if stream['data_format'] == self.DATA_FORMAT:
-                                data_fmt_err = False
+                            if stream['data_format'] != self.DATA_FORMAT: data_fmt_err = True
                         else:
-                            data_fmt_err = False
                             stream.update({'data_format': self.DATA_FORMAT})
+                        if 'sample_rate' not in stream: sample_rate_err = True
             else:
                 data_fmt_err = False
         if proto_err: self._print("Warning! Protocol version mismatch!")
         if streams_err: self._print("Warning! No streams specified!")
         if data_fmt_err: self._print("Warning! Unsupported data format!")
+        if sample_rate_err: self._print("Warning! Sample rate not specified")
         self.init_packet = dict_obj
-        return proto_err or streams_err or data_fmt_err
-
-    def _print(self, msg):
-        if self.name != None:
-            print("[%s] %s" % (self.name, msg))
-        else:
-            print(msg)
+        return proto_err or streams_err or data_fmt_err or sample_rate_err
 
 
 class NJSP_STREAMSERVER(NJSP):
-    def __init__(self, listen_addr, init_packet, streamer_name=None):
-        super().__init__(name=streamer_name)
+    def __init__(self, listen_addr, init_packet, print_fxn=print, streamer_name=None):
+        super().__init__(print_fxn=print_fxn, name=streamer_name)
         self.load_init_packet(init_packet)
         self.init_data = self.NJSP_PROTOCOL_IDENTIFIER + self.encode_hdr_and_json(self.init_packet)
         self.ringbuffer = collections.deque([], self.NJSP_PACKET_BUFFER_SIZE)
@@ -121,7 +115,7 @@ class NJSP_STREAMSERVER(NJSP):
             socket.close()
         else:
             socket.setblocking(0)
-            queue = collections.deque(self.ringbuffer, self.NJSP_PACKET_BUFFER_SIZE + 3)
+            queue = collections.deque(self.ringbuffer, self.NJSP_PACKET_BUFFER_SIZE * 2)
             queue.appendleft(self.init_data)
             self.connected_clients.update({socket: queue})
             self._print("New client %s connected" % (str(raddr)))
@@ -132,6 +126,7 @@ class NJSP_STREAMSERVER(NJSP):
         socket.close()
 
     def __client_send_packet(self, socket):
+        if socket not in self.connected_clients: return  # client was deleted while thread was stuck in select
         bytes_sent = 0
         packet = self.connected_clients[socket].popleft()
         try:
@@ -157,7 +152,7 @@ class NJSP_STREAMSERVER(NJSP):
                         self._print("Client %s queue is full, breaking connection" % str(socket.getpeername()))
                 for socket in remove_list: self.__client_remove(socket)
         except:
-            self._print("NJSP Error broadcasting packet")
+            self._print("Error broadcasting packet")
 
     def __socketserver_thread(self, addr):
         listening_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -180,31 +175,35 @@ class NJSP_STREAMSERVER(NJSP):
             sockets_list_to_write = list()
             for client_socket, queue in self.connected_clients.items():
                 if len(queue) > 0: sockets_list_to_write.append(client_socket)
-            readable, writable, exceptional = select.select(sockets_list, sockets_list_to_write, sockets_list, 0.5)
-            for s in writable:
-                self.__client_send_packet(s)
-            for s in readable:
-                if s is listening_socket:
-                    self.__client_add(*s.accept())
-                else:
-                    self.__client_remove(s)
-            for s in exceptional:
-                if s is listening_socket:
-                    self._print("Socket server fatal error!")
-                    self.abort_event.set()
-                else:
-                    self.__client_remove(s)
+            try:
+                readable, writable, exceptional = select.select(sockets_list, sockets_list_to_write, sockets_list, 0.5)
+                for s in writable:
+                    self.__client_send_packet(s)
+                for s in readable:
+                    if s is listening_socket:
+                        self.__client_add(*s.accept())
+                    else:
+                        self.__client_remove(s)
+                for s in exceptional:
+                    if s is listening_socket:
+                        self._print("Socket server fatal error!")
+                        self.abort_event.set()
+                    else:
+                        self.__client_remove(s)
+            except:
+                self._print("Socket server fatal error!")
+                self.abort_event.set()
 
         self.alive = False
         for s in sockets_list: s.close()
         listening_socket.close()
-        self._print("NJSP Server on port %s thread exited" % str(addr))
+        self._print("Server on port %s thread exited" % str(addr))
 
 
 class NJSP_STREAMREADER(NJSP):
-    def __init__(self, connect_addr, reader_name=None):
-        super().__init__(name=reader_name)
-        self.queue = queue.Queue(self.NJSP_PACKET_BUFFER_SIZE + 2)
+    def __init__(self, connect_addr, print_fxn=print, reader_name=None):
+        super().__init__(print_fxn=print_fxn, name=reader_name)
+        self.queue = queue.Queue(self.NJSP_PACKET_BUFFER_SIZE * 2)
         self.abort_event = threading.Event()
         self.connected_event = threading.Event()
         self.disconnected_event = threading.Event()
@@ -307,10 +306,13 @@ class NJSP_STREAMREADER(NJSP):
 '''
 # Server example
 
+import time
+
 init_packet = {
     'parameters': {
         'streams': {
             'main': {
+                'sample_rate':1,
                 'channels': {
                     'ch1': {
                         'ch_active': True
