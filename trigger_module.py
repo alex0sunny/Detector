@@ -87,7 +87,7 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
         }
         config_params = {
             'config_file_name': 'trigger_module_cfg.json',
-            'default_config': {'trigger_dir': '/var/lib/cloud9/trigger'}
+            #'default_config': {'trigger_dir': '/var/lib/cloud9/trigger'}
         }
 
         web_ui_dir = os.path.join(os.path.dirname(__file__), "backend")
