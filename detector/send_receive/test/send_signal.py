@@ -89,15 +89,14 @@ for tr in st100:
 data = st[-1].data
 st[-1].data = np.append(data[2000:], data[:2000])
 sources_dic = getSources()
-print(sources_dic)
 stations = list(sources_dic.keys())
 kwargs_list = [{'target': send_signal,
                 'kwargs': {'st': st[:3],
-                           'conn_str': 'tcp://*:' + str(sources_dic[stations[0]]['port'])}}]#,
-               #{'target': send_signal,
-                #'kwargs': {'st': st100[:3], 'units': 'A',
-                           #'conn_str': 'tcp://*:' + str(sources_dic[stations[1]]['port'])}}]
+                           'conn_str': 'tcp://*:' + str(sources_dic[stations[0]]['port'])}},
+               {'target': send_signal,
+                'kwargs': {'st': st100[:3], 'units': 'A',
+                           'conn_str': 'tcp://*:' + str(sources_dic[stations[1]]['port'])}}]
 if __name__ == '__main__':
-    for kwargs in kwargs_list[:1]:
+    for kwargs in kwargs_list:
         Process(**kwargs).start()
 

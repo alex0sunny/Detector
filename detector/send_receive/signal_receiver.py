@@ -9,6 +9,7 @@ import os
 # from detector.misc.header_util import pack_ch_header
 from collections import OrderedDict
 from ctypes import cast, POINTER
+from time import sleep
 
 import numpy as np
 import zmq
@@ -25,7 +26,10 @@ STREAM_NAME = None
 
 
 def signal_receiver(conn_str, station_bin, triggers_params):
-    show_signal = os.name == 'nt'
+    station = station_bin.decode()
+    show_signal = False     # os.name == 'nt'
+    if station != 'ND02':
+        show_signal = False
 
     context = zmq.Context()
     #socket = NjspClient(conn_str, context)
@@ -43,11 +47,12 @@ def signal_receiver(conn_str, station_bin, triggers_params):
     socket_buf = context.socket(zmq.PUB)
     socket_buf.connect(conn_str_pub)
 
-    init_packet['parameters']['streams'][station_bin.decode()] = \
-            init_packet['parameters']['streams'][STREAM_NAME]
-    del init_packet['parameters']['streams'][STREAM_NAME]
-    params_dic = init_packet['parameters']['streams'][station_bin.decode()]
-    socket_buf.send(Subscription.parameters.value + json.dumps(init_packet).encode())
+    #show_signal = station == 'ND02'
+    if station != STREAM_NAME:
+        init_packet['parameters']['streams'][station] = \
+                init_packet['parameters']['streams'][STREAM_NAME]
+        del init_packet['parameters']['streams'][STREAM_NAME]
+    params_dic = init_packet['parameters']['streams'][station]
 
     socket_confirm = context.socket(zmq.SUB)
     socket_confirm.connect('tcp://localhost:' + str(Port.proxy.value))
@@ -71,27 +76,32 @@ def signal_receiver(conn_str, station_bin, triggers_params):
 
     chs_ref = []
 
-    logger.debug('init_packet:' + str(init_packet))
-
     #trigger_wrapper = TriggerWrapper(context, 1, TriggerType.sta_lta, 1000, True, 100, 300, 3, 1, 1, 4)
     while True:
         if not stream_reader.connected_event.is_set():
+            logger.warning('kill stream_reader')
             stream_reader.kill()
             stream_reader = NJSP_STREAMREADER((host, port))
-            stream_reader.connected_event.wait()
+            logger.warning('wait connection...')
+            if not stream_reader.connected_event.wait():
+                continue
+            logger.info('stream_reader connected')
             init_packet = stream_reader.init_packet.copy()
-            init_packet['parameters']['streams'][station_bin.decode()] = \
-                init_packet['parameters']['streams'][STREAM_NAME]
-            del init_packet['parameters']['streams'][STREAM_NAME]
+            if station != STREAM_NAME:
+                init_packet['parameters']['streams'][station] = \
+                    init_packet['parameters']['streams'][STREAM_NAME]
+                del init_packet['parameters']['streams'][STREAM_NAME]
             socket_buf.send(Subscription.parameters.value + json.dumps(init_packet).encode())
-            params_dic = init_packet['parameters']['streams'][station_bin.decode()]
-        logger.debug('wait data packet')
+            params_dic = init_packet['parameters']['streams'][station]
+            if confirmed:
+                socket_buf.send(Subscription.parameters.value + json.dumps(init_packet).encode())
+        #logger.debug('wait data packet')
         try:
             packet = stream_reader.queue.get(timeout=0.5)
         except:
             packet = None
-        if packet:
-            logger.debug('packet received')
+        # if packet:
+        #     logger.debug('packet received')
         if not packet or 'streams' not in packet:
             continue
         if not confirmed:
@@ -99,6 +109,7 @@ def signal_receiver(conn_str, station_bin, triggers_params):
             socket_confirm.recv()
             logger.debug('signal resent confirmed')
             confirmed = True
+            socket_buf.send(Subscription.parameters.value + json.dumps(init_packet).encode())
         starttime = UTCDateTime(packet['streams'][STREAM_NAME]['timestamp'])
             #logger.debug('received packet, dt:' + str(starttime))
         if skip_packet:
@@ -117,7 +128,7 @@ def signal_receiver(conn_str, station_bin, triggers_params):
         if not chs_ref:
             chs_ref = sorted(chs)
             #units = json_data['signal']['counts']
-            set_source_channels(station_bin.decode(), chs_ref)
+            set_source_channels(station, chs_ref)
         sample_rate = params_dic['sample_rate']
         if trigger_objs_dic is None:
             trigger_objs_dic = {}
@@ -154,10 +165,11 @@ def signal_receiver(conn_str, station_bin, triggers_params):
         for ch in data_dic:
             ch_data = data_dic[ch]
             data_dic[ch] = base64.encodebytes(ch_data).decode()
-        packet['streams'][station_bin.decode()] = packet['streams'][STREAM_NAME]
-        del packet['streams'][STREAM_NAME]
+        if station != STREAM_NAME:
+            packet['streams'][station] = packet['streams'][STREAM_NAME]
+            del packet['streams'][STREAM_NAME]
         socket_buf.send(Subscription.signal.value + custom_header +
-                        json.dumps(packet).encode())
+                            json.dumps(packet).encode())
 
         if not check_time:
             check_time = starttime

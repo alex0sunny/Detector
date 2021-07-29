@@ -24,8 +24,9 @@ def resend(conn_str, rules, pem, pet):
     socket_confirm.connect('tcp://localhost:' + str(Port.multi.value))
     
     str_parts = conn_str.split(':')[-2:]
-    host = str_parts[0][2:]
+    host = ''
     port = int(str_parts[-1])
+    print('port:', port)
     logger.debug('create stream_server, host:%s, port %d' % (host, port))
     stream_server = None
 
@@ -94,6 +95,9 @@ def resend(conn_str, rules, pem, pet):
             continue
         raw_data = socket_sub.recv()
         #print('raw_data recvd:' + str(raw_data))
+        subscription = raw_data[0]
+        if subscription != 1:
+            logger.debug('subscription:' + str(raw_data[0]))
         if raw_data[:1] == Subscription.parameters.value:
             logger.debug('parameters received in resender')
             #exit(1)
@@ -105,6 +109,9 @@ def resend(conn_str, rules, pem, pet):
                     stream_server.init_packet['parameters']['streams']:
                 stream_server.init_packet['parameters']['streams'][stream_name] = \
                     init_packet['parameters']['streams'][stream_name]
+                stream_server.load_init_packet(stream_server.init_packet)
+                stream_server.init_data = stream_server.NJSP_PROTOCOL_IDENTIFIER + \
+                                          stream_server.encode_hdr_and_json(stream_server.init_packet)
             continue
         resent_data = raw_data[1:]
         custom_header = CustomHeader()
@@ -135,14 +142,20 @@ def resend(conn_str, rules, pem, pet):
             while buf:
                 logger.debug('send data to output from buf, dt:' + str(buf[0][0]))
                 if stream_server:
+                    logger.debug('broadcast_data...')
                     stream_server.broadcast_data(buf[0][1])
+                else:
+                    logger.debug('stream_server:' + str(stream_server))
                 #stream_server.send(buf[0][1])
                 # logger.debug('buf item dt:' + str(buf[0][0]))
                 buf = buf[1:]
             logger.debug('send regular data, dt' + str(dt))
             #logger.debug('send data to output')
             if stream_server:
+                logger.debug('broadcast_data...')
                 stream_server.broadcast_data(json_data)
+            else:
+                logger.debug('stream_server:' + str(stream_server))
         else:
             #logger.debug('append to buf with dt:' + str(dt))
             buf.append((dt, json_data))

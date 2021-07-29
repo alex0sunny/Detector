@@ -291,6 +291,7 @@ class NJSP_STREAMREADER(NJSP):
             if self.abort_event.wait(1) == True:
                 self._print("Client %s thread exited" % str(remote_address))
                 self.alive = False
+                #self.__socket.close()
                 return
         self._print("Connection to %s established" % str(remote_address))
         self.disconnected_event.clear()

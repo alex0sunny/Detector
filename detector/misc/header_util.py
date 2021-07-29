@@ -128,8 +128,8 @@ def stream_to_dic(st, units='V'):
     stamp_ns = stats.starttime._ns
     samples_dic = {}
     for tr in st:
-        # data_decoded = base64.encodebytes(tr.data.tobytes()).decode('ASCII')
-        samples_dic[tr.stats.channel] = tr.data.tobytes()
+        data_decoded = base64.encodebytes(tr.data.tobytes()).decode('ASCII')
+        samples_dic[tr.stats.channel] = data_decoded
     data_packet = {
         'streams': {
             station: {

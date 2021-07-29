@@ -119,7 +119,7 @@ if __name__ == '__main__':
             kwargs = {'target': signal_receiver,
                       'kwargs': {'conn_str': 'tcp://' + conn_data['host'] + ':' + str(conn_data['port']),
                                  'station_bin': station.encode(),
-                                 'triggers_params': triggers_params[station]}}
+                                 'triggers_params': trigger_params.get(station, {})}}
             kwargs_list.append(kwargs)
 
         # for kwargs in kwargs_list:
