@@ -29,6 +29,9 @@ logger = logging.getLogger('globals')
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
 
+CONNECTION_TOUT = 5000
+
+
 ENCODING = 'cp1250'
 
 
