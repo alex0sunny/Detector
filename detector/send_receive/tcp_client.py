@@ -54,7 +54,6 @@ class TcpClient:
                 assert (self.identity == self.socket.recv())
                 data = self.socket.recv()
                 if not data:
-                    self.identity = self.socket = None
                     raise ConnectionException('connection was closed by the server')
                 return data
             except ConnectionException as ex:
