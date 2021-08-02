@@ -52,7 +52,11 @@ class TcpClient:
                 if not self.socket.poll(CONNECTION_TOUT):
                     raise ConnectionException('tout while receiving data')
                 assert (self.identity == self.socket.recv())
-                return self.socket.recv()
+                data = self.socket.recv()
+                if not data:
+                    self.identity = self.socket = None
+                    raise ConnectionException('connection was closed by the server')
+                return data
             except ConnectionException as ex:
                 logger.warning(ex)
                 if self.socket:
