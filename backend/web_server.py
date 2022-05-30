@@ -1,6 +1,6 @@
 import json
 import zmq
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from os.path import curdir, sep
 import os
 
@@ -228,7 +228,7 @@ def web_server():
     try:
         # Create a web server and define the handler to manage the
         # incoming request
-        server = ThreadingHTTPServer(('', PORT_NUMBER), myHandler)
+        server = HTTPServer(('', PORT_NUMBER), myHandler)
         print
         'Started httpserver on port ', PORT_NUMBER
 

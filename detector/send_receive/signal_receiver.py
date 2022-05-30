@@ -19,7 +19,7 @@ from backend.trigger_html_util import set_source_channels
 from detector.filter_trigger.StaLtaTrigger import logger, TriggerWrapper
 from detector.misc.globals import Port, Subscription
 from detector.misc.header_util import prep_ch, CustomHeader, ChName, ChHeader
-from detector.send_receive.njsp.njsp import NJSP_STREAMREADER
+from detector.send_receive.njsp.njsp import NJSP_MULTISTREAMREADER
 
 STREAM_IND = 0
 STREAM_NAME = None
@@ -28,17 +28,27 @@ STREAM_NAME = None
 def signal_receiver(conn_str, station_bin, triggers_params):
     station = station_bin.decode()
     show_signal = False     # os.name == 'nt'
-    if station != 'ND02':
-        show_signal = False
+    # if station != 'ND02':
+    #     show_signal = False
 
     context = zmq.Context()
     #socket = NjspClient(conn_str, context)
     str_parts = conn_str.split(':')[-2:]
     host = str_parts[0][2:]
     port = str_parts[-1]
-    stream_reader = NJSP_STREAMREADER((host, int(port)))
-    stream_reader.connected_event.wait()
-    init_packet = stream_reader.init_packet.copy()
+    stream_reader = NJSP_MULTISTREAMREADER()
+    stream_reader.add_client(host, port)
+    packet = client_name = None
+    while not packet or not client_name or 'parameters' not in packet[client_name]:
+        try:
+            packet = stream_reader.queue.get(timeout=30)
+            client_name = list(packet.keys())[0]
+        except Exception as ex:
+            logger.error('cannot receive init packet:', ex)
+            packet = None
+    #stream_reader.connected_event.wait()
+    #init_packet = stream_reader.init_packet.copy()
+    init_packet = packet[client_name]
     STREAM_NAME = list(init_packet['parameters']['streams'].keys())[0]
 
     socket_pub = context.socket(zmq.PUB)
@@ -78,15 +88,26 @@ def signal_receiver(conn_str, station_bin, triggers_params):
 
     #trigger_wrapper = TriggerWrapper(context, 1, TriggerType.sta_lta, 1000, True, 100, 300, 3, 1, 1, 4)
     while True:
-        if not stream_reader.connected_event.is_set():
+        if not stream_reader.alive: #stream_reader.connected_event.is_set():
             logger.warning('kill stream_reader')
             stream_reader.kill()
-            stream_reader = NJSP_STREAMREADER((host, port))
+            #stream_reader = NJSP_STREAMREADER((host, port))
+            stream_reader = NJSP_MULTISTREAMREADER()
+            stream_reader.add_client(host, port)
             logger.warning('wait connection...')
-            if not stream_reader.connected_event.wait():
+            # if not stream_reader.connected_event.wait():
+            #     continue
+            try:
+                packet = stream_reader.queue.get(timeout=30)
+            except Exception as ex:
+                logger.error('cannot receive init packet:', ex)
+                packet = None
+            if not packet:
                 continue
             logger.info('stream_reader connected')
-            init_packet = stream_reader.init_packet.copy()
+            #init_packet = stream_reader.init_packet.copy()
+            client_name = list(packet.keys())[0]
+            init_packet = packet[client_name]
             if station != STREAM_NAME:
                 init_packet['parameters']['streams'][station] = \
                     init_packet['parameters']['streams'][STREAM_NAME]
@@ -100,8 +121,9 @@ def signal_receiver(conn_str, station_bin, triggers_params):
             packet = stream_reader.queue.get(timeout=0.5)
         except:
             packet = None
-        # if packet:
-        #     logger.debug('packet received')
+        if packet:
+            #logger.debug('packet received')
+            packet = packet[client_name]
         if not packet or 'streams' not in packet:
             continue
         if not confirmed:
@@ -114,6 +136,9 @@ def signal_receiver(conn_str, station_bin, triggers_params):
             #logger.debug('received packet, dt:' + str(starttime))
         if skip_packet:
             times_dic[UTCDateTime()._ns] = starttime._ns
+            # print()
+            # for tr, ts in times_dic.items():
+            #     print(UTCDateTime(tr / (10 ** 9)), ' ', UTCDateTime(ts / (10 ** 9)))
             while len(times_dic.keys()) > 2 and \
                         list(times_dic.keys())[-2] - list(times_dic.keys())[0] > limit_ns:
                 del times_dic[list(times_dic.keys())[0]]
@@ -176,7 +201,7 @@ def signal_receiver(conn_str, station_bin, triggers_params):
         if show_signal and starttime > check_time + 1:
             check_time = starttime
             st.sort().merge()
-            st.trim(starttime=st[0].stats.endtime - 10)
+            st.trim(starttime=st[0].stats.endtime - 50)
             pyplot.clf()
             st.plot(fig=figure)
             pyplot.show()
