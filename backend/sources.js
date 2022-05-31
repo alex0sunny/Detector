@@ -65,8 +65,7 @@ function genNames()	{
 	var rows = document.getElementById("sourcesTable").rows;
 	for (var row of Array.from(rows).slice(1))	{
 		var cells = row.cells;
-		var inp = cells[stationCol].children[0];
-	    var station = inp.value.trim();
+	    var station = cells[stationCol].children[0].value.trim();
 		console.log('station:' + station);
 	    station = genName(station, stations);
 	    cells[stationCol].children[0].value = station;
