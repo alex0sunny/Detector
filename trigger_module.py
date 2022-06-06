@@ -231,5 +231,5 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
 
         os.killpg(os.getpgid(p.pid), SIGTERM)
         self.module_alive = False
-        self._print('Main thread exited')
+        #self._print('Main thread exited')
 
