@@ -191,7 +191,7 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
         #             stdout=PIPE, shell=True, preexec_fn=os.setsid)
 
         if self.config.error:
-            self.set_config(config)
+            self.config.set_config(config)
             self.config.error = None
         self.message = 'Starting...'
         check_time = UTCDateTime() + 60
