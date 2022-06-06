@@ -13,15 +13,12 @@ import zmq
 import os
 
 if os.name == 'nt':
-    logpath = os.path.dirname(os.path.dirname(
-        os.path.dirname(__file__))) + '/trigger.log'
+    logpath = os.path.dirname(os.path.dirname(os.path.dirname(__file__))) + '/trigger.log'
 else:
-    logpath = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
-        os.path.dirname(__file__))))) + '/logs/trigger.log'
+    logpath = '/media/sdcard/logs/trigger/trigger.log'
 loglevel = logging.DEBUG
 
-logging.basicConfig(filename=logpath, filemode='w',
-                    format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
+logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
                            '%(message)s',
                     level=loglevel)
 logger = logging.getLogger('globals')
