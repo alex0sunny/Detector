@@ -1,4 +1,4 @@
-import os, sys, json, zmq
+import os, sys, json, zmq, logging
 from com_main_module import COMMON_MAIN_MODULE_CLASS
 from time import sleep, time
 from signal import SIGTERM
@@ -11,8 +11,7 @@ from backend.trigger_html_util import save_pprint_trig, getTriggerParams, \
     save_triggers, update_sockets, post_triggers, \
     save_sources, save_rules, update_rules, apply_sockets_rule, save_actions, \
     update_triggers_sockets, getActions, getRuleDic, getSources
-from detector.misc.globals import Port, Subscription, action_names_dic0, \
-    logger, CustomThread
+from detector.misc.globals import Port, Subscription, action_names_dic0, CustomThread
 
 from threading import Thread
 from multiprocessing import Process
@@ -80,14 +79,19 @@ def get_rule_sockets(session_id):
 
 class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
     def __init__(self, trigger_fxn, standalone=False):
+
         logger_config = {
-            'log_file_name': 'trigger_module_log.txt',
-            'print_to_stdout': True,
-            'stdout_prefix': 'TRIGGER_MODULE'
+            'logger_name': 'trigger',
+            'file_name': 'trigger',
+            'files_dir': '/media/sdcard/logs',
+            'file_level': logging.DEBUG,
+            'console_level': logging.DEBUG,  # if standalone else logging.WARN,
+            'console_name': None if standalone else 'TRIGGER_MODULE'
         }
+
         config_params = {
             'config_file_name': 'trigger_module_cfg.json',
-            #'default_config': {'trigger_dir': '/var/lib/cloud9/trigger'}
+            # 'default_config': {'trigger_dir': '/var/lib/cloud9/trigger'}
         }
 
         web_ui_dir = os.path.join(os.path.dirname(__file__), "backend")
@@ -130,17 +134,13 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
                 response_dic['rules'] = rules
             if path == 'initRule':
                 params_list = getTriggerParams()
-                # logger.debug('params_list:' + str(params_list))
                 trigger_dic = {params['ind']: params['name'] for params in params_list}
                 response_dic = {'triggers': trigger_dic,
                                 'actions': action_names_dic0.copy()}
                 actions_dic = getActions()
-                # logger.debug('getActions:' + str(actions_dic))
                 sms_dic = actions_dic.get('sms', {})
                 sms_dic = {sms_id: sms_dic[sms_id]['name'] for sms_id in sms_dic}
-                # logger.debug('sms_dic:' + str(sms_dic) + ' json_dic:' + str(json_dic))
                 response_dic['actions'].update(sms_dic)
-                # logger.debug('actions_dic:' + str(json_dic['actions']))
             if path == 'apply':
                 response_dic = {'apply': 1}
             if path == 'applyRules':
@@ -172,7 +172,6 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
                 for action_id in ids:
                     action_id_s = '%02d' % action_id
                     bin_message = Subscription.test.value + action_id_s.encode()
-                    # logger.info('send bin_message:' + str(bin_message))
                     socket_test.send(bin_message)
 
             if response_dic:
@@ -202,7 +201,7 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
             from detector.misc.globals import Port, Subscription
             socket_sub.connect('tcp://localhost:' + str(Port.proxy.value))
             socket_sub.setsockopt(zmq.SUBSCRIBE, Subscription.signal.value)
-            
+
             # read new packets in loop, abort if connection fails or shutdown event is set
             while not self.shutdown_event.is_set():
                 if self.restarting:
@@ -231,5 +230,4 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
 
         os.killpg(os.getpgid(p.pid), SIGTERM)
         self.module_alive = False
-        #self._print('Main thread exited')
-
+        # self._print('Main thread exited')

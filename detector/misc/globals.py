@@ -18,9 +18,9 @@ else:
     logpath = '/media/sdcard/logs/trigger/trigger.log'
 loglevel = logging.DEBUG
 
-logging.basicConfig(format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
-                           '%(message)s',
-                    level=loglevel)
+logging.basicConfig(level=loglevel, filename=logpath,
+                    format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
+                           '%(message)s')
 logger = logging.getLogger('globals')
 
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
