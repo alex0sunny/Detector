@@ -127,7 +127,7 @@ function apply()	{
 	for (var row of Array.from(getRows()).slice(4))	{
 		for (var colName of [nameCol, addressCol, messageCol])	{
 			var inputElement = row.cells[colName].children[0];
-			inputElement.setAttribute("value", inputElement.value);
+			inputElement.setAttribute("value", inputElement.value.trim());
 		}
 	}
 	var xhr = new XMLHttpRequest();
