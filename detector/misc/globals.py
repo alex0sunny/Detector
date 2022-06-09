@@ -18,13 +18,12 @@ else:
     logpath = '/media/sdcard/logs/trigger/trigger.log'
 loglevel = logging.DEBUG
 
-logging.basicConfig(level=loglevel, filename=logpath,
-                    format='%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d '
-                           '%(message)s')
+format = '%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d %(message)s'
+logging.basicConfig(level=loglevel, filename=logpath, format=format)
 logger = logging.getLogger('globals')
 
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
-
+logging.getLogger("gpsd").setLevel(logging.WARNING)
 
 CONNECTION_TOUT = 5000
 
