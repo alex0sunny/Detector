@@ -238,13 +238,16 @@ def post_triggers(json_triggers, sockets_trigger, last_trigs=None):
     return {'triggers': triggers}
 
 
-def update_rules(json_rules, sockets_rule):
+def update_rules(json_rules, sockets_rule, last_triggerings=None):
     # logger.debug('json_rules:' + str(json_rules))
     rules = {int(k): v for k, v in json_rules.items()}
     # logger.debug('post_data_str:' + post_data_str + '\ntriggers dic:' + str(triggers) + '\ntriggers keys:' +
     #              str(triggers.keys()))
     # logger.debug('rules:' + str(rules) + ' n of rule sockets:' + str(len(sockets_rule)))
     for i in rules:
+        if last_triggerings and i in last_triggerings:
+            rules[i] = last_triggerings[i]
+            continue
         if i in sockets_rule:
             socket_rule = sockets_rule[i]
             try:

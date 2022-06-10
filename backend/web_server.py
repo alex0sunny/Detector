@@ -160,13 +160,20 @@ def web_server():
             if self.path == '/rule':
                 json_dic = json.loads(post_data_str)
                 session_id = json_dic['sessionId']
+                new_session = session_id not in sockets_data_dic
                 # logger.debug('session id:' + str(session_id))
                 json_triggers = json_dic['triggers']
                 sockets_trigger = get_sockets_data(session_id)
-                json_map = post_triggers(json_triggers, sockets_trigger)
+                if new_session:
+                    json_map = post_triggers(json_triggers, sockets_trigger, last_vals['triggers'])
+                else:
+                    json_map = post_triggers(json_triggers, sockets_trigger)
                 sockets_rule = get_rule_sockets(session_id)
                 rules_dic = json_dic['rules']
-                rules_dic = update_rules(rules_dic, sockets_rule)
+                if new_session:
+                    rules_dic = update_rules(rules_dic, sockets_rule, last_vals['rules'])
+                else:
+                    rules_dic = update_rules(rules_dic, sockets_rule)
                 json_map['rules'] = rules_dic
                 self.send_response(200)
                 self.send_header('Content-type', 'application/json')
