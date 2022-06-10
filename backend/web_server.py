@@ -1,4 +1,5 @@
 import json
+
 import zmq
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from os.path import curdir, sep
@@ -8,7 +9,7 @@ from obspy import UTCDateTime
 
 from backend.trigger_html_util import save_pprint_trig, getTriggerParams, save_triggers, update_sockets, post_triggers, \
     save_sources, save_rules, update_rules, apply_sockets_rule, save_actions, \
-    update_triggers_sockets, getActions, getRuleDic, getSources
+    update_triggers_sockets, getActions, getRuleDic, getSources, create_ref_socket, poll_ref_socket
 from detector.misc.globals import Port, Subscription, action_names_dic0, logger
 
 PORT_NUMBER = 8001
@@ -29,6 +30,8 @@ def web_server():
 
     sockets_data_dic = {}
 
+    last_vals = {'triggers': {}, 'rules': {}}
+    ref_socket = create_ref_socket(conn_str_sub, context)
 
     def create_sockets_data():
         sockets_trigger = {}
@@ -134,14 +137,22 @@ def web_server():
                 self.send_header('Content-type', 'application/json')
                 self.end_headers()
                 self.wfile.write(json.dumps(stations_dic).encode())
+                poll_ref_socket(ref_socket, last_vals)
             if self.path == '/trigger':
                 # logging.info('json_map:' + str(json_map))
                 json_dic = json.loads(post_data_str)
                 session_id = json_dic['sessionId']
                 # logger.debug('session id:' + str(session_id))
                 json_triggers = json_dic['triggers']
+                new_session = session_id not in sockets_data_dic
                 sockets_trigger = get_sockets_data(session_id)
-                json_map = post_triggers(json_triggers, sockets_trigger)
+                if new_session:
+                    #logger.debug(f'new session, last_vals:{last_vals}')
+                    json_map = post_triggers(json_triggers, sockets_trigger, last_vals['triggers'])
+                    #logger.debug(f'response triggerings:{json_map}')
+                else:
+                    json_map = post_triggers(json_triggers, sockets_trigger)
+                    #logger.debug(f'response triggerings:{json_map}')
                 self.send_response(200)
                 self.send_header('Content-type', 'application/json')
                 self.end_headers()

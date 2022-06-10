@@ -216,11 +216,14 @@ def apply_sockets_rule(conn_str, context, sockets_rule):
             update_sockets(rule_id, conn_str, context, sockets_rule, Subscription.rule.value)
 
 
-def post_triggers(json_triggers, sockets_trigger):
+def post_triggers(json_triggers, sockets_trigger, last_trigs=None):
     triggers = {int(k): v for k, v in json_triggers.items()}
     # logger.debug('post_data_str:' + post_data_str + '\ntriggers dic:' + str(triggers) + '\ntriggers keys:' +
     #              str(triggers.keys()))
     for i in triggers:
+        if last_trigs and i in last_trigs:
+            triggers[i] = last_trigs[i]
+            continue
         if i in sockets_trigger:
             socket_trigger = sockets_trigger[i]
             try:
@@ -253,6 +256,25 @@ def update_rules(json_rules, sockets_rule):
             logger.warning('i ' + str(i) + ' not in rules')
 
     return rules
+
+
+def create_ref_socket(conn_str, context):
+    socket_ref = context.socket(zmq.SUB)
+    socket_ref.connect(conn_str)
+    for subscription in [Subscription.trigger.value, Subscription.rule.value]:
+        socket_ref.setsockopt(zmq.SUBSCRIBE, subscription)
+    return socket_ref
+
+
+def poll_ref_socket(socket_ref, last_vals):
+    while socket_ref.poll(1):
+        bin_message = socket_ref.recv()
+        update_rule = bin_message[:1] == Subscription.rule.value
+        # logger.debug(f'bin_message:{bin_message} update_rule:{update_rule}')
+        ind = int(bin_message[1:3])
+        triggering = int(bin_message[3:4])
+        last_vals['rules' if update_rule else 'triggers'][ind] = triggering
+
 
 # print(str(getActions()))
 

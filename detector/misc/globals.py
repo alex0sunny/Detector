@@ -13,7 +13,7 @@ import zmq
 import os
 
 if os.name == 'nt':
-    logpath = os.path.dirname(os.path.dirname(os.path.dirname(__file__))) + '/trigger.log'
+    logpath = None  # os.path.dirname(os.path.dirname(os.path.dirname(__file__))) + '/trigger.log'
 else:
     logpath = '/media/sdcard/logs/trigger/trigger.log'
 loglevel = logging.DEBUG
