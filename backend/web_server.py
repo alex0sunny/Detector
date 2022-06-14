@@ -29,6 +29,7 @@ def web_server():
     conn_str_sub = 'tcp://localhost:' + str(Port.proxy.value)
 
     sockets_data_dic = {}
+    rule_sockets_dic = {}
 
     last_vals = {'triggers': {}, 'rules': {}}
     ref_socket = create_ref_socket(conn_str_sub, context)
@@ -39,15 +40,16 @@ def web_server():
             update_sockets(trigger_param['ind'], conn_str_sub, context, sockets_trigger)
         return sockets_trigger
 
-
     def get_sockets_data(session_id):
         if session_id not in sockets_data_dic:
+            if len(sockets_data_dic) > 10:
+                for sid in sockets_data_dic:
+                    break
+                sockets_dic = sockets_data_dic.pop(sid)
+                for sock in sockets_dic.values():
+                    sock.close()
             sockets_data_dic[session_id] = create_sockets_data()
         return sockets_data_dic[session_id]
-
-
-    rule_sockets_dic = {}
-
 
     def create_rule_sockets():
         rule_sockets = {}
@@ -56,12 +58,16 @@ def web_server():
             update_sockets(rule_id, conn_str_sub, context, rule_sockets, subscription=Subscription.rule.value)
         return rule_sockets
 
-
     def get_rule_sockets(session_id):
         if session_id not in rule_sockets_dic:
+            if len(rule_sockets_dic) > 10:
+                for sid in rule_sockets_dic:
+                    break
+                sockets_dic = rule_sockets_dic[sid]
+                for sock in sockets_dic.values():
+                    sock.close()
             rule_sockets_dic[session_id] = create_rule_sockets()
         return rule_sockets_dic[session_id]
-
 
     # This class will handles any incoming request from
     # the browser
@@ -196,6 +202,7 @@ def web_server():
                 json_dic['actions'].update(sms_dic)
                 logger.debug('actions_dic:' + str(json_dic['actions']))
                 self.wfile.write(json.dumps(json_dic).encode())
+                poll_ref_socket(ref_socket, last_vals)
             if self.path == '/apply':
                 self.send_response(200)
                 self.send_header('Content-type', 'application/json')
