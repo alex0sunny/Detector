@@ -10,7 +10,8 @@ sys.path.append(os.path.dirname(__file__))
 from backend.trigger_html_util import save_pprint_trig, getTriggerParams, \
     save_triggers, update_sockets, post_triggers, \
     save_sources, save_rules, update_rules, apply_sockets_rule, save_actions, \
-    update_triggers_sockets, getActions, getRuleDic, getSources
+    update_triggers_sockets, getActions, getRuleDic, getSources, \
+    create_ref_socket, poll_ref_socket
 from detector.misc.globals import Port, Subscription, action_names_dic0, CustomThread
 
 from threading import Thread
@@ -48,6 +49,9 @@ conn_str_sub = 'tcp://localhost:' + str(Port.proxy.value)
 
 sockets_data_dic = {}
 rule_sockets_dic = {}
+
+last_vals = {'triggers': {}, 'rules': {}}
+ref_socket = create_ref_socket(conn_str_sub, context)
 
 
 def create_sockets_data():
@@ -118,14 +122,21 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
 
             if path == 'initTrigger':
                 response_dic = getSources()
+                poll_ref_socket(ref_socket, last_vals)
             if path == 'trigger':
                 session_id = request_dic['sessionId']
                 triggers = request_dic['triggers']
+                new_session = session_id not in sockets_data_dic
                 sockets_trigger = get_sockets_data(session_id)
-                response_dic = post_triggers(triggers, sockets_trigger)
+                if new_session:
+                    response_dic = post_triggers(triggers, sockets_trigger,
+                                                    last_vals['triggers'])
+                else:
+                    response_dic = post_triggers(triggers, sockets_trigger)
             if path == 'rule':
                 session_id = request_dic['sessionId']
                 triggers = request_dic['triggers']
+                new_session = session_id not in sockets_data_dic
                 sockets_trigger = get_sockets_data(session_id)
                 response_dic = post_triggers(triggers, sockets_trigger)
                 sockets_rule = get_rule_sockets(session_id)

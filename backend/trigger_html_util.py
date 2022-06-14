@@ -218,8 +218,6 @@ def apply_sockets_rule(conn_str, context, sockets_rule):
 
 def post_triggers(json_triggers, sockets_trigger, last_trigs=None):
     triggers = {int(k): v for k, v in json_triggers.items()}
-    # logger.debug('post_data_str:' + post_data_str + '\ntriggers dic:' + str(triggers) + '\ntriggers keys:' +
-    #              str(triggers.keys()))
     for i in triggers:
         if last_trigs and i in last_trigs:
             triggers[i] = last_trigs[i]
@@ -229,12 +227,10 @@ def post_triggers(json_triggers, sockets_trigger, last_trigs=None):
             try:
                 mes = socket_trigger.recv(zmq.NOBLOCK)
                 triggers[i] = int(mes[3:4])
-                #logger.info('triggering detected, message:' + str(mes))
             except zmq.ZMQError:
                 pass
         else:
             logger.warning('i ' + str(i) + ' not in triggers')
-
     return {'triggers': triggers}
 
 
