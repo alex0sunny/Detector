@@ -27,16 +27,6 @@ from detector.misc.misc_util import to_action_rules
 from detector.send_receive.signal_receiver import signal_receiver
 from detector.send_receive.triggers_proxy import triggers_proxy
 
-
-def fps(kwargs_list):
-    ps = []
-    for kwargs in kwargs_list:
-        p = CustomThread(**kwargs)
-        p.start()
-        ps.append(p)
-    return ps
-
-
 context = zmq.Context()
 
 socket_backend = context.socket(zmq.PUB)
@@ -75,6 +65,7 @@ def get_sockets_data(session_id):
 
 def create_rule_sockets():
     rule_sockets = {}
+    trigger_dic = {params['ind']: params['name'] for params in getTriggerParams()}
     for rule_id in sorted(getRuleDic().keys()):
         update_sockets(rule_id, conn_str_sub, context, rule_sockets, subscription=Subscription.rule.value)
     return rule_sockets
@@ -112,6 +103,7 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
         web_ui_dir = os.path.join(os.path.dirname(__file__), "backend")
         # self._print('Initializing trigger module...')
         super().__init__(standalone, config_params, logger_config, web_ui_dir=web_ui_dir)
+        self.message = 'Stopped'
         config = self.get_config()
         # self._print('config:\n' + str(config) + '\n')
         self.restarting = False
@@ -141,7 +133,7 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
                 sockets_trigger = get_sockets_data(session_id)
                 if new_session:
                     response_dic = post_triggers(triggers, sockets_trigger,
-                                                    last_vals['triggers'])
+                                                 last_vals['triggers'])
                 else:
                     response_dic = post_triggers(triggers, sockets_trigger)
             if path == 'rule':
@@ -151,7 +143,7 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
                 sockets_trigger = get_sockets_data(session_id)
                 if new_session:
                     response_dic = post_triggers(triggers, sockets_trigger,
-                                                        last_vals['triggers'])
+                                                 last_vals['triggers'])
                 else:
                     response_dic = post_triggers(triggers, sockets_trigger)
                 sockets_rule = get_rule_sockets(session_id)
@@ -241,7 +233,11 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
                     self.restarting = False
                 if socket_sub.poll(3000):
                     self.errors = []
-                    self.message = 'Running'
+                    poll_ref_socket(ref_socket, last_vals)
+                    if any(last_vals['rules'].values()):
+                        self.message = 'TRIGGERED'
+                    else:
+                        self.message = 'Running'
                     # self._print('data received')
                     try:
                         # self._print('flush socket')
@@ -257,6 +253,9 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
                 else:
                     self.errors = ['No stations online']
                     self.message = self.errors[-1]
+            self.message = 'Stopped'
+            socket_sub.close()
+            context.destroy()
 
         os.killpg(os.getpgid(p.pid), SIGTERM)
         self.module_alive = False
