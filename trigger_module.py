@@ -138,10 +138,17 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
                 triggers = request_dic['triggers']
                 new_session = session_id not in sockets_data_dic
                 sockets_trigger = get_sockets_data(session_id)
-                response_dic = post_triggers(triggers, sockets_trigger)
+                if new_session:
+                    response_dic = post_triggers(triggers, sockets_trigger,
+                                                        last_vals['triggers'])
+                else:
+                    response_dic = post_triggers(triggers, sockets_trigger)
                 sockets_rule = get_rule_sockets(session_id)
                 rules = request_dic['rules']
-                rules = update_rules(rules, sockets_rule)
+                if new_session:
+                    rules = update_rules(rules, sockets_rule, last_vals['rules'])
+                else:
+                    rules = update_rules(rules, sockets_rule)
                 response_dic['rules'] = rules
             if path == 'initRule':
                 params_list = getTriggerParams()
@@ -152,6 +159,7 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
                 sms_dic = actions_dic.get('sms', {})
                 sms_dic = {sms_id: sms_dic[sms_id]['name'] for sms_id in sms_dic}
                 response_dic['actions'].update(sms_dic)
+                poll_ref_socket(ref_socket, last_vals)
             if path == 'apply':
                 response_dic = {'apply': 1}
             if path == 'applyRules':
