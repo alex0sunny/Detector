@@ -26,10 +26,11 @@ logger = logging.getLogger('generator')
 njsp = NJSP(logger=logger, log_level=logging.DEBUG)
 
 
-def send_signal(st, port, units='V'):
+def send_signal(st1, st2, port, units='V'):
     show_signal = False
 
-    signal_generator = SignalGenerator(st)
+    signal_generator1 = SignalGenerator(st1)
+    signal_generator2 = SignalGenerator(st2)
 
     #context = zmq.Context()
     if show_signal:
@@ -37,13 +38,19 @@ def send_signal(st, port, units='V'):
         figure = pyplot.figure()
     st_vis = Stream()
     check_time = time.time()
-    ch_dic = {tr.stats.channel: {'ch_active': True, 'counts_in_volt': tr.stats.k} for tr in st}
+    ch_dic  = {tr.stats.channel: {'ch_active': True, 'counts_in_volt': tr.stats.k} for tr in st1}
+    ch_dic2 = {tr.stats.channel: {'ch_active': True, 'counts_in_volt': tr.stats.k} for tr in st2}
     parameters_dic = {
         'parameters': {
             'streams': {
-                st[0].stats.station: {
-                    'sample_rate': int(st[0].stats.sampling_rate),
+                st1[0].stats.station: {
+                    'sample_rate': int(st1[0].stats.sampling_rate),
                     'channels': ch_dic,
+                    'data_format': 'bson'
+                },
+                st2[0].stats.station: {
+                    'sample_rate': int(st2[0].stats.sampling_rate),
+                    'channels': ch_dic2,
                     'data_format': 'bson'
                 }
             }
@@ -53,8 +60,9 @@ def send_signal(st, port, units='V'):
     streamserver = njsp.add_streamer('', port, streamer_params)
 
     while True:
-        st = signal_generator.get_stream()
-        st_add = st.copy()
+        st1 = signal_generator1.get_stream()
+        st2 = signal_generator2.get_stream()
+        st_add = st1.copy()
         for tr_vis in st_add:
             tr_vis.data = np.require(tr_vis.data / tr_vis.stats.k, 'float32')
         st_vis += st_add
@@ -71,14 +79,15 @@ def send_signal(st, port, units='V'):
                 pyplot.pause(.01)
             else:
                 time.sleep(.1)  # delete this when return pyplot!
-        sts = chunk_stream(st)
-        bson_datas = [stream_to_dic(st, units) for st in sts]
-        for bson_data in bson_datas:
-            njsp.broadcast_data(streamserver, bson_data)
-            # data_len = len(bson_data)
-            # size_bytes = ('%08x' % data_len).encode()
-            # sender.send(size_bytes + bson_data)
-            time.sleep(.01)
+        for st12 in [st1, st2]:
+            sts = chunk_stream(st12)
+            bson_datas = [stream_to_dic(st, units) for st in sts]
+            for bson_data in bson_datas:
+                njsp.broadcast_data(streamserver, bson_data)
+                # data_len = len(bson_data)
+                # size_bytes = ('%08x' % data_len).encode()
+                # sender.send(size_bytes + bson_data)
+                time.sleep(.01)
         #print('broadcasted')
         time.sleep(.1)
 
@@ -96,4 +105,4 @@ data = st[-1].data
 st[-1].data = np.append(data[2000:], data[:2000])
 
 print(st)
-send_signal(st, 10001)
+send_signal(st, st100, 10001)
