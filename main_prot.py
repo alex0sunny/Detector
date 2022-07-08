@@ -27,8 +27,6 @@ def worker(njsp):
 
     while True:
 
-        init = True
-
         glob.restart = False
         njsp_queue = Queue(100)
         packets_q = []
