@@ -1,31 +1,35 @@
-import json
+import logging
 import time
-from collections import OrderedDict
-from multiprocessing import Process
 
 import numpy as np
 
 from obspy import *
 from matplotlib import pyplot
 
-#from detector.misc.globals import ports_map
-from backend.trigger_html_util import getSources
-from detector.misc.header_util import chunk_stream, stream_to_json
-from detector.send_receive.njsp_server import NjspServer
+from detector.misc.header_util import chunk_stream, stream_to_dic
+from detector.send_receive.njsp.njsp import NJSP
 from detector.test.signal_generator import SignalGenerator
-from detector.send_receive.tcp_server import TcpServer
-import zmq
 import os
 import detector.misc as misc
 import inspect
 
 
-def send_signal(st, conn_str, units='V'):
+logpath = None
+loglevel = logging.DEBUG
+
+format = '%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d %(message)s'
+logging.basicConfig(level=loglevel, filename=logpath, format=format)
+logger = logging.getLogger('generator')
+
+njsp = NJSP(logger=logger, log_level=logging.DEBUG)
+
+
+def send_signal(st, port, units='V'):
     show_signal = False
 
     signal_generator = SignalGenerator(st)
 
-    context = zmq.Context()
+    #context = zmq.Context()
     if show_signal:
         pyplot.ion()
         figure = pyplot.figure()
@@ -37,15 +41,14 @@ def send_signal(st, conn_str, units='V'):
             'streams': {
                 st[0].stats.station: {
                     'sample_rate': int(st[0].stats.sampling_rate),
-                    'channels': ch_dic
+                    'channels': ch_dic,
+                    'data_format': 'bson'
                 }
             }
         }
     }
-    json_str = json.dumps(OrderedDict(parameters_dic))
-    size_bytes = ('%08x' % len(json_str)).encode()
-    sender = NjspServer(conn_str, context)
-    sender.set_params(size_bytes + json_str.encode())
+    streamer_params = {'init_packet': parameters_dic, 'ringbuffer_size': 10}
+    streamserver = njsp.add_streamer('', port, streamer_params)
 
     while True:
         st = signal_generator.get_stream()
@@ -67,16 +70,15 @@ def send_signal(st, conn_str, units='V'):
             else:
                 time.sleep(.1)  # delete this when return pyplot!
         sts = chunk_stream(st)
-        json_datas = [stream_to_json(st, units).encode('utf8') for st in sts]
-        for json_data in json_datas:
-            data_len = len(json_data)
-            size_bytes = ('%08x' % data_len).encode()
-            # json_dic = json.loads(json_data)
-            # time_sec = list(json_dic['streams'].items())[0][1]['timestamp']
-            # print('time:' + str(UTCDateTime(time_sec)))
-            sender.send(size_bytes + json_data)
+        bson_datas = [stream_to_dic(st, units) for st in sts]
+        for bson_data in bson_datas:
+            njsp.broadcast_data(streamserver, bson_data)
+            # data_len = len(bson_data)
+            # size_bytes = ('%08x' % data_len).encode()
+            # sender.send(size_bytes + bson_data)
             time.sleep(.01)
-        time.sleep(1)
+        #print('broadcasted')
+        time.sleep(.1)
 
 
 base_path = os.path.split(inspect.getfile(misc))[0] + '/'
@@ -86,17 +88,10 @@ for tr in st:
 st100 = read(base_path + 'st100.mseed')
 for tr in st100:
     tr.stats.k = 10000
+    tr.stats.network = 'RU'
+    tr.stats.location = '00'
 data = st[-1].data
 st[-1].data = np.append(data[2000:], data[:2000])
-sources_dic = getSources()
-stations = list(sources_dic.keys())
-kwargs_list = [{'target': send_signal,
-                'kwargs': {'st': st[:3],
-                           'conn_str': 'tcp://*:' + str(sources_dic[stations[0]]['port'])}},
-               {'target': send_signal,
-                'kwargs': {'st': st100[:3], 'units': 'A',
-                           'conn_str': 'tcp://*:' + str(sources_dic[stations[1]]['port'])}}]
-if __name__ == '__main__':
-    for kwargs in kwargs_list:
-        Process(**kwargs).start()
 
+print(st100)
+send_signal(st100, 10002)
