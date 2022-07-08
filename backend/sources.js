@@ -11,12 +11,13 @@ var checkCol = headersObj["del"];
 var stationCol = headersObj["station"];
 var hostCol = headersObj["host"];
 var portCol = headersObj["port"];
+var outPortCol = headersObj["out port"];
 
 function apply_save() {
-	genNames();
+	genNamesPorts();
 	var rows = document.getElementById("sourcesTable").rows;
 	for (var row of Array.from(rows).slice(1))	{
-		for (var col of [stationCol, hostCol, portCol])	{
+		for (var col of [stationCol, hostCol, portCol, outPortCol])	{
 			var valNode = row.cells[col].children[0];
 			valNode.setAttribute("value", valNode.value);
 		}
@@ -41,6 +42,7 @@ function addSource() {
     var row = rows[len - 1].cloneNode(true);
     row.cells[stationCol].children[0].setAttribute("value", "");
     table.children[0].appendChild(row);
+	genNamesPorts();
 }
 
 function genName(name, names)	{
@@ -60,8 +62,21 @@ function genName(name, names)	{
 	return name;
 }
 
-function genNames()	{
+function genPort(port, ports)	{
+	if (!ports.has(port))
+		return port;
+	console.log('has port:' + port);
+	for (var port = 10001; port < 10100; port++) {
+		if (ports.has(port) == false)	{
+			console.log('gen port:' + port);
+			return port;
+		}
+	}
+}
+
+function genNamesPorts()	{
 	var stations = new Set();
+	var ports = new Set();
 	var rows = document.getElementById("sourcesTable").rows;
 	for (var row of Array.from(rows).slice(1))	{
 		var cells = row.cells;
@@ -70,6 +85,13 @@ function genNames()	{
 	    station = genName(station, stations);
 	    cells[stationCol].children[0].value = station;
 	    stations.add(station);
+		for (var col of [portCol, outPortCol])	{
+			port = parseInt(cells[col].children[0].value);
+			console.log('port:' + port);
+			port = genPort(port, ports);
+			cells[col].children[0].value = genPort(port, ports);
+			ports.add(port);
+		}
     }
 }
 

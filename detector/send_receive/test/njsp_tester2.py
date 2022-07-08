@@ -10,8 +10,8 @@ from detector.send_receive.njsp.njsp import NJSP
 show_signal = True
 
 host = 'localhost'
-port = 10001
-station = 'ND02'
+port = 10010
+station = 'NDYY'
 sample_rate = init_packet = check_time = None
 
 logpath = None
@@ -20,11 +20,14 @@ loglevel = logging.DEBUG
 format = '%(levelname)s %(asctime)s %(funcName)s %(filename)s:%(lineno)d %(message)s'
 logging.basicConfig(level=loglevel, filename=logpath, format=format)
 logger = logging.getLogger('router')
+logging.getLogger("matplotlib").setLevel(logging.WARNING)
+logging.getLogger("gpsd").setLevel(logging.WARNING)
+
 
 njsp = NJSP(logger=logger, log_level=logging.DEBUG)
 njsp_params = {
     'reconnect': True,
-    'reconnect_period': 60,
+    'reconnect_period': 10,
     'bson': True,
     'handshake': {
         'subscriptions': ['status', 'log', 'streams', 'alarms'],

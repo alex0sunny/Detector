@@ -26,9 +26,21 @@ logging.getLogger("matplotlib").setLevel(logging.WARNING)
 logging.getLogger("gpsd").setLevel(logging.WARNING)
 
 CONNECTION_TOUT = 5000
-
-
+PBUF_SIZE = 100
 ENCODING = 'cp1250'
+
+pem_time = 0
+restart = False
+
+
+class ActionType(Enum):
+    relay_A = 1
+    relay_B = 2
+    send_SIGNAL = 3
+    send_SMS = 4
+
+
+TEST_TRIGGERINGS = {}
 
 
 class Port(Enum):

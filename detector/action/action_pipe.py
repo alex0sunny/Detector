@@ -1,33 +1,31 @@
 import json
-from enum import Enum
 
-from detector.filter_trigger.StaLtaTrigger import logger
+from detector.misc.globals import logger, ActionType
 
-
-class ActionType(Enum):
-    relay_A = 1
-    relay_B = 2
-    send_SIGNAL = 3
-    send_SMS = 4
+TRIGGER_PATH = '/var/lib/cloud9/ndas_rt/fifos/trigger'
 
 
-def execute_action(action_type, action_message, action_address=None):
+def execute_action(action_id, action_on, inverse=False, action_message=None, action_address=None):
+    action_id = min(action_id, ActionType.send_SMS.value)
+    action_type = ActionType(action_id)
+    inner_on = not action_on if inverse else action_on
     action_dic = {'type': str(action_type.name)}
     if action_type in [ActionType.relay_A, ActionType.relay_B]:
-        action = 'set' if action_message else 'clear'
-        logger.debug('action:' + str(action_type) + ' ' + action)
-        action_dic['action'] = action
+        action_dic['action'] = 'set' if inner_on else 'clear'
     if action_type == ActionType.send_SMS:
-        action_dic['phone_number'] = action_address
-        action_dic['text'] = action_message
+        if inner_on:
+            action_dic['phone_number'] = action_address
+            action_dic['text'] = action_message
+        else:
+            return
     actions_str = json.dumps({'actions': [action_dic]})
+    logger.debug(f'actions_str:{actions_str}')
     try:
-        with open('/var/lib/cloud9/ndas_rt/fifos/trigger', 'w') as p:
+        with open(TRIGGER_PATH, 'w') as p:
             p.write(actions_str + '\n')
         logger.info("Trigger fired!")
     except Exception as ex:
         logger.error("Error writing data to trigger pipe:" + str(ex))
-    return actions_str
     # json_dic = {"actions": [{"type": "relay_A", "action": "set"},
     #                         {"type": "relay_B", "action": "clear"},
     #                         {"type": "send_SMS", "phone_number": "XXX", "text": "YYY"}]}

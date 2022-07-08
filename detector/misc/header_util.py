@@ -92,7 +92,7 @@ def unpack_header(bin_data):
         exit(1)
     stamp_ns = int.from_bytes(bin_data[8:16], byteorder='big')
     chans_mask = int.from_bytes(bin_data[16:24], byteorder='big')
-    stamp = UTCDateTime(stamp_ns / 10**9)
+    stamp = UTCDateTime(stamp_ns / 10 ** 9)
     n_of_chans = bin(chans_mask).count('1')
     return station, sampling_rate, stamp, n_of_chans
 
@@ -102,7 +102,7 @@ def chunk_stream(st):
     npts = stats.npts
     n_of_chans = len(st)
     k = max(1, npts * n_of_chans * 4 // 1000)
-    sts = [Stream(trs) for trs in zip(*[tr / k for tr in st]) if trs[0]]    # bug walkaround?
+    sts = [Stream(trs) for trs in zip(*[tr / k for tr in st]) if trs[0]]  # bug walkaround?
     for st in sts:
         if not st:
             print('error:' + str(st))
@@ -128,8 +128,8 @@ def stream_to_dic(st, units='V'):
     stamp_ns = stats.starttime._ns
     samples_dic = {}
     for tr in st:
-        data_decoded = base64.encodebytes(tr.data.tobytes()).decode('ASCII')
-        samples_dic[tr.stats.channel] = data_decoded
+        #data_decoded = base64.encodebytes(tr.data.tobytes()).decode('ASCII')
+        samples_dic[tr.stats.channel] = tr.data.tobytes()
     data_packet = {
         'streams': {
             station: {
@@ -146,7 +146,6 @@ def stream_to_json(st, units='V'):
     return json.dumps(dic)
 
 
-
 def bin_to_stream(bin_data):
     station, sampling_rate, stamp, n_of_chans = unpack_header(bin_data[:24])
     data_multiplexed = np.frombuffer(bin_data[24:], dtype='int32')
@@ -157,11 +156,10 @@ def bin_to_stream(bin_data):
         tr = Trace(data=data2d[i])
         tr.stats.sampling_rate = sampling_rate
         tr.stats.starttime = stamp
-        tr.stats.channel = 'ch' + str(i+1)
+        tr.stats.channel = 'ch' + str(i + 1)
         tr.stats.station = station
         st += tr
     return st
-
 
 # print(stream_to_json(read()))
 
@@ -181,4 +179,3 @@ def bin_to_stream(bin_data):
 # st = bin_to_stream(bdata)
 # print('st:' + str(st))
 # st.plot()
-

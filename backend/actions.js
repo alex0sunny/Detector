@@ -158,7 +158,9 @@ function test()	{
 	var url = "testActions";
 	xhr.open("POST", url, true);
 	xhr.setRequestHeader("Content-Type", "application/html");
-	var sendObj = {ids: ids};
+	var sendObj = {};
+	for (var action_id of ids)
+		sendObj[action_id] = 1;
 //	if (ids.includes(1))	{
 //		var relay1Cell = getRows()[1].cells[additionalCol];
 //		var relayNode = relay1Cell.children[1];

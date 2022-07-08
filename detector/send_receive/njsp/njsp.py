@@ -1,581 +1,468 @@
-import json, base64, bson, threading, socket, select, collections, queue, time, logging
+import json, base64, bson, threading, collections, queue, logging, asyncio, signal, socket, platform
+
+if platform.system() == 'Windows': asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 
 class NJSP_LOGGER_ADAPTER(logging.LoggerAdapter):
-    def __init__(self, logger, prefix):
-        self.set_prefix(prefix)
-        super().__init__(logger, False)
-        
-    def set_prefix(self, prefix):
-        if prefix != None: self.prefix = '[%s] '%prefix
-        else: self.prefix = ''
-        
     def process(self, msg, kwargs):
-        return (self.prefix + msg), kwargs
+        return '[%s] %s' % (self.extra['prefix'], msg), kwargs
 
-class NJSP:
-    def __init__(self, logger = None, name = None):
-        if name != None: 
-            if logger == None: self.logger = NJSP_LOGGER_ADAPTER(logging.getLogger('NJSP'), name)
-            else: self.logger = NJSP_LOGGER_ADAPTER(logger, 'NJSP:%s'%name)
-        else: 
-            if logger == None: self.logger = logging.getLogger('NJSP')
-            else: self.logger = NJSP_LOGGER_ADAPTER(logger, 'NJSP')
-        logging.basicConfig(level=logging.DEBUG)
-        self.NJSP_PROTOCOL_VERIOSN = 2.0
-        self.NJSP_PACKET_BUFFER_SIZE = 100
-        self.NJSP_MAX_CLIENTS = 5
-        self.NJSP_PROTOCOL_ID = b'NBJSP\0'
-        self.NJSP_HEADER_LENGTH = 8
-        self.ENCODING = "ASCII"
-        self.DATA_FORMAT = "signed_int32"
-        self.error = False
-        self.init_packet = None
-        
-    def decode_header(self, hdr):
+
+class NJSP_HANDLE_BASE:
+    def __init__(self, njsp, tp, ip, port, prefix):
+        self.njsp, self.tp, self.ip, self.port, self.prefix = njsp, tp, ip, int(port), prefix
+        if prefix != None:
+            self.name = '%s:%s:%s:%d' % (tp, prefix, ip, int(port))
+        else:
+            self.name = '%s:%s:%d' % (tp, ip, int(port))
+        self.logger = NJSP_LOGGER_ADAPTER(njsp.logger, {'prefix': self.name})
+        self.read_packet = self.read_packet_json
+        self.encode_hdr_and_payload = self.encode_hdr_and_payload_json
+        self.split_to_datatypes_and_encode = self.split_to_datatypes_and_encode_to_json
+        self.PROTOCOL_ID = self.njsp.ID_JSON
+        self.bson = False
+
+    def _to_bson_mode(self):
+        self.read_packet = self.read_packet_bson
+        self.encode_hdr_and_payload = self.encode_hdr_and_payload_bson
+        self.split_to_datatypes_and_encode = self.split_to_datatypes_and_encode_to_bson
+        self.PROTOCOL_ID = self.njsp.ID_BSON
+        self.bson = True
+        self.logger.debug("Using BSON mode")
+
+    async def init_async(self):
         try:
-            retval = int(hdr.decode(self.ENCODING), 16)
-        except:
-            retval = None
-            self.logger.error("Error decoding packet header %s" %str(hdr))
-            self.error = True
+            self.closed = asyncio.Event()
+            async with self.njsp.aio_lock:
+                self.njsp.handles.update({self.name: self})
+            self.future = asyncio.create_task(self.task())
+            res = 'OK'
+        except Exception as e:
+            self.logger.error(repr(e))
+            res = 'error'
+        finally:
+            return res
+
+    async def read_packet_json(self, reader):
+        hdr = await reader.readexactly(8)
+        length = int(hdr.decode('ASCII'), 16)
+        payload = await reader.readexactly(length)
+        retval = json.loads(payload.decode('ASCII'))
+        for stream in retval.get('streams', dict()).values():
+            for ch_name, ch_signal in stream.get('samples', dict()).items():
+                data = base64.decodebytes(ch_signal.encode('ASCII'))
+                stream['samples'].update({ch_name: data})
         return retval
-        
-    def decode_json(self, payload):
-        try: 
-            retval = json.loads(payload.decode(self.ENCODING))
-            #if 'status' in retval: print(json.dumps(retval, indent=4, sort_keys=True))
-            if 'streams' in retval:
-                for stream_name, stream in retval['streams'].items():
-                    if 'samples' in stream:
-                        for ch_name, ch_signal in stream['samples'].items():
-                            stream['samples'].update({ch_name:base64.decodebytes(ch_signal.encode(self.ENCODING))})
-        except:
-            retval = None
-            self.logger.error("Error decoding json")
-            self.error = True
-        return retval
-        
-    def encode_hdr_and_json(self, dict_obj):
-        try:
-            if 'streams' in dict_obj:
-                for stream_name, stream in dict_obj['streams'].items():
-                    if 'samples' in stream:
-                        for ch_name, ch_signal in stream['samples'].items():
-                            encoded_signal = base64.encodebytes(ch_signal).decode(self.ENCODING)
-                            stream['samples'].update({ch_name:encoded_signal})
-            retval = json.dumps(dict_obj).encode(self.ENCODING)
-            retval = format(len(retval), '08x').encode(self.ENCODING) + retval
-        except:
-            retval = b''
-            self.logger.error("Error encoding packet")
-            self.error = True
-        return retval
-        
-        
-    def split_to_datatypes_and_encode(self, dict_obj):
+
+    async def read_packet_bson(self, reader):
+        hdr = await reader.readexactly(4)
+        length = int.from_bytes(hdr, byteorder='big', signed=False)
+        payload = await reader.readexactly(length)
+        return bson.loads(payload)
+
+    def encode_hdr_and_payload_json(self, dict_obj):
+        for stream in dict_obj.get('streams', dict()).values():
+            for ch_name, ch_signal in stream.get('samples', dict()).items():
+                encoded_signal = base64.encodebytes(ch_signal).decode('ASCII')
+                stream['samples'].update({ch_name: encoded_signal})
+        payload = json.dumps(dict_obj).encode('ASCII')
+        hdr = format(len(payload), '08x').encode('ASCII')
+        return hdr + payload
+
+    def encode_hdr_and_payload_bson(self, dict_obj):
+        payload = bson.dumps(dict_obj)
+        hdr = int.to_bytes(len(payload), length=4, byteorder='big')
+        return hdr + payload
+
+    def split_to_datatypes_and_encode_to_json(self, dict_obj):
         out_packet = dict()
         for data_type, payload in dict_obj.items():
-            out_packet.update({data_type:self.encode_hdr_and_json({data_type:payload})})
+            out_packet.update({
+                data_type: self.encode_hdr_and_payload_json({data_type: payload})
+            })
         return out_packet
-        
-    def check_init_packet(self, dict_obj):
-        proto_err = True
-        data_fmt_err = False
-        streams_err = True
-        sample_rate_err = False
-        if 'parameters' in dict_obj:
-            if 'protocol_version' in dict_obj['parameters']:
-                if dict_obj['parameters']['protocol_version'] == self.NJSP_PROTOCOL_VERIOSN: 
-                    proto_err = False
-            else: 
-                dict_obj['parameters'].update({'protocol_version':self.NJSP_PROTOCOL_VERIOSN})
-                proto_err = False
-            if 'welcome_msg' not in dict_obj['parameters']: 
-                dict_obj['parameters']['welcome_msg'] = 'Hello! This is NJSP v%.2f'%self.NJSP_PROTOCOL_VERIOSN
-            if 'streams'  in dict_obj['parameters']:
-                if len(dict_obj['parameters']['streams']) > 0: 
-                    streams_err = False
-                    for stream in dict_obj['parameters']['streams'].values():
-                        if 'data_format' in stream:
-                            if stream['data_format'] != self.DATA_FORMAT: data_fmt_err = True
-                        else:
-                            stream.update({'data_format':self.DATA_FORMAT})
-                        if 'sample_rate' not in stream: sample_rate_err = True
-            else: data_fmt_err = False
-        if proto_err: self.logger.error("Error! Protocol version mismatch!")
-        if streams_err: self.logger.error("Error! No streams specified!")
-        if data_fmt_err: self.logger.error("Error! Unsupported data format!")
-        if sample_rate_err: self.logger.error("Error! Sample rate not specified")
-        return proto_err or streams_err or data_fmt_err or sample_rate_err
-        
-    def create_handshake_packet(self, user_params):
-        if user_params == None: user_params = dict()
-        user_params.update({'protocol_version': self.NJSP_PROTOCOL_VERIOSN})
-        if 'subscriptions' not in user_params: user_params.update({'subscriptions': ['status','log','streams','alarms']})
-        if 'flush_buffer' not in user_params: user_params.update({'flush_buffer': True})
-        if 'client_name' not in user_params: user_params.update({'client_name': socket.gethostname()})
-        return {'handshake': user_params}
 
-class NBJSP(NJSP):
-    def decode_json(self, payload):
-        try: 
-            retval = bson.loads(payload)
-        except:
-            retval = None
-            self.logger.error("Error decoding json")
-            self.error = True
-        return retval
-        
-    def encode_hdr_and_json(self, dict_obj):
+    def split_to_datatypes_and_encode_to_bson(self, dict_obj):
+        out_packet = dict()
+        for data_type, payload in dict_obj.items():
+            out_packet.update({
+                data_type: self.encode_hdr_and_payload_bson({data_type: payload})
+            })
+        return out_packet
+
+    async def task(self):
         try:
-            retval = bson.dumps(dict_obj)
-            retval = format(len(retval), '08x').encode(self.ENCODING) + retval
-        except:
-            retval = b''
-            self.logger.error("Error encoding packet")
-            self.error = True
-        return retval
-
-class NJSP_CLIENT_HANDLER:
-    def __init__(self, logger, streamserver, socket_obj, client_addr):
-        self.server = streamserver
-        self.addr = '%s:%s'%(client_addr[0],client_addr[1])
-        self.logger = NJSP_LOGGER_ADAPTER(logger, self.addr)
-        self.__socket = socket_obj
-        self.__socket.setblocking(0)
-        self.queue = collections.deque([self.server.init_data_bin], self.server.NJSP_PACKET_BUFFER_SIZE*2)
-        self.logger.info("Socket opened, handshaking...")
-        self.subscriptions = list()
-        self.queue_ready = False
-        self.client_alive = True
-        self.recevice_statemachine = {
-            'state':'waiting_id',
-            'recvd_bytes':b'',
-            'bytes_left':len(self.server.NJSP_PROTOCOL_ID)
-        }
-        
-    def __new_packet(self, in_packet):
-        retval = 'OK'
-        for data_type, payload in in_packet.items():
-            if data_type in self.subscriptions:
-                if len(self.queue) >= (self.queue.maxlen-1):
-                    retval = 'error'
-                    self.logger.error("Queue max length reached, breaking connection")
-                    self.client_alive = False
-                    self.queue_ready = False
-                    break
-                else: self.queue.append(payload) 
-        return retval
-        
-    def new_packet(self, in_packet):
-        if self.queue_ready: return self.__new_packet(in_packet)
-        else: return 'OK'
-        
-    def __process_handshake_packet(self, incoming_payload):
-        retval = 'error'
-        dict_obj = self.server.decode_json(incoming_payload)
-        if dict_obj != None and 'handshake' in dict_obj: 
-            client_params = dict_obj['handshake']
-            if 'protocol_version' in client_params:
-                if client_params['protocol_version'] == self.server.NJSP_PROTOCOL_VERIOSN: 
-                    retval = 'OK'
-                    if 'client_name' in client_params: 
-                        self.logger.debug("Client name is %s"%client_params['client_name'])
-                        self.logger.prefix_msg = '%s:%s'%(self.addr, client_params['client_name'])
-                    if 'subscriptions' in client_params: 
-                        self.subscriptions = client_params['subscriptions']
-                        self.logger.info("Subscriptions: %s"%str(self.subscriptions))
-                    if 'flush_buffer' in client_params:
-                        if client_params['flush_buffer']:
-                            self.logger.debug("Flushing buffer...")
-                            self.queue_ready = True
-                            #with self.server.ringbuffer_lock:
-                            for packet in list(self.server.ringbuffer): self.__new_packet(packet)
-                        else: self.queue_ready = True
-                else: self.logger.error("Protocol version mismatch (client %d server %d)!"\
-                                    %(client_params['protocol_version'],self.server.NJSP_PROTOCOL_VERIOSN))
-        return retval
-    
-    def __recv_stm_worker(self, new_bytes):
-        retval = 'error'
-        if self.recevice_statemachine['bytes_left'] > len(new_bytes): bytes_consumed = new_bytes
-        else: bytes_consumed = new_bytes[:self.recevice_statemachine['bytes_left']]
-        self.recevice_statemachine['recvd_bytes'] += bytes_consumed
-        self.recevice_statemachine['bytes_left'] -= len(bytes_consumed)
-        
-        if self.recevice_statemachine['bytes_left'] > 0: 
-            retval = 'OK'
-            
-        elif self.recevice_statemachine['state'] == 'waiting_id':
-            if self.recevice_statemachine['recvd_bytes'] != self.server.NJSP_PROTOCOL_ID:
-                self.logger.error("Error: incorrect protocol id (%s)!"%self.recevice_statemachine['recvd_bytes'])
-            else:
-                self.recevice_statemachine['state'] = 'waiting_hdr'
-                self.recevice_statemachine['recvd_bytes'] = b''
-                self.recevice_statemachine['bytes_left'] = self.server.NJSP_HEADER_LENGTH
-                retval = 'OK'
-
-        elif self.recevice_statemachine['state'] == 'waiting_hdr':
-            payload_size = self.server.decode_header(self.recevice_statemachine['recvd_bytes'])
-            if payload_size != None:
-                self.recevice_statemachine['state'] = 'waiting_payload'
-                self.recevice_statemachine['recvd_bytes'] = b''
-                self.recevice_statemachine['bytes_left'] = payload_size
-                retval = 'OK'
-            
-        elif self.recevice_statemachine['state'] == 'waiting_payload':
-            retval = self.__process_handshake_packet(self.recevice_statemachine['recvd_bytes'])
-            self.recevice_statemachine['state'] = 'handshake_ok'
-            self.recevice_statemachine['recvd_bytes'] = b''
-            self.recevice_statemachine['bytes_left'] = 0
-            
-        else: self.logger.error("Received unexpected data from client, disconnecting: %s"%str(new_bytes))
-            
-        return new_bytes[len(bytes_consumed):], retval
-    
-    def receive_packet(self):
-        retval = 'OK'; bytes = b''
-        try: bytes = self.__socket.recv(4096)
-        except: retval = 'error'
-        if len(bytes) == 0: retval = 'error'
-        #else: self.logger.debug("Received %d bytes from client"%len(bytes))
-        while len(bytes) > 0 and retval == 'OK': bytes, retval = self.__recv_stm_worker(bytes)
-        return retval
-        
-    def send_packet(self):
-        bytes_sent = 0
-        packet_bin = self.queue.popleft()
-        try: bytes_sent = self.__socket.send(packet_bin)
-        except: self.logger.error("TCP socket send error")
-        bytes_left = len(packet_bin) - bytes_sent
-        if bytes_left > 0: 
-            self.queue.appendleft(packet_bin[bytes_sent:])
-            self.logger.debug('Sent %db, putting %db back to queue'%(bytes_sent, bytes_left))
-
-    def disconnect(self):
-        self.__socket.close()
-        self.logger.warning("Client disconnected")
-
-
-class NJSP_STREAMSERVER(NBJSP):
-    def __init__(self, listen_addr, init_packet, logger = None, streamer_name = None):
-        super().__init__(logger = logger, name = streamer_name)
-        if self.check_init_packet(init_packet) == False: self.init_packet = init_packet
-        self.init_data_bin = self.NJSP_PROTOCOL_ID + self.encode_hdr_and_json(self.init_packet)
-        self.ringbuffer = collections.deque([], self.NJSP_PACKET_BUFFER_SIZE)
-        self.connected_clients = dict()
-        self.global_lock = threading.Lock()
-        self.kill_event = threading.Event()
-        self.alive = True
-        self.socketserver_thread = threading.Thread(target=self.__socketserver_thread_fxn, args=([listen_addr]))
-        self.socketserver_thread.name = 'njsp_srv'
-        self.socketserver_thread.start()
-            
-    def kill(self):
-        self.kill_event.set()
-        self.socketserver_thread.join()
-        
-    def broadcast_data(self, dict_obj):
-        if dict_obj == None or self.alive == False: return
-        packet = self.split_to_datatypes_and_encode(dict_obj)
-        if len(packet) > 0:
-            with self.global_lock: 
-                self.ringbuffer.append(packet)
-                for client in self.connected_clients.values(): client.new_packet(packet)
-
-    def __socketserver_main_loop(self, listening_socket):
-        listen_socket_error = False
-        while not (self.kill_event.is_set() or listen_socket_error):
-            
-            read_list = list(self.connected_clients.keys())
-            write_list = list()
-            remove_list = list()
-            
-            if len(self.connected_clients) < self.NJSP_MAX_CLIENTS: read_list.append(listening_socket)
-            
-            for client_socket, client_handler in self.connected_clients.items(): 
-                if not client_handler.client_alive: remove_list.append(client_socket)
-                if len(client_handler.queue) > 0: write_list.append(client_socket)
-                
-            with self.global_lock:
-                for s in remove_list: self.connected_clients.pop(s).disconnect()
-
-            r, w, e = select.select(read_list, write_list, read_list, 0.5)
-            
-            with self.global_lock:
-                for s in w:
-                    if s in self.connected_clients: self.connected_clients[s].send_packet()
-                    else: s.close()
-                for s in r:
-                    if s is listening_socket: 
-                        socket_obj, raddr = s.accept()
-                        new_client = NJSP_CLIENT_HANDLER(self.logger, self, socket_obj, raddr)
-                        self.connected_clients.update({socket_obj:new_client})
-                    elif s in self.connected_clients: 
-                        result = self.connected_clients[s].receive_packet()
-                        if result != 'OK': self.connected_clients.pop(s).disconnect()
-                    else: s.close()
-                for s in e:
-                    if s is listening_socket:
-                        self.logger.critical("Socket server fatal error!") 
-                        listen_socket_error = True
-                    else: 
-                        self.connected_clients.pop(s).disconnect()
-                    
-        # close all connections with command abort
-        start_time = time.monotonic()
-        sockets_list = list(self.connected_clients.keys())
-        abort_bin = self.encode_hdr_and_json({'abort':'Server stopped'})
-        
-        #TODO: if client queue has unsent part of some packet, send it first
-        for s in sockets_list: 
-            try: s.send(abort_bin)
-            except: pass
-        
-        while len(sockets_list) > 0:
-            r, w, e = select.select(sockets_list, list(), list(), 1)
-            for s in r:
-                try: bytes = s.recv(4096)
-                except: bytes = b''
-                if bytes == b'':
-                    s.close()
-                    sockets_list.remove(s)
-            if time.monotonic() - start_time > 1: break
-        if len(sockets_list) > 0: self.logger.warning("%d clients were not disconnected properly"%len(sockets_list))
-        else: self.logger.debug("All clients disconnected in %dms"%((time.monotonic() - start_time)*1000))
-        
-        listening_socket.close()
-
-    def __socketserver_thread_fxn(self, addr):
-        listening_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        listening_socket.setblocking(0)
-        socket_opened = False
-        while not socket_opened:
-            try:
-                listening_socket.bind(addr)
-                listening_socket.listen()
-                self.logger.info("Listening to %s" %str(addr))
-                socket_opened = True
-            except: self.logger.error("TCP socket on port %s open error, retrying..." %str(addr))
-            if self.kill_event.wait(10) == True: break
-        
-        if socket_opened: self.__socketserver_main_loop(listening_socket)
-            
-        self.kill_event.wait() # loop until killed
-        self.logger.info("Server thread (port %s) exited" %str(addr))
-        
-
-class NJSP_READER_HANDLER:
-    def __init__(self, server, name, addr, params):
-        self.server = server
-        self.name = name
-        self.logger = NJSP_LOGGER_ADAPTER(server.logger, '%s:%d'%(addr[0],addr[1]))
-        self.logger.warning("New client added, establishing connection..")
-        self.addr = addr
-        self.params = params
-        self.socket_opened = False
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.setblocking(0)
-        self.handshake_bytes = self.server.NJSP_PROTOCOL_ID
-        self.handshake_bytes += self.server.encode_hdr_and_json(self.server.create_handshake_packet(params))
-        self.state = 'establishing_connection'
-        self.__send_state_update('connecting')
-        
-    def __send_state_update(self, state):
-        self.server.queue.put_nowait({self.name:{'connection_state':state}})
-
-    def try_to_connect(self):
-        try:
-            self.socket.settimeout(0.1)
-            self.socket.connect(self.addr)
-            self.socket.settimeout(0)
-            self.logger.debug("Connection established, handshaking..")
-            self.state = 'sending_handshake'
-            self.socket_opened = True
-            self.bytes_to_write = self.handshake_bytes
-            self.__rearm_recv_stm('waiting_id', len(self.server.NJSP_PROTOCOL_ID))
-        except:
+            await self._task_loop()
+        except asyncio.CancelledError:
             pass
-            
-    def __packet_received(self, packet):
-        if 'abort' in packet:
-            self.logger.warning("Received abort command, disconnecting...")
-            self.disconnect(reconnect = True)
-        else:
-            if self.state == 'waiting_init_packet':
-                if self.server.check_init_packet(packet) == False: 
-                    self.init_packet = packet
-                    self.state = 'receiving_data'
-                    self.__send_state_update('connected')
-                    self.logger.warning("Connected!")
-                else: 
-                    self.logger.critical("Error reading init packet")
-                    self.disconnect(reconnect = False)
-            out_packet = {self.name:packet}
-            try: self.server.queue.put_nowait(out_packet)
-            except: self.logger.error("Error putting packet to queue")
-        
-    def __rearm_recv_stm(self, state, length):
-        self.recevice_statemachine = {
-            'state':state,
-            'recvd_bytes':b'',
-            'bytes_left':length
-        }
-                    
-    def __recv_stm_worker(self):
-        retval = 'error'
-            
-        if self.recevice_statemachine['state'] == 'waiting_id':
-            if self.recevice_statemachine['recvd_bytes'] != self.server.NJSP_PROTOCOL_ID:
-                self.logger.error("Incorrect protocol id (%s)!"%str(self.recevice_statemachine['recvd_bytes']))
-            else:
-                self.__rearm_recv_stm('waiting_hdr', self.server.NJSP_HEADER_LENGTH)
-                retval = 'OK'
+        except Exception as e:
+            self.logger.error('Main loop exception:\n\t%s' % repr(e))
+        finally:
+            self.logger.debug('Task stopped')
+            self.closed.set()
+            async with self.njsp.aio_lock:
+                del self.njsp.handles[self.name]
 
-        elif self.recevice_statemachine['state'] == 'waiting_hdr':
-            payload_size = self.server.decode_header(self.recevice_statemachine['recvd_bytes'])
-            if payload_size != None:
-                self.__rearm_recv_stm('waiting_payload', payload_size)
-                retval = 'OK'
-            
-        elif self.recevice_statemachine['state'] == 'waiting_payload':
-            packet = self.server.decode_json(self.recevice_statemachine['recvd_bytes'])
-            if packet != None: 
-                self.__packet_received(packet)
-                self.__rearm_recv_stm('waiting_hdr', self.server.NJSP_HEADER_LENGTH)
-                retval = 'OK'
-        else: 
-            self.logger.error("Received unexpected data from client, disconnecting: %s"%str(new_bytes))
-            retval = 'error'
-            
-        if retval != 'OK': self.disconnect(reconnect = False)
-        return retval
-        
-    def select_error(self):
-        self.logger.error("Select exceptional, disconnecting...")
-        self.disconnect(reconnect = False)
-    
-    def can_write(self):
-        try: bytes_sent = self.socket.send(self.bytes_to_write)
-        except: 
-            self.logger.error("Error sending bytes to socket")
-            self.disconnect(reconnect = False)
-        self.bytes_to_write = self.bytes_to_write[bytes_sent:]
-        if self.state == 'sending_handshake' and self.bytes_to_write == b'': 
-            self.state = 'waiting_init_packet'
-        
-    def __recv_collector(self, bytes):
-        while len(bytes) > 0:
-            if self.recevice_statemachine['bytes_left'] > len(bytes): n_bytes_read = len(bytes)
-            else: n_bytes_read = self.recevice_statemachine['bytes_left']
-            self.recevice_statemachine['recvd_bytes'] += bytes[:n_bytes_read]
-            self.recevice_statemachine['bytes_left'] -= n_bytes_read
-            bytes = bytes[n_bytes_read:]
-            if self.recevice_statemachine['bytes_left'] == 0: 
-                if self.__recv_stm_worker() != 'OK': break
-        
-    def can_read(self):
-        try: bytes = self.socket.recv(4096)
-        except: bytes = b''
-        if bytes == b'': 
-            self.logger.error("RECV returned b'', closing socket")
-            self.disconnect(reconnect = True)
-        else: self.__recv_collector(bytes)
-        
-    def disconnect(self, reconnect = False):
-        if self.socket_opened:
-            self.socket_opened = False
-            self.socket.close()
-            self.__send_state_update('disconnected')
-            self.logger.warning("Connection closed")
-        if reconnect:
-            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.socket.setblocking(0)
-            self.state = 'establishing_connection'
-            self.__send_state_update('connecting')
-        else: self.state = 'kill_me'
-        
 
-        
-class NJSP_MULTISTREAMREADER(NBJSP):
-    def __init__(self, logger = None, reader_name = None):
-        super().__init__(logger = logger, name = reader_name)
-        self.queue = queue.Queue(self.NJSP_PACKET_BUFFER_SIZE*5)
-        self.abort_event = threading.Event()
-        self.lock = threading.Lock()
-        self.clients = dict()
-        self.__gen_client_name = lambda ip, port: '%s:%d'%(ip,port)
-        self.receiver_thread = threading.Thread(target=self.__receiver_thread_fxn, args=([]))
-        self.receiver_thread.name = 'njsp_multi_rdr'
-        self.receiver_thread.start()
-        
-    def kill(self):
-        self.alive = False
-        self.abort_event.set()
-        self.receiver_thread.join()
-        
-    def add_client(self, ip, port, params = None):
+class NJSP_LOCAL_CLIENT(NJSP_HANDLE_BASE):
+    def __init__(self, reader, streamer):
+        self.reader = reader
+        self.reader_name = reader.name
+        self.subscriptions = reader.handshake['subscriptions']
+        self.init_packet = streamer.params['init_packet']
+        self.queue = reader.queue
+        self.streamer = streamer
+        super().__init__(reader.njsp, NJSP.LOCAL_CLIENT, '', streamer.port, reader.prefix)
+
+    def write_nonblock(self, packet):
+        for datatype, data in packet.items():
+            if datatype in self.subscriptions:
+                try:
+                    self.queue.put_nowait({self.reader_name: {datatype: data}})
+                except queue.Full:
+                    self.logger.error("Queue full, closing connection")
+                    self.closed.set()
+            if datatype == 'abort': self.closed.set()
+
+    async def _task_loop(self):
+        self.logger.info("Shortcut found, connecting to %s directly" % (self.streamer.name))
+        self.queue.put_nowait({self.reader_name: {'connection_state': 'connected'}})
+        self.queue.put_nowait({self.reader_name: self.init_packet})
+        self.logger.debug('Subscriptions: %s' % str(self.subscriptions))
+        if self.reader.handshake.get('flush_buffer', False):
+            for packet in list(self.streamer.ringbuffer): self.write_nonblock(packet)
+        self.streamer.register_client(self)
+        self.logger.info('Connected')
+        awaitables = [
+            asyncio.create_task(self.closed.wait()),
+            asyncio.create_task(self.reader.closed.wait()),
+            asyncio.create_task(self.streamer.closed.wait())
+        ]
+        done, pending = await asyncio.wait(awaitables, return_when=asyncio.FIRST_COMPLETED)
+        for fut in pending: fut.cancel
+
+
+class NJSP_READER(NJSP_HANDLE_BASE):
+    def __init__(self, njsp, ip, port, prefix, params, rd_queue):
         if ip == 'localhost' or ip == '': ip = '127.0.0.1'
-        port = int(port)
-        name = self.__gen_client_name(ip, port)
-        client = NJSP_READER_HANDLER(self, name, (ip,port), params)
-        with self.lock: self.clients.update({name:client})
+        self.params = params
+        self.handshake = params['handshake']
+        self.queue = rd_queue
+        super().__init__(njsp, NJSP.READER, ip, port, prefix)
+        if params.get('bson', False): self._to_bson_mode()
+        self.logger.info("Reader created")
+
+    async def find_local_streamer(self):
+        if self.ip != '127.0.0.1': return False
+        local_streamer = None
+        async with self.njsp.aio_lock:
+            for streamer in self.njsp.handles.values():
+                if streamer.tp == NJSP.STREAMER and streamer.port == self.port:
+                    return streamer
+
+    async def _internal_loop(self):
+        reader, writer = await asyncio.open_connection(self.ip, self.port)
+        self.logger.debug('Connection established')
+        handshake_packet = self.encode_hdr_and_payload({'handshake': self.handshake})
+        writer.write(self.PROTOCOL_ID + handshake_packet)
+        await writer.drain()
+        idbytes = await reader.readexactly(len(self.PROTOCOL_ID))
+        if idbytes != self.PROTOCOL_ID:
+            raise RuntimeError('Incorrect protocol ID: %s' % str(idbytes))
+        init_packet = await self.read_packet(reader)
+        self.queue.put_nowait({self.name: {'connection_state': 'connected'}})
+        self.queue.put_nowait({self.name: init_packet})
+        self.last_state = "Connected"
+        self.logger.info("Connected")
+        while True:
+            packet = await self.read_packet(reader)
+            self.queue.put_nowait({self.name: packet})
+            if 'abort' in packet: raise RuntimeError('Connection aborted by streamer')
+
+    async def _task_loop(self):
+        self.last_state = "Disconnected"
+        while True:
+            if self.last_state == "Disconnected":
+                self.queue.put_nowait({self.name: {'connection_state': 'connecting'}})
+                self.last_state = 'Connecting'
+            local_streamer = await self.find_local_streamer()
+
+            try:
+                if local_streamer is None or local_streamer is False:
+                    await self._internal_loop()
+                else:
+                    client = NJSP_LOCAL_CLIENT(self, local_streamer)
+                    await client.init_async()
+                    self.last_state = "Connected"
+                    await client.closed.wait()
+            except queue.Full:
+                self.logger.error("Queue full")
+                break
+            except ConnectionError as e:
+                self.logger.debug('Connection error:\n\t%s' % repr(e))
+            except Exception as e:
+                self.logger.error('Reader loop exception:\n\t%s' % repr(e))
+                break
+
+            if self.last_state == "Connected":
+                self.queue.put_nowait({self.name: {'connection_state': 'disconnected'}})
+                self.last_state = "Disconnected"
+
+            if not self.params.get('reconnect', False): break
+            await asyncio.sleep(self.params.get('reconnect_period', 30))
+
+    @staticmethod
+    def check_params(dict_obj):
+        if 'handshake' not in dict_obj:
+            dict_obj.update({'handshake': dict()})
+        dict_obj['handshake'].update({'protocol_version': NJSP.PROTOCOL_VERIOSN})
+        if 'subscriptions' not in dict_obj['handshake']:
+            dict_obj['handshake'].update({'subscriptions': ['status', 'log', 'streams', 'alarms']})
+        if 'client_name' not in dict_obj['handshake']:
+            dict_obj['handshake'].update({'client_name': socket.gethostname()})
+        if 'flush_buffer' not in dict_obj['handshake']:
+            dict_obj['handshake'].update({'flush_buffer': False})
+
+    @staticmethod
+    def construct_name(ip, port, prefix):
+        if ip == 'localhost' or ip == '': ip = '127.0.0.1'
+        if prefix != None:
+            return 'RD:%s:%s:%d' % (prefix, ip, int(port))
+        else:
+            return 'RD:%s:%d' % (ip, int(port))
+
+
+class NJSP_STREAMER_CLIENT(NJSP_HANDLE_BASE):
+    def __init__(self, streamer, reader, writer):
+        self.streamer, self.reader, self.writer = streamer, reader, writer
+        print(f'params:{writer.get_extra_info("peername")}')
+        super().__init__(streamer.njsp, NJSP.CLIENT, *writer.get_extra_info('peername'), None)
+
+    def write_nonblock(self, encoded_packet):
+        try:
+            for datatype, datapacket in encoded_packet.items():
+                if datatype in self.subscriptions:
+                    try:
+                        self.writer.write(datapacket)
+                    except asyncio.LimitOverrunError:
+                        self.writer.close()
+                        self.logger.warning('Buffer overflow, breaking connection')
+        except Exception as e:
+            self.writer.close()
+            self.logger.error('Write exception\n\t%s', repr(e))
+
+    async def _task_loop(self):
+        self.logger.debug('Connection from %s:%d, handshaking...' % (self.ip, self.port))
+        idbytes = await self.reader.readexactly(len(self.PROTOCOL_ID))
+        if idbytes != self.njsp.ID_JSON:
+            if idbytes == self.njsp.ID_BSON:
+                self._to_bson_mode()
+            else:
+                raise RuntimeError('Incorrect protocol ID: %s' % str(idbytes))
+        packet = await self.read_packet(self.reader)
+        if 'handshake' not in packet:
+            raise RuntimeError('Handshake packet expected!')
+        handshake = packet['handshake']
+        ver = handshake.get('protocol_version', 'unknown')
+        if ver != NJSP.PROTOCOL_VERIOSN:
+            raise RuntimeError('Incompatible protocol ver!')
+        if 'client_name' in handshake:
+            self.logger.info("Client name is %s" % handshake['client_name'])
+        self.subscriptions = handshake.get('subscriptions', dict())
+        self.logger.debug('Subscriptions: %s' % str(self.subscriptions))
+        init_packet = self.encode_hdr_and_payload(self.streamer.params['init_packet'])
+        self.writer.write(self.PROTOCOL_ID + init_packet)
+        if handshake.get('flush_buffer', False):
+            async with self.streamer.ringbuffer_lock:
+                self.logger.debug('Flushing buffer...')
+                for packet in list(self.streamer.ringbuffer):
+                    encoded_packet = self.split_to_datatypes_and_encode(packet)
+                    self.write_nonblock(encoded_packet)
+                    await asyncio.wait_for(self.writer.drain(), timeout=0.25)
+        self.streamer.register_client(self)
+        self.logger.info('Connected')
+        try:
+            await self.writer.wait_closed()
+        except BrokenPipeError:
+            self.logger.info("Socket closed: BrokenPipeError")
+
+
+class NJSP_STREAMER(NJSP_HANDLE_BASE):
+    def __init__(self, njsp, ip, port, params):
+        if ip == 'localhost': ip = ''
+        self.params = params
+        self.clients = dict()
+        self.local_clients = dict()
+        self.bson_clients = dict()
+        super().__init__(njsp, NJSP.STREAMER, ip, port, None)
+        self.logger.info('Streamer created')
+
+    async def init_async(self):
+        self.ringbuffer = collections.deque(list(), self.params.get('ringbuffer_size', 10))
+        self.ringbuffer_lock = asyncio.Lock()
+        return await super().init_async()
+
+    def register_client(self, client_handle):
+        if client_handle.tp == NJSP.CLIENT:
+            if client_handle.bson:
+                self.bson_clients.update({client_handle.name: client_handle})
+            else:
+                self.clients.update({client_handle.name: client_handle})
+        else:
+            self.local_clients.update({client_handle.name: client_handle})
+        self.logger.debug("Client %s registered" % client_handle.name)
+
+    async def remove_dead_clients(self):
+        while not self.closed.is_set():
+            dead_clients, dead_local_clients, dead_bson_clients = list(), list(), list()
+            for name, handle in self.clients.items():
+                if handle.closed.is_set(): dead_clients.append(name)
+            for name, handle in self.bson_clients.items():
+                if handle.closed.is_set(): dead_bson_clients.append(name)
+            for name, handle in self.local_clients.items():
+                if handle.closed.is_set(): dead_local_clients.append(name)
+            for name in dead_clients: del self.clients[name]
+            for name in dead_bson_clients: del self.bson_clients[name]
+            for name in dead_local_clients: del self.local_clients[name]
+            total = dead_clients + dead_local_clients + dead_bson_clients
+            if len(total) > 0: self.logger.info("Removed clients: %s" % str(total))
+            try:
+                await asyncio.wait_for(self.closed.wait(), timeout=1)
+            except asyncio.TimeoutError:
+                pass
+
+    async def broadcast(self, packet):
+        try:
+            async with self.ringbuffer_lock:
+                self.ringbuffer.append(packet)
+                if len(self.clients) > 0:
+                    encoded_packet = self.split_to_datatypes_and_encode_to_json(packet)
+                    for client in self.clients.values():
+                        if not client.closed.is_set():
+                            client.write_nonblock(encoded_packet)
+                if len(self.bson_clients) > 0:
+                    encoded_packet = self.split_to_datatypes_and_encode_to_bson(packet)
+                    for client in self.bson_clients.values():
+                        if not client.closed.is_set():
+                            client.write_nonblock(encoded_packet)
+                for client_name, client in self.local_clients.items():
+                    client.write_nonblock(packet)
+        except Exception as e:
+            self.logger.error("Broadcast exception:\n\t%s" % repr(e))
+
+    async def _task_loop(self):
+        handler = lambda r, w: NJSP_STREAMER_CLIENT(self, r, w).init_async()
+        server = await asyncio.start_server(handler, self.ip, self.port, reuse_address=True)
+        asyncio.create_task(self.remove_dead_clients())
+        async with server: await server.serve_forever()
+
+    @staticmethod
+    def construct_name(ip, port):
+        return '%s:%s:%d' % (NJSP.STREAMER, ('' if ip == 'localhost' else ip), int(port))
+
+    @staticmethod
+    def check_params(dict_obj):
+        if 'init_packet' not in dict_obj: raise RuntimeError('Init packet is missing!')
+        if 'parameters' not in dict_obj['init_packet']: raise RuntimeError('Incorrect init packet!')
+        params = dict_obj['init_packet']['parameters']
+        ver = params.get('parameters', NJSP.PROTOCOL_VERIOSN)
+        if ver != NJSP.PROTOCOL_VERIOSN:  raise RuntimeError('Incorrect protocol version!')
+        for stream in params.get('streams', dict()).values():
+            if 'data_format' not in stream: raise RuntimeError('Data format is missing!')
+            if 'sample_rate' not in stream: raise RuntimeError('Stream sample rate is missing!')
+            if 'channels' not in stream: raise RuntimeError('Channels params are missing!')
+
+
+class NJSP:
+    PROTOCOL_VERIOSN = 3.0
+    ID_JSON = b'NJSP\0\0'
+    ID_BSON = b'NBJSP\0'
+    READER = 'RD'
+    STREAMER = 'ST'
+    CLIENT = 'CL'
+    LOCAL_CLIENT = 'LO'
+
+    def __init__(self, logger=logging.getLogger(), log_level=logging.INFO):
+        #self.logger = NJSP_LOGGER_ADAPTER(logger, {'prefix': 'NJSP'})
+        self.logger = logger
+        self.logger.setLevel(log_level)
+        self.handles = dict()
+        start_event = threading.Event()
+        self.thread_lock = threading.Lock()
+        self.thread = threading.Thread(target=asyncio.run, args=([self.main(start_event)]))
+        self.thread.start()
+        start_event.wait()
+
+    def add_streamer(self, ip, port, params):
+        name = NJSP_STREAMER.construct_name(ip, int(port))
+        NJSP_STREAMER.check_params(params)
+        with self.thread_lock:
+            if name in self.handles: raise ValueError('Streamer %s already exists' % name)
+            streamer = NJSP_STREAMER(self, ip, int(port), params)
+            fut = asyncio.run_coroutine_threadsafe(streamer.init_async(), self.ioloop)
+            fut.result()
         return name
 
-    def remove_client(self, client_name):
-        if client_name in self.clients: self.clients[client_name].disconnect(reconnect = False)
-        
-    def __receiver_thread_fxn(self):
-        self.logger.debug("NJSP multistream reader thread started")
-        self.alive = True
-        while not self.abort_event.is_set(): 
-            active_clients = dict()
-            write_clients = dict()
-            with self.lock:
-                dead_clients = list()
-                for client in self.clients.values():
-                    if client.state == 'establishing_connection': client.try_to_connect()
-                    if client.state == 'kill_me': dead_clients.append(client.name)
-                    if client.socket_opened: 
-                        active_clients.update({client.socket:client})
-                        if len(client.bytes_to_write) > 0: 
-                            write_clients.update({client.socket:client})
-                for name in dead_clients:
-                    del self.clients[name]
-                            
-            active_list = list(active_clients.keys())
-            write_list = list(write_clients.keys())
-            if len(active_list) > 0 or len(write_list) > 0:
-                r, w, e = select.select(active_list, write_list, active_list, 1)
-                #print(r, w, e)
-                for s in e: active_clients[s].select_error()
-                for s in w: write_clients[s].can_write()
-                for s in r: active_clients[s].can_read()
-            else:
-                #print(active_list, write_list)
-                time.sleep(1)
-            
-        for client in self.clients.values(): client.disconnect()
+    def add_reader(self, ip, port, prefix, params, rd_queue):
+        name = NJSP_READER.construct_name(ip, int(port), prefix)
+        NJSP_READER.check_params(params)
+        with self.thread_lock:
+            if name in self.handles: raise ValueError('Reader %s already exists' % name)
+            reader = NJSP_READER(self, ip, int(port), prefix, params, rd_queue)
+            fut = asyncio.run_coroutine_threadsafe(reader.init_async(), self.ioloop)
+            fut.result()
+        return name
 
-'''        
-class NJSP_STREAMREADER_OVER_SSH(NJSP_STREAMREADER):
-    def __init__(self, ssh_addr, ssh_login, ssh_pwd, remote_addr, **kwargs):
-        from sshtunnel import SSHTunnelForwarder
-        self.ssh_server = SSHTunnelForwarder(
-            ssh_address_or_host = ssh_addr,
-            ssh_username = ssh_login,
-            ssh_password = ssh_pwd,
-            remote_bind_address = remote_addr,
-            compression = True
-        )
-        super().__init__(remote_addr, **kwargs)
-        
-    def _receiver_thread_fxn(self, remote_address):
-        self.ssh_server.start()
-        port = self.ssh_server.local_bind_port
-        self.logger.info("Connecting over SSH tunnel on local port %d"%port)
-        super()._receiver_thread_fxn(('localhost',port))
-        self.ssh_server.stop()
-        self.logger.info("SSH connection closed")
-        
-'''
+    def is_alive(self, name):
+        if name == None:  return False
+        if name not in self.handles: return False
+        try:
+            return not self.handles[name].closed.is_set()
+        except Exception as e:
+            self.logger.warning(repr(e))
+            return False
+
+    def connected_clients(self, name):
+        if name == None: return 0
+        try:
+            h = self.handles[name]
+            return len(h.clients) + len(h.local_clients) + len(h.bson_clients)
+        except Exception as e:
+            self.logger.warning(repr(e))
+            return 0
+
+    def remove(self, name):
+        if name == None: return
+        try:
+            self.ioloop.call_soon_threadsafe(self.handles[name].future.cancel)
+            self.logger.info('Handle removed: %s' % name)
+        except Exception as e:
+            self.logger.warning(repr(e))
+
+    def broadcast_data(self, name, packet):
+        try:
+            asyncio.run_coroutine_threadsafe(self.handles[name].broadcast(packet), self.ioloop)
+        except Exception as e:
+            self.logger.warning(repr(e))
+
+    async def main(self, start_event):
+        self.logger.debug('Asyncio loop started')
+        self.abort_event = asyncio.Event()
+        self.aio_lock = asyncio.Lock()
+        self.ioloop = asyncio.get_event_loop()
+        start_event.set()
+        while not self.abort_event.is_set():
+            stats = {NJSP.READER: 0, NJSP.STREAMER: 0, NJSP.CLIENT: 0, NJSP.LOCAL_CLIENT: 0}
+            async with self.aio_lock:
+                for h in self.handles.values(): stats.update({h.tp: stats[h.tp] + 1})
+            self.logger.debug(stats)
+            try:
+                await asyncio.wait_for(self.abort_event.wait(), timeout=10)
+            except asyncio.TimeoutError:
+                pass
+        self.logger.debug('Asyncio loop finished')
+
+    def kill(self):
+        self.ioloop.call_soon_threadsafe(self.abort_event.set())
+        self.thread.join()
+        self.logger.debug('NJSP killed')

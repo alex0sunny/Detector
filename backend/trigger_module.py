@@ -1,21 +1,30 @@
 import json
+import logging
+from threading import Thread
+from time import sleep
 
 import zmq
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from os.path import curdir, sep
 import os
+import detector.misc.globals as glob
 
 from obspy import UTCDateTime
 
 from backend.trigger_html_util import save_pprint_trig, getTriggerParams, save_triggers, update_sockets, post_triggers, \
     save_sources, save_rules, update_rules, apply_sockets_rule, save_actions, \
-    update_triggers_sockets, getActions, getRuleDic, getSources, create_ref_socket, poll_ref_socket
-from detector.misc.globals import Port, Subscription, action_names_dic0, logger
+    update_triggers_sockets, get_actions, getRuleDic, getSources, create_ref_socket, poll_ref_socket
+from detector.misc.globals import Port, Subscription, action_names_dic0, logger, CustomThread
+from detector.send_receive.njsp.njsp import NJSP
+from main_prot import worker
 
 PORT_NUMBER = 8001
 
 
-def web_server():
+def trigger_module():
+    njsp = NJSP(logger=logger, log_level=logging.DEBUG)
+    Thread(target=worker, args=[njsp]).start()
+
     web_dir = os.path.dirname(__file__)
     os.chdir(web_dir)
 
@@ -69,9 +78,12 @@ def web_server():
             rule_sockets_dic[session_id] = create_rule_sockets()
         return rule_sockets_dic[session_id]
 
+    def restart_core(p):
+        glob.restart = True
+
     # This class will handles any incoming request from
     # the browser
-    class myHandler(BaseHTTPRequestHandler):
+    class CustomHandler(BaseHTTPRequestHandler):
 
         def log_message(self, format, *args):
             return
@@ -105,7 +117,7 @@ def web_server():
 
                 if sendReply:
                     # Open the static file requested and send it
-                    if  mimetype == 'image/jpg':
+                    if mimetype == 'image/jpg':
                         f = open(curdir + sep + self.path, 'rb')
                     else:
                         f = open(curdir + sep + self.path)
@@ -131,12 +143,10 @@ def web_server():
 
         # Handler for the POST requests
         def do_POST(self):
-            # logger.debug('inside post')
-            # logger.debug(self.path)
             content_length = int(self.headers['Content-Length'])  # <--- Gets the size of data
             post_data = self.rfile.read(content_length)  # <--- Gets the data itself
             post_data_str = post_data.decode()
-            #print(f'{UTCDateTime()} POST {post_data_str}')
+            # print(f'{UTCDateTime()} POST {post_data_str}')
             if self.path == '/initTrigger':
                 stations_dic = getSources()
                 self.send_response(200)
@@ -153,12 +163,12 @@ def web_server():
                 new_session = session_id not in sockets_data_dic
                 sockets_trigger = get_sockets_data(session_id)
                 if new_session:
-                    #logger.debug(f'new session, last_vals:{last_vals}')
+                    # logger.debug(f'new session, last_vals:{last_vals}')
                     json_map = post_triggers(json_triggers, sockets_trigger, last_vals['triggers'])
-                    #logger.debug(f'response triggerings:{json_map}')
+                    # logger.debug(f'response triggerings:{json_map}')
                 else:
                     json_map = post_triggers(json_triggers, sockets_trigger)
-                    #logger.debug(f'response triggerings:{json_map}')
+                    # logger.debug(f'response triggerings:{json_map}')
                 self.send_response(200)
                 self.send_header('Content-type', 'application/json')
                 self.end_headers()
@@ -194,7 +204,7 @@ def web_server():
                 self.end_headers()
                 # print('trigger ids' + str(trigger_ids))
                 json_dic = {'triggers': trigger_dic, 'actions': action_names_dic0.copy()}
-                actions_dic = getActions()
+                actions_dic = get_actions()
                 logger.debug('getActions:' + str(actions_dic))
                 sms_dic = actions_dic.get('sms', {})
                 sms_dic = {sms_id: sms_dic[sms_id]['name'] for sms_id in sms_dic}
@@ -208,54 +218,40 @@ def web_server():
                 self.send_header('Content-type', 'application/json')
                 self.end_headers()
                 self.wfile.write(json.dumps({'apply': 1}).encode())
+                glob.restart = True
             if self.path == '/applyRules':
                 json_dic = json.loads(post_data_str)
                 session_id = json_dic['sessionId']
                 html = json_dic['html']
                 save_rules(html)
-                sockets_rule = get_rule_sockets(session_id)
-                apply_sockets_rule(conn_str_sub, context, sockets_rule)
-                socket_backend.send(b'AP')
+                glob.restart = True
             if self.path == '/save':
                 json_dic = json.loads(post_data_str)
                 session_id = json_dic['sessionId']
                 html = json_dic['html']
                 save_triggers(html)
-                sockets_trigger = get_sockets_data(session_id)
-                update_triggers_sockets(conn_str_sub, context, sockets_trigger)
-                socket_backend.send(b'AP')
+                glob.restart = True
             if self.path == '/saveSources':
                 save_sources(post_data_str)
                 socket_backend.send(b'AP')
+                glob.restart = True
             if self.path == '/applyActions':
                 save_actions(post_data_str)
                 socket_backend.send(b'AP')
+                glob.restart = True
             if self.path == '/testActions':
-                test_dic = json.loads(post_data_str)
-                ids = test_dic['ids']
-                for action_id in ids:
-                    action_id_s = '%02d' % action_id
-                    bin_message = Subscription.test.value + action_id_s.encode()
-                    # if action_id in [1, 2]:
-                    #     if test_dic['relay' + str(action_id)]:
-                    #         bin_message += b'1'
-                    #     else:
-                    #         bin_message += b'0'
-                    # else:
-                    #     bin_message += b'1'
-                    logger.info('send bin_message:' + str(bin_message))
-                    socket_test.send(bin_message)
-                # print('actions test:' + str(ids))
+                test_triggerings = {int(id): v for id, v in json.loads(post_data_str).items()}
+                glob.TEST_TRIGGERINGS.update(test_triggerings)
             if self.path == '/load':
                 print('load')
-
 
     try:
         # Create a web server and define the handler to manage the
         # incoming request
-        server = HTTPServer(('', PORT_NUMBER), myHandler)
+        server = HTTPServer(('', PORT_NUMBER), CustomHandler)
         print
         'Started httpserver on port ', PORT_NUMBER
+        exit(1)
 
         # Wait forever for incoming htto requests
         server.serve_forever()
@@ -265,4 +261,5 @@ def web_server():
         '^C received, shutting down the web server'
         server.socket.close()
 
-web_server()
+
+trigger_module()

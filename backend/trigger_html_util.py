@@ -10,7 +10,7 @@ import backend
 import zmq
 
 from detector.filter_trigger.trigger_types import TriggerType
-from detector.misc.globals import logger, Subscription
+from detector.misc.globals import logger, Subscription, ActionType
 
 
 def getHeaderDic(root):
@@ -83,6 +83,7 @@ def getSources():
     station_col = headers_dic['station']
     host_col = headers_dic['host']
     port_col = headers_dic['port']
+    outport_col = headers_dic['out port']
     channels_col = headers_dic['channels']
     units_col = headers_dic['units']
     rows = root.xpath('/html/body/table/tbody/tr')[1:]
@@ -93,6 +94,7 @@ def getSources():
         src_dic[station] = {}
         src_dic[station]['host'] = row[host_col][0].attrib['value'].strip()
         src_dic[station]['port'] = int(row[port_col][0].attrib['value'].strip())
+        src_dic[station]['out_port'] = int(row[outport_col][0].attrib['value'].strip())
         src_dic[station]['channels'] = row[channels_col].text.split(' ')
         src_dic[station]['units'] = row[units_col].text.strip()
     return src_dic
@@ -117,8 +119,7 @@ def get_action_data(action_type, root, id_col, address_col, message_col, name_co
             for row in rows}
 
 
-def getActions():
-    actions_dic = {}
+def get_actions():
     root = etree.parse(os.path.split(inspect.getfile(backend))[0] + '/actions.html')
     headers_dic = getHeaderDic(root)
     id_col = headers_dic['action_id']
@@ -126,27 +127,26 @@ def getActions():
     message_col = headers_dic['message']
     name_col = headers_dic['name']
     additional_col = headers_dic['additional']
-    for action_type in ['SMS', 'email']:
-        dic = get_action_data(action_type, root, id_col, address_col, message_col, name_col, additional_col)
-        # print("dic:" + str(dic))
-        if dic:
-            actions_dic[action_type.lower()] = dic
-    pem = int(root.xpath("//input[@id='PEM']/@value")[0])
-    pet = int(root.xpath("//input[@id='PET']/@value")[0])
-    actions_dic['seedlk'] = {'pem': pem, 'pet': pet}
     petA = int(root.xpath("//*[@id='petA']/@value")[0])
     petB = int(root.xpath("//*[@id='petB']/@value")[0])
     infiniteA = 'checked' in root.xpath("//*[@id='infiniteA']")[0].attrib
     infiniteB = 'checked' in root.xpath("//*[@id='infiniteB']")[0].attrib
-    inverseA = 'checked' in root.xpath("//*[@id='inverseA']")[0].attrib
-    inverseB = 'checked' in root.xpath("//*[@id='inverseB']")[0].attrib
-    actions_dic['relay'] = {'relayA': {'infinite': infiniteA, 'pet': petA, 'inverse': inverseA},
-                            'relayB': {'infinite': infiniteB, 'pet': petB, 'inverse': inverseB}}
-    # relay1cell = root.xpath("//*[@id='relay1']")[0]
-    # relay2cell = root.xpath("//*[@id='relay2']")[0]
-    # relays = ['checked' in releCell.attrib for releCell in [relay1cell, relay2cell]]
-    # actions_dic['relay1'] = int(relays[0])
-    # actions_dic['relay2'] = int(relays[1])
+    pet_inf = 60 * 60 * 24 * 365 * 10
+    if infiniteA:
+        petA = pet_inf
+    if infiniteB:
+        petB = pet_inf
+    actions_dic = {ActionType.relay_A.value: {'name': 'relayA', 'pet': petA},
+                   ActionType.relay_B.value: {'name': 'relayB', 'pet': petB}}
+    pem = int(root.xpath("//input[@id='PEM']/@value")[0])
+    pet = int(root.xpath("//input[@id='PET']/@value")[0])
+    actions_dic[ActionType.send_SIGNAL.value] = {'name': 'seedlk', 'pem': pem, 'pet': pet}
+    for row in root.xpath('/html/body/table/tbody/tr')[ActionType.send_SMS.value:]:
+        sms_dic = {'name':    row[name_col][0].get('value'),
+                   'address': row[address_col][0].get('value'),
+                   'message': row[message_col][0].get('value'),
+                   'inverse': 'checked' in row[additional_col][1].attrib}
+        actions_dic[int(row[id_col].text)] = sms_dic
     return actions_dic
 
 
@@ -274,8 +274,7 @@ def poll_ref_socket(socket_ref, last_vals):
         triggering = int(bin_message[3:4])
         last_vals['rules' if update_rule else 'triggers'][ind] = triggering
 
-
-# print(str(getActions()))
+print(str(get_actions()))
 
 # print(getRuleFormulasDic())
 
