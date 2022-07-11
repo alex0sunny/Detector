@@ -24,36 +24,22 @@ def getTriggerParams():
     rows = root.xpath('/html/body/table/tbody/tr')[1:]
     params_list = []
     for row in rows:
-        params_map = {}
+        params_dic = {}
         for col in ['station', 'channel', 'trigger']:
-            [params_map[col]] = \
+            [params_dic[col]] = \
                 [el.text for el in row[header_inds[col]].iter() if 'selected' in el.attrib]
-        params_map['trigger_type'] = TriggerType[params_map.pop('trigger')]
-        params_map['use_filter'] = 'checked' in row[header_inds['filter']][0].attrib
+        params_dic['trigger_type'] = TriggerType[params_dic.pop('trigger')]
+        params_dic['use_filter'] = 'checked' in row[header_inds['filter']][0].attrib
         for cell_name in ['name', 'sta', 'lta', 'init_level', 'stop_level', 'freqmin', 'freqmax']:
             col_type = str if cell_name == 'name' else float if cell_name in ['stop_level', 'init_level'] \
                 else int
-            params_map[cell_name] = col_type(row[header_inds[cell_name]][0].get('value'))
-        params_map['ind'] = int(row[header_inds['ind']].text.strip())
-        # [station] = [el.text for el in row[header_inds['station']].iter() if 'selected' in el.attrib]
-        # [channel] = [el.text for el in row[header_inds['channel']].iter() if 'selected' in el.attrib]
-        # [type_str] = [el.text for el in row[header_inds['trigger']].iter() if 'selected' in el.attrib]
-        # use_filter = 'checked' in row[header_inds['filter']][0].attrib
-        # trigger_type = TriggerType[type_str]
-        # params_map = {'station': station, 'channel': channel, 'trigger_type': trigger_type,
-        #               'use_filter': use_filter}
-        # for cell_name in ['init_level', 'stop_level']:
-        #     params_map[cell_name] = float(row[header_inds[cell_name]][0].get('value'))
-        # excluded_headers = ['check', 'name', 'channel', 'val', 'trigger', 'filter'] + list(params_map.keys())
-        # for header in header_inds.keys():
-        #     if header not in excluded_headers:
-        #         params_map[header] = int(row[header_inds[header]].text)
-        # params_map['name'] = row[header_inds['name']].text
-        params_list.append(params_map)
+            params_dic[cell_name] = col_type(row[header_inds[cell_name]][0].get('value'))
+        params_dic['ind'] = int(row[header_inds['ind']].text.strip())
+        params_list.append(params_dic)
     return params_list
 
 
-def getRuleDic():
+def get_rules_settings():
     root = etree.parse(os.path.split(inspect.getfile(backend))[0] + '/rules.html')
     headers_dic = getHeaderDic(root)
     id_col = headers_dic['rule_id']
@@ -72,8 +58,11 @@ def getRuleDic():
                 else:
                     formula_list.append(el.text)
         rule_dic[rule_id]['formula'] = formula_list
-        rule_dic[rule_id]['actions'] = \
-            [int(el.attrib['action_id']) for el in row[actions_col].iter() if 'selected' in el.attrib]
+        rule_dic[rule_id]['triggers_ids'] = [formula_list[i]
+                                             for i in range(0, len(formula_list), 2)]
+        rule_dic[rule_id]['actions'] = [int(el.attrib['action_id'])
+                                        for el in row[actions_col].iter()
+                                        if 'selected' in el.attrib]
     return rule_dic
 
 
@@ -119,7 +108,7 @@ def get_action_data(action_type, root, id_col, address_col, message_col, name_co
             for row in rows}
 
 
-def get_actions():
+def get_actions_settings():
     root = etree.parse(os.path.split(inspect.getfile(backend))[0] + '/actions.html')
     headers_dic = getHeaderDic(root)
     id_col = headers_dic['action_id']
@@ -142,7 +131,7 @@ def get_actions():
     pet = int(root.xpath("//input[@id='PET']/@value")[0])
     actions_dic[ActionType.send_SIGNAL.value] = {'name': 'seedlk', 'pem': pem, 'pet': pet}
     for row in root.xpath('/html/body/table/tbody/tr')[ActionType.send_SMS.value:]:
-        sms_dic = {'name':    row[name_col][0].get('value'),
+        sms_dic = {'name': row[name_col][0].get('value'),
                    'address': row[address_col][0].get('value'),
                    'message': row[message_col][0].get('value'),
                    'inverse': 'checked' in row[additional_col][1].attrib}
@@ -211,7 +200,7 @@ def save_actions(post_data_str):
 def apply_sockets_rule(conn_str, context, sockets_rule):
     # clear_triggers(sockets_rule, sockets_rule_off)
     trigger_dic = {params['ind']: params['name'] for params in getTriggerParams()}
-    for rule_id in getRuleDic().keys():
+    for rule_id in get_rules_settings().keys():
         if rule_id not in sockets_rule:
             update_sockets(rule_id, conn_str, context, sockets_rule, Subscription.rule.value)
 
@@ -230,7 +219,8 @@ def post_triggers(json_triggers, sockets_trigger, last_trigs=None):
             except zmq.ZMQError:
                 pass
         else:
-            logger.warning('i ' + str(i) + ' not in triggers')
+            #logger.warning('i ' + str(i) + ' not in triggers')
+            pass
     return {'triggers': triggers}
 
 
@@ -257,24 +247,7 @@ def update_rules(json_rules, sockets_rule, last_triggerings=None):
     return rules
 
 
-def create_ref_socket(conn_str, context):
-    socket_ref = context.socket(zmq.SUB)
-    socket_ref.connect(conn_str)
-    for subscription in [Subscription.trigger.value, Subscription.rule.value]:
-        socket_ref.setsockopt(zmq.SUBSCRIBE, subscription)
-    return socket_ref
-
-
-def poll_ref_socket(socket_ref, last_vals):
-    while socket_ref.poll(1):
-        bin_message = socket_ref.recv()
-        update_rule = bin_message[:1] == Subscription.rule.value
-        # logger.debug(f'bin_message:{bin_message} update_rule:{update_rule}')
-        ind = int(bin_message[1:3])
-        triggering = int(bin_message[3:4])
-        last_vals['rules' if update_rule else 'triggers'][ind] = triggering
-
-print(str(get_actions()))
+# print(str(getTriggerParams()))
 
 # print(getRuleFormulasDic())
 

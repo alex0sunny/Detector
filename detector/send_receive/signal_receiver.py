@@ -27,7 +27,7 @@ STREAM_NAME = None
 
 def signal_receiver(conn_str, station_bin, triggers_params):
     station = station_bin.decode()
-    show_signal = False     # os.name == 'nt'
+    show_signal = os.name == 'nt'
     # if station != 'ND02':
     #     show_signal = False
 
@@ -49,6 +49,7 @@ def signal_receiver(conn_str, station_bin, triggers_params):
     #stream_reader.connected_event.wait()
     #init_packet = stream_reader.init_packet.copy()
     init_packet = packet[client_name]
+    # print(init_packet)
     STREAM_NAME = list(init_packet['parameters']['streams'].keys())[0]
 
     socket_pub = context.socket(zmq.PUB)

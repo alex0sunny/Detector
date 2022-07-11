@@ -15,7 +15,7 @@ from matplotlib import pyplot
 from obspy import UTCDateTime
 
 from detector.filter_trigger.StaLtaTrigger import logger
-from detector.misc.header_util import pack_ch_header
+#from detector.misc.header_util import pack_ch_header
 from detector.send_receive.tcp_client import TcpClient
 
 
@@ -66,5 +66,5 @@ def receive_original(conn_str):
             pyplot.pause(.1)
 
 
-receive_original('tcp://192.168.0.200:10003')
+receive_original('tcp://192.168.0.226:10001')
 

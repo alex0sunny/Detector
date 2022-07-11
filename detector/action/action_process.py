@@ -4,6 +4,24 @@ from detector.misc.globals import ActionType
 import detector.misc.globals as glob
 
 
+def exec_actions(actions_triggerings, packets_q, njsp, sample_rates, counters, pet_times,
+                 actions_settings, streamers):
+    for date_time, action_id, triggering in actions_triggerings:
+        # logger.debug(f'TEST_TRIGGERINGS:{glob.TEST_TRIGGERINGS}\n'
+        #              f'action_id:{action_id} triggering:{triggering}')
+        action_settings = actions_settings[action_id]
+        main_action(action_id, triggering, packets_q, pet_times, counters,
+                    action_settings.get('pem', 0),
+                    action_settings.get('pet', 0),
+                    action_settings.get('inverse', False),
+                    action_settings.get('message', None),
+                    action_settings.get('address', None), njsp, sample_rates, streamers)
+        if glob.TEST_TRIGGERINGS[action_id] == 1:
+            glob.TEST_TRIGGERINGS[action_id] = -1
+        elif glob.TEST_TRIGGERINGS[action_id] == -1:
+            glob.TEST_TRIGGERINGS[action_id] = 0
+
+
 def get_timing(streams_packet, sample_rates):
     stream_name = list(streams_packet['streams'].keys())[0]
     starttime = streams_packet['streams'][stream_name]['timestamp']

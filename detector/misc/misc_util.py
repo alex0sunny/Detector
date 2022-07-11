@@ -1,4 +1,5 @@
 import time
+from collections import defaultdict
 from time import sleep
 
 import zmq
@@ -18,13 +19,38 @@ def get_expr(formula_list, triggers_dic):
     return ' '.join(expr_list)
 
 
-def get_formula_triggers(formula_list):
-    triggers = []
-    for i in range(len(formula_list)):
-        if not i % 2:
-            trigger_id = int(formula_list[i])
-            triggers.append(trigger_id)
-    return triggers
+def group_triggerings(triggerings, user_triggerings, last_triggerings={}):
+    for date_time, triggering, trigger_id in triggerings:
+        last_triggerings[trigger_id] = triggering
+        user_triggerings[trigger_id].append(triggering)
+        user_triggerings[trigger_id][:-10] = []
+
+
+def fill_out_triggerings(triggers_ids, user_triggerings, last_triggerings):
+    triggerings_out = {}
+    for trigger_id in triggers_ids:
+        if user_triggerings[trigger_id]:
+            triggerings_out[trigger_id] = user_triggerings[trigger_id].pop(0)
+        else:
+            triggerings_out[trigger_id] = last_triggerings[trigger_id]
+    return triggerings_out
+
+
+def to_actions_triggerings(rules_triggerings, rules_settings, actions_triggerings):
+    for date_time, triggering, rule_id in rules_triggerings:
+        for action_id in rules_settings[rule_id]['actions']:
+            actions_triggerings.append((date_time, 1 if triggering else -1, action_id))
+
+
+def append_test_triggerings(actions_triggerings, test_triggerings):
+    for action_id in test_triggerings:
+        triggering = test_triggerings[action_id]
+        if triggering:
+            actions_triggerings.append(float(UTCDateTime()), triggering, action_id)
+        if triggering == 1:
+            test_triggerings[action_id] = -1
+        if triggering == -1:
+            test_triggerings[action_id] = 0
 
 
 def to_action_rules(rule_actions):

@@ -3,7 +3,6 @@ import logging
 from threading import Thread
 from time import sleep
 
-import zmq
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from os.path import curdir, sep
 import os
@@ -13,8 +12,9 @@ from obspy import UTCDateTime
 
 from backend.trigger_html_util import save_pprint_trig, getTriggerParams, save_triggers, update_sockets, post_triggers, \
     save_sources, save_rules, update_rules, apply_sockets_rule, save_actions, \
-    update_triggers_sockets, get_actions, getRuleDic, getSources, create_ref_socket, poll_ref_socket
+    update_triggers_sockets, get_actions_settings, get_rules_settings, getSources
 from detector.misc.globals import Port, Subscription, action_names_dic0, logger, CustomThread
+from detector.misc.misc_util import fill_out_triggerings
 from detector.send_receive.njsp.njsp import NJSP
 from main_prot import worker
 
@@ -27,59 +27,6 @@ def trigger_module():
 
     web_dir = os.path.dirname(__file__)
     os.chdir(web_dir)
-
-    context = zmq.Context()
-    socket_backend = context.socket(zmq.PUB)
-    socket_backend.connect('tcp://localhost:' + str(Port.backend.value))
-
-    socket_test = context.socket(zmq.PUB)
-    socket_test.connect('tcp://localhost:' + str(Port.multi.value))
-
-    conn_str_sub = 'tcp://localhost:' + str(Port.proxy.value)
-
-    sockets_data_dic = {}
-    rule_sockets_dic = {}
-
-    last_vals = {'triggers': {}, 'rules': {}}
-    ref_socket = create_ref_socket(conn_str_sub, context)
-
-    def create_sockets_data():
-        sockets_trigger = {}
-        for trigger_param in getTriggerParams():
-            update_sockets(trigger_param['ind'], conn_str_sub, context, sockets_trigger)
-        return sockets_trigger
-
-    def get_sockets_data(session_id):
-        if session_id not in sockets_data_dic:
-            if len(sockets_data_dic) > 10:
-                for sid in sockets_data_dic:
-                    break
-                sockets_dic = sockets_data_dic.pop(sid)
-                for sock in sockets_dic.values():
-                    sock.close()
-            sockets_data_dic[session_id] = create_sockets_data()
-        return sockets_data_dic[session_id]
-
-    def create_rule_sockets():
-        rule_sockets = {}
-        trigger_dic = {params['ind']: params['name'] for params in getTriggerParams()}
-        for rule_id in sorted(getRuleDic().keys()):
-            update_sockets(rule_id, conn_str_sub, context, rule_sockets, subscription=Subscription.rule.value)
-        return rule_sockets
-
-    def get_rule_sockets(session_id):
-        if session_id not in rule_sockets_dic:
-            if len(rule_sockets_dic) > 10:
-                for sid in rule_sockets_dic:
-                    break
-                sockets_dic = rule_sockets_dic[sid]
-                for sock in sockets_dic.values():
-                    sock.close()
-            rule_sockets_dic[session_id] = create_rule_sockets()
-        return rule_sockets_dic[session_id]
-
-    def restart_core(p):
-        glob.restart = True
 
     # This class will handles any incoming request from
     # the browser
@@ -153,48 +100,32 @@ def trigger_module():
                 self.send_header('Content-type', 'application/json')
                 self.end_headers()
                 self.wfile.write(json.dumps(stations_dic).encode())
-                poll_ref_socket(ref_socket, last_vals)
             if self.path == '/trigger':
                 # logging.info('json_map:' + str(json_map))
                 json_dic = json.loads(post_data_str)
-                session_id = json_dic['sessionId']
-                # logger.debug('session id:' + str(session_id))
                 json_triggers = json_dic['triggers']
-                new_session = session_id not in sockets_data_dic
-                sockets_trigger = get_sockets_data(session_id)
-                if new_session:
-                    # logger.debug(f'new session, last_vals:{last_vals}')
-                    json_map = post_triggers(json_triggers, sockets_trigger, last_vals['triggers'])
-                    # logger.debug(f'response triggerings:{json_map}')
-                else:
-                    json_map = post_triggers(json_triggers, sockets_trigger)
-                    # logger.debug(f'response triggerings:{json_map}')
+                triggers_ids = [int(sid) for sid in json_triggers]
+                triggerings_out = fill_out_triggerings(triggers_ids, glob.USER_TRIGGERINGS,
+                                                       glob.LAST_TRIGGERINGS)
                 self.send_response(200)
                 self.send_header('Content-type', 'application/json')
                 self.end_headers()
-                self.wfile.write(json.dumps(json_map).encode())
+                self.wfile.write(json.dumps({'triggers': triggerings_out}).encode())
             if self.path == '/rule':
                 json_dic = json.loads(post_data_str)
-                session_id = json_dic['sessionId']
-                new_session = session_id not in sockets_data_dic
-                # logger.debug('session id:' + str(session_id))
                 json_triggers = json_dic['triggers']
-                sockets_trigger = get_sockets_data(session_id)
-                if new_session:
-                    json_map = post_triggers(json_triggers, sockets_trigger, last_vals['triggers'])
-                else:
-                    json_map = post_triggers(json_triggers, sockets_trigger)
-                sockets_rule = get_rule_sockets(session_id)
+                triggers_ids = [int(sid) for sid in json_triggers]
+                triggerings_out = fill_out_triggerings(triggers_ids, glob.USER_TRIGGERINGS,
+                                                       glob.LAST_TRIGGERINGS)
                 rules_dic = json_dic['rules']
-                if new_session:
-                    rules_dic = update_rules(rules_dic, sockets_rule, last_vals['rules'])
-                else:
-                    rules_dic = update_rules(rules_dic, sockets_rule)
-                json_map['rules'] = rules_dic
+                rules_ids = [int(sid) for sid in rules_dic]
+                rules_out = fill_out_triggerings(rules_ids, glob.URULES_TRIGGERINGS,
+                                                 glob.LAST_RTRIGGERINGS)
                 self.send_response(200)
                 self.send_header('Content-type', 'application/json')
                 self.end_headers()
-                self.wfile.write(json.dumps(json_map).encode())
+                self.wfile.write(json.dumps({'rules': rules_out,
+                                             'triggers': triggerings_out}).encode())
             if self.path == '/initRule':
                 params_list = getTriggerParams()
                 logger.debug('params_list:' + str(params_list))
@@ -204,7 +135,7 @@ def trigger_module():
                 self.end_headers()
                 # print('trigger ids' + str(trigger_ids))
                 json_dic = {'triggers': trigger_dic, 'actions': action_names_dic0.copy()}
-                actions_dic = get_actions()
+                actions_dic = get_actions_settings()
                 logger.debug('getActions:' + str(actions_dic))
                 sms_dic = actions_dic.get('sms', {})
                 sms_dic = {sms_id: sms_dic[sms_id]['name'] for sms_id in sms_dic}
@@ -212,7 +143,6 @@ def trigger_module():
                 json_dic['actions'].update(sms_dic)
                 logger.debug('actions_dic:' + str(json_dic['actions']))
                 self.wfile.write(json.dumps(json_dic).encode())
-                poll_ref_socket(ref_socket, last_vals)
             if self.path == '/apply':
                 self.send_response(200)
                 self.send_header('Content-type', 'application/json')
@@ -233,11 +163,9 @@ def trigger_module():
                 glob.restart = True
             if self.path == '/saveSources':
                 save_sources(post_data_str)
-                socket_backend.send(b'AP')
                 glob.restart = True
             if self.path == '/applyActions':
                 save_actions(post_data_str)
-                socket_backend.send(b'AP')
                 glob.restart = True
             if self.path == '/testActions':
                 test_triggerings = {int(id): v for id, v in json.loads(post_data_str).items()}
@@ -251,7 +179,6 @@ def trigger_module():
         server = HTTPServer(('', PORT_NUMBER), CustomHandler)
         print
         'Started httpserver on port ', PORT_NUMBER
-        exit(1)
 
         # Wait forever for incoming htto requests
         server.serve_forever()

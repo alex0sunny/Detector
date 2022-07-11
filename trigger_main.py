@@ -4,9 +4,9 @@ from threading import Thread
 
 import zmq
 
-from backend.trigger_html_util import getTriggerParams, getSources, getActions, getRuleDic
+from backend.trigger_html_util import getTriggerParams, getSources, get_actions_settings, get_rules_settings
 #from backend.web_server import web_server
-from detector.action.action_process import action_process, sms_process
+from detector.action.action_process import main_action, sms_process
 from detector.action.relay_actions import turn
 from detector.action.send_email import send_email
 from detector.action.send_sms import send_sms
@@ -51,7 +51,7 @@ if __name__ == '__main__':
 
         kwargs_list = []
 
-        action_params = getActions()
+        action_params = get_actions_settings()
         # print('action_params:' + str(action_params))
         # exit(1)
         action_names_dic = {}
@@ -59,7 +59,7 @@ if __name__ == '__main__':
         sms_dic0 = action_params.get('sms', {})
         sms_dic = {sms_id: sms_dic0[sms_id]['name'] for sms_id in sms_dic0}
         action_names_dic.update(sms_dic)
-        rule_dic = getRuleDic()
+        rule_dic = get_rules_settings()
         #print('rule_dic:' + str(rule_dic) + '\naction_names_dic:' + str(action_names_dic))
         rule_actions = {rule: rule_dic[rule]['actions'] for rule in rule_dic}
         #print('rule_actions:' + str(rule_actions))
@@ -94,7 +94,7 @@ if __name__ == '__main__':
             if action_id in action_rules:
                 rules = action_rules[action_id]
             #print('pet:' + str(action_params['relay'][relay_k]['pet']))
-            kwargs_list.append({'target': action_process,
+            kwargs_list.append({'target': main_action,
                                 'kwargs': {'action_id': action_id, 'rules': rules, 'send_func': turn,
                                            'args': {'inverse':  action_params['relay'][relay_k]['inverse']},
                                            'infinite': action_params['relay'][relay_k]['infinite'],

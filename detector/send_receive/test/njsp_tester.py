@@ -10,8 +10,8 @@ from detector.send_receive.njsp.njsp import NJSP
 show_signal = True
 
 host = 'localhost'
-port = 10011
-station = 'NDXX'
+port = 10001
+station = 'ND01'
 sample_rate = init_packet = check_time = None
 
 logpath = None

@@ -1,6 +1,7 @@
 # ports_map = {'signal': 10003, 'test_signal': 5555, 'signal_route': 5559, 'internal_resend': 5560,
 #              'signal_resend': 5561, 'trigger': 5562, 'backend': 5563}
 import ctypes
+from collections import defaultdict
 from enum import Enum
 import threading
 from threading import Thread
@@ -41,6 +42,10 @@ class ActionType(Enum):
 
 
 TEST_TRIGGERINGS = {}
+USER_TRIGGERINGS = defaultdict(list)
+LAST_TRIGGERINGS = defaultdict(int)
+URULES_TRIGGERINGS = defaultdict(list)
+LAST_RTRIGGERINGS = defaultdict(int)
 
 
 class Port(Enum):

@@ -1,15 +1,22 @@
+from collections import defaultdict
+
+import numpy as np
 from obspy import UTCDateTime
 
 import detector.misc.globals as glob
 from detector.action.action_pipe import execute_action
+from detector.filter_trigger.StaLtaTrigger import TriggerWrapper
+from detector.filter_trigger.construct_triggers import construct_triggers
+from detector.filter_trigger.rule import rule_picker
 from detector.misc.globals import ActionType
 from copy import deepcopy
 from queue import Queue, Empty
 from time import sleep
 
-from backend.trigger_html_util import getSources, get_actions
-from detector.action.action_process import main_action
+from backend.trigger_html_util import getSources, get_actions_settings, getTriggerParams, set_source_channels, get_rules_settings
+from detector.action.action_process import exec_actions
 from detector.misc.globals import logger
+from detector.misc.misc_util import group_triggerings, to_actions_triggerings, append_test_triggerings
 
 base_params = {
     'reconnect': True,
@@ -36,6 +43,13 @@ def worker(njsp):
 
         counters = {}
         pet_times = {}
+        ks = defaultdict(dict)
+
+        triggerings = []
+        rules_triggerings = []
+        actions_triggerings = []
+
+        rules_settings = get_rules_settings()
 
         sources = getSources()
         for station in sources:
@@ -46,7 +60,7 @@ def worker(njsp):
                                                njsp_params, njsp_queue)
 
         glob.TEST_TRIGGERINGS = {}
-        actions_settings = get_actions()
+        actions_settings = get_actions_settings()
         for action_id in [ActionType.relay_A.value, ActionType.relay_B.value]:
             execute_action(action_id, 0, actions_settings[action_id].get('inverse', False))
         for action_id in actions_settings:
@@ -54,6 +68,8 @@ def worker(njsp):
             glob.TEST_TRIGGERINGS[action_id] = 0
             # glob.TEST_TRIGGERINGS[action_id] = -1 if action_id in \
             #     [ActionType.relay_A.value, ActionType.relay_B.value] else 0
+
+        triggers = construct_triggers(getTriggerParams())
 
         while not glob.restart:
             try:
@@ -67,39 +83,52 @@ def worker(njsp):
                                                'ringbuffer_size': 10}
                             streamers[station] = njsp.add_streamer('', sources[station]['out_port'],
                                                                    streamer_params)
-                            sample_rates[station] = content['streams'][station]['sample_rate']
+                            station_data = content['streams'][station]
+                            sample_rates[station] = station_data['sample_rate']
+                            chans = list(station_data['channels'].keys())
+                            set_source_channels(station, chans)
+                            for chan in chans:
+                                ks[station][chan] = \
+                                    station_data['channels'][chan]['counts_in_volt']
+                            for trigger_list in triggers[station].values():
+                                for trigger in trigger_list:
+                                    trigger.set_sample_rate(sample_rates[station])
                         if 'streams' == packet_type:
                             packets_q.append({packet_type: content})
+                            starttime = UTCDateTime(content[station]['timestamp'])
+                            channels_data = content[station]['samples']
+                            # logger.debug(f'channels:{list(channels_data.keys())}')
+                            for chan, bytez in channels_data.items():
+                                k = ks[station][chan]
+                                data = np.frombuffer(bytez, 'int').astype('float') / k
+                                for trigger in triggers.get(station, {}).get(chan, []):
+                                    triggerings.extend(trigger.pick(starttime, data))
+                triggerings.sort()
+                # process triggerings and clear after that
+                for rule_id, rule_settings in rules_settings:
+                    rules_triggerings.extend(rule_picker(rule_id, triggerings,
+                                                         rule_settings['triggers'],
+                                                         rule_settings['formula']))
+                rules_triggerings.sort()
+                to_actions_triggerings(rules_triggerings, rules_settings, actions_triggerings)
+                append_test_triggerings(actions_triggerings, glob.TEST_TRIGGERINGS)
+                actions_triggerings.sort()
+                group_triggerings(triggerings, glob.USER_TRIGGERINGS, glob.LAST_TRIGGERINGS)
+                group_triggerings(rules_triggerings, glob.URULES_TRIGGERINGS, glob.LAST_RTRIGGERINGS)
             except Empty:
-                #logger.info('no data')
                 pass
-                # logger.debug('packets:\n' + str(packets_data))
             packets_q[:-glob.PBUF_SIZE] = []
-            exec_actions(packets_q, njsp, sample_rates, counters, pet_times,
-                         actions_settings, streamers)
+            exec_actions(actions_triggerings, packets_q, njsp, sample_rates, counters,
+                         pet_times, actions_settings, streamers)
+            triggerings.clear()
+            rules_triggerings.clear()
+            actions_triggerings.clear()
 
         conns = list(streamers.values()) + list(readers.values())
         for conn in conns:
             njsp.remove(conn)
         while set(conns) & set(njsp.handles):
             sleep(.1)
-
-
-def exec_actions(packets_q, njsp, sample_rates, counters, pet_times, actions_settings, streamers):
-    for action_id, action_settings in actions_settings.items():
-        triggering = glob.TEST_TRIGGERINGS[action_id]
-        # logger.debug(f'TEST_TRIGGERINGS:{glob.TEST_TRIGGERINGS}\n'
-        #              f'action_id:{action_id} triggering:{triggering}')
-        main_action(action_id, triggering, packets_q, pet_times, counters,
-                    action_settings.get('pem', 0),
-                    action_settings.get('pet', 0),
-                    action_settings.get('inverse', False),
-                    action_settings.get('message', None),
-                    action_settings.get('address', None), njsp, sample_rates, streamers)
-        if triggering == 1:
-            glob.TEST_TRIGGERINGS[action_id] = -1
-        elif triggering == -1:
-            glob.TEST_TRIGGERINGS[action_id] = 0
 
 
 def rename_packet(packet_type, content, station):

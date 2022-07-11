@@ -23,23 +23,43 @@ def handle_data(trace):
     #print('trace %s appended to stream %s' % (trace, st))
 
 
-#client = create_client('rtserve.iris.washington.edu', on_data=handle_data)
-#client = create_client('192.168.0.226', on_data=handle_data)
-client = create_client('193.232.109.121', on_data=handle_data)
+#client_us = create_client('rtserve.iris.washington.edu', on_data=handle_data)
+#client_fr = create_client('rtserver.ipgp.fr', on_data=handle_data)
+#client = create_client('192.168.0.178', on_data=handle_data)
+client = create_client('192.168.0.240', on_data=handle_data)
 #client = create_client('81.26.81.45', on_data=handle_data)
 print(client.get_info('streams'))
+#exit(1)
 print()
 print(client.get_info('ALL'))
+#exit(1)
+print()
+#print(client_fr.get_info('streams'))
+#print()
+#print(client_fr.get_info('ALL'))
 
-#client.select_stream('IU', 'ANMO', 'BH?')
+
+#client_us.select_stream('IU', 'ANMO', 'BH?')
+#client_fr.select_stream('RU', 'DEVA', 'CH?')
 #client.select_stream('KS', 'SHAR', 'S2?')
-client.select_stream('RU', 'ND01', 'BH?')
+#client.select_stream('RU', 'ND01', 'CH?')
+client.select_stream('RU', 'ND02', 'CH?')
+#client.select_stream('RU', 'ND14', 'C??')
+#client.select_stream('RU', 'NADC', 'CH?')
+
+
+#geofon.gfz-potsdam.de
+
+
+# def f_receiver_fr():
+#     client_fr.run()
 
 
 def f_receiver():
     client.run()
 
 
+# Thread(target=f_receiver_fr).start()
 Thread(target=f_receiver).start()
 
 

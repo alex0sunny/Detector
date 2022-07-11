@@ -1,23 +1,24 @@
-import os, sys, json, zmq, logging
+import os, sys, json, logging
 from com_main_module import COMMON_MAIN_MODULE_CLASS
 from time import sleep, time
 from signal import SIGTERM
 from obspy import UTCDateTime
 from subprocess import Popen, PIPE
+from queue import Queue, Empty
 
 sys.path.append(os.path.dirname(__file__))
 
 from backend.trigger_html_util import save_pprint_trig, getTriggerParams, \
     save_triggers, update_sockets, post_triggers, \
     save_sources, save_rules, update_rules, apply_sockets_rule, save_actions, \
-    update_triggers_sockets, getActions, getRuleDic, getSources, \
+    update_triggers_sockets, get_actions_settings, get_rules_settings, getSources, \
     create_ref_socket, poll_ref_socket
 from detector.misc.globals import Port, Subscription, action_names_dic0, CustomThread
 
 from threading import Thread
 from multiprocessing import Process
 
-from detector.action.action_process import action_process, sms_process
+from detector.action.action_process import main_action, sms_process
 from detector.action.relay_actions import turn
 from detector.action.send_email import send_email
 from detector.action.send_sms import send_sms
@@ -27,64 +28,12 @@ from detector.misc.misc_util import to_action_rules
 from detector.send_receive.signal_receiver import signal_receiver
 from detector.send_receive.triggers_proxy import triggers_proxy
 
-context = zmq.Context()
-
-socket_backend = context.socket(zmq.PUB)
-socket_backend.connect('tcp://localhost:' + str(Port.backend.value))
-
-socket_test = context.socket(zmq.PUB)
-socket_test.connect('tcp://localhost:' + str(Port.multi.value))
-
-conn_str_sub = 'tcp://localhost:' + str(Port.proxy.value)
-
-sockets_data_dic = {}
-rule_sockets_dic = {}
-
 last_vals = {'triggers': {}, 'rules': {}}
-ref_socket = create_ref_socket(conn_str_sub, context)
-
-
-def create_sockets_data():
-    sockets_trigger = {}
-    for trigger_param in getTriggerParams():
-        update_sockets(trigger_param['ind'], conn_str_sub, context, sockets_trigger)
-    return sockets_trigger
-
-
-def get_sockets_data(session_id):
-    if session_id not in sockets_data_dic:
-        if len(sockets_data_dic) > 10:
-            for sid in sockets_data_dic:
-                break
-            sockets_dic = sockets_data_dic[sid]
-            for sock in sockets_dic.values():
-                sock.close()
-        sockets_data_dic[session_id] = create_sockets_data()
-    return sockets_data_dic[session_id]
-
-
-def create_rule_sockets():
-    rule_sockets = {}
-    trigger_dic = {params['ind']: params['name'] for params in getTriggerParams()}
-    for rule_id in sorted(getRuleDic().keys()):
-        update_sockets(rule_id, conn_str_sub, context, rule_sockets, subscription=Subscription.rule.value)
-    return rule_sockets
-
-
-def get_rule_sockets(session_id):
-    if session_id not in rule_sockets_dic:
-        if len(rule_sockets_dic) > 10:
-            for sid in rule_sockets_dic:
-                break
-            sockets_dic = rule_sockets_dic[sid]
-            for sock in sockets_dic.values():
-                sock.close()
-        rule_sockets_dic[session_id] = create_rule_sockets()
-    return rule_sockets_dic[session_id]
 
 
 class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
-    def __init__(self, trigger_fxn, standalone=False):
+
+    def __init__(self, njsp, trigger_fxn, standalone=False):
 
         logger_config = {
             'logger_name': 'trigger',
@@ -102,7 +51,7 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
 
         web_ui_dir = os.path.join(os.path.dirname(__file__), "backend")
         # self._print('Initializing trigger module...')
-        super().__init__(standalone, config_params, logger_config, web_ui_dir=web_ui_dir)
+        super().__init__(standalone, config_params, njsp, logger_config, web_ui_dir=web_ui_dir)
         self.message = 'Stopped'
         config = self.get_config()
         # self._print('config:\n' + str(config) + '\n')
@@ -125,76 +74,44 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
 
             if path == 'initTrigger':
                 response_dic = getSources()
-                poll_ref_socket(ref_socket, last_vals)
             if path == 'trigger':
-                session_id = request_dic['sessionId']
                 triggers = request_dic['triggers']
-                new_session = session_id not in sockets_data_dic
-                sockets_trigger = get_sockets_data(session_id)
-                if new_session:
-                    response_dic = post_triggers(triggers, sockets_trigger,
-                                                 last_vals['triggers'])
-                else:
-                    response_dic = post_triggers(triggers, sockets_trigger)
             if path == 'rule':
-                session_id = request_dic['sessionId']
                 triggers = request_dic['triggers']
-                new_session = session_id not in sockets_data_dic
-                sockets_trigger = get_sockets_data(session_id)
-                if new_session:
-                    response_dic = post_triggers(triggers, sockets_trigger,
-                                                 last_vals['triggers'])
-                else:
-                    response_dic = post_triggers(triggers, sockets_trigger)
-                sockets_rule = get_rule_sockets(session_id)
                 rules = request_dic['rules']
-                if new_session:
-                    rules = update_rules(rules, sockets_rule, last_vals['rules'])
-                else:
-                    rules = update_rules(rules, sockets_rule)
                 response_dic['rules'] = rules
             if path == 'initRule':
                 params_list = getTriggerParams()
                 trigger_dic = {params['ind']: params['name'] for params in params_list}
                 response_dic = {'triggers': trigger_dic,
                                 'actions': action_names_dic0.copy()}
-                actions_dic = getActions()
+                actions_dic = get_actions_settings()
                 sms_dic = actions_dic.get('sms', {})
                 sms_dic = {sms_id: sms_dic[sms_id]['name'] for sms_id in sms_dic}
                 response_dic['actions'].update(sms_dic)
-                poll_ref_socket(ref_socket, last_vals)
             if path == 'apply':
                 response_dic = {'apply': 1}
             if path == 'applyRules':
                 session_id = request_dic['sessionId']
                 html = request_dic['html']
                 save_rules(html)
-                sockets_rule = get_rule_sockets(session_id)
-                apply_sockets_rule(conn_str_sub, context, sockets_rule)
-                socket_backend.send(b'AP')
                 self.restarting = True
             if path == 'save':
                 session_id = request_dic['sessionId']
                 html = request_dic['html']
                 save_triggers(html)
-                sockets_trigger = get_sockets_data(session_id)
-                update_triggers_sockets(conn_str_sub, context, sockets_trigger)
-                socket_backend.send(b'AP')
                 self.restarting = True
             if path == 'saveSources':
                 save_sources(content.decode())
-                socket_backend.send(b'AP')
                 self.restarting = True
             if path == 'applyActions':
                 save_actions(content.decode())
-                socket_backend.send(b'AP')
                 self.restarting = True
             if path == 'testActions':
                 ids = request_dic['ids']
                 for action_id in ids:
                     action_id_s = '%02d' % action_id
                     bin_message = Subscription.test.value + action_id_s.encode()
-                    socket_test.send(bin_message)
 
             if response_dic:
                 content = json.dumps(response_dic).encode()
@@ -206,8 +123,8 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
     def main(self):
         workdir = os.path.dirname(__file__)
         config = self.get_config()
-        p = Popen(['python3', workdir + '/trigger_main.py'],
-                  preexec_fn=os.setsid)
+        # p = Popen(['python3', workdir + '/trigger_main.py'],
+        #           preexec_fn=os.setsid)
         # p = Popen(['python3', '/var/lib/cloud9/trigger/trigger_main.py'],
         #             stdout=PIPE, shell=True, preexec_fn=os.setsid)
 
@@ -215,48 +132,41 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
             self.config.set_config(config)
             self.config.error = None
         self.message = 'Starting...'
+        station, conn_data = getSources().items()[0]
+        njsp_params = {
+            'reconnect': True,
+            'reconnect_period': 30,
+            'bson': True,
+            'handshake': {
+                'subscriptions': ['status', 'log', 'streams', 'alarms'],
+                'flush_buffer': True,
+                'client_name': 'TRIG'
+            }
+        }
+        njsp_queue = Queue(100)
+        host = conn_data['host']
+        port = conn_data['port']
+        reader_id = self.njsp.add_reader(host, port, 'TRIG', njsp_params, njsp_queue)
         check_time = UTCDateTime() + 60
         while not self.shutdown_event.is_set():
             # sleep(1)
-            context = zmq.Context()
-            socket_sub = context.socket(zmq.SUB)
-            from detector.misc.globals import Port, Subscription
-            socket_sub.connect('tcp://localhost:' + str(Port.proxy.value))
-            socket_sub.setsockopt(zmq.SUBSCRIBE, Subscription.signal.value)
-
-            # read new packets in loop, abort if connection fails or shutdown event is set
             while not self.shutdown_event.is_set():
-                if self.restarting:
-                    self.errors = []
-                    self.message = 'Restarting...'
+                if not self.njsp.isalive(reader_id):
+                    self.message = 'Connecting...'
                     check_time = UTCDateTime() + 60
-                    self.restarting = False
-                if socket_sub.poll(3000):
-                    self.errors = []
-                    poll_ref_socket(ref_socket, last_vals)
-                    if any(last_vals['rules'].values()):
-                        self.message = 'TRIGGERED'
-                    else:
-                        self.message = 'Running'
-                    # self._print('data received')
-                    try:
-                        # self._print('flush socket')
-                        while True:
-                            socket_sub.recv(zmq.NOBLOCK)
-                    except zmq.ZMQError:
-                        # self._print('socket flushed')
-                        pass
+                self.message = 'Running'
+                try:
+                    packets = njsp_queue.get(timeout=1)
+                    for packet_type, content in packets.items():
+                        if packet_type == 'streams':
+                            for stream_name, stream_data in content.items():
+                                for ch_name in stream_data:
+                                    stream_data[ch_name] = len(stream_data[ch_name])
+                    self.logger.info('packets:\n' + str(packets))
+                except Empty:
                     continue
-                elif UTCDateTime() < check_time:
-                    if self.message != 'Starting...':
-                        self.message = 'Restarting...'
-                else:
-                    self.errors = ['No stations online']
-                    self.message = self.errors[-1]
             self.message = 'Stopped'
-            socket_sub.close()
-            context.destroy()
 
-        os.killpg(os.getpgid(p.pid), SIGTERM)
+        # os.killpg(os.getpgid(p.pid), SIGTERM)
         self.module_alive = False
         # self._print('Main thread exited')
