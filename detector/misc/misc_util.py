@@ -5,7 +5,7 @@ from time import sleep
 import zmq
 from obspy import UTCDateTime
 
-from detector.misc.globals import Port, Subscription
+from detector.misc.globals import Port, Subscription, logger
 
 
 def get_expr(formula_list, triggers_dic):
@@ -15,7 +15,8 @@ def get_expr(formula_list, triggers_dic):
         if i % 2:
             expr_list.append(expr_item)
         else:
-            expr_list.append(str(triggers_dic.get(int(expr_item), False)))
+            val = triggers_dic[expr_item]
+            expr_list.append(str(val))
     return ' '.join(expr_list)
 
 
@@ -45,8 +46,7 @@ def to_actions_triggerings(rules_triggerings, rules_settings, actions_triggering
 def append_test_triggerings(actions_triggerings, test_triggerings):
     for action_id in test_triggerings:
         triggering = test_triggerings[action_id]
-        if triggering:
-            actions_triggerings.append(float(UTCDateTime()), triggering, action_id)
+        actions_triggerings.append((float(UTCDateTime()), triggering, action_id))
         if triggering == 1:
             test_triggerings[action_id] = -1
         if triggering == -1:

@@ -1,34 +1,32 @@
-import os, sys, json, logging
-from com_main_module import COMMON_MAIN_MODULE_CLASS
-from time import sleep, time
-from signal import SIGTERM
-from obspy import UTCDateTime
-from subprocess import Popen, PIPE
+import json
+import logging
+import os
+import sys
+from collections import defaultdict
+from copy import deepcopy
 from queue import Queue, Empty
+from time import sleep
+
+import numpy as np
+from com_main_module import COMMON_MAIN_MODULE_CLASS
+from obspy import UTCDateTime
+
+import detector.misc.globals as glob
+from detector.action.action_pipe import execute_action
+from detector.filter_trigger.construct_triggers import construct_triggers
+from main_prot import rename_packet
 
 sys.path.append(os.path.dirname(__file__))
 
-from backend.trigger_html_util import save_pprint_trig, getTriggerParams, \
-    save_triggers, update_sockets, post_triggers, \
-    save_sources, save_rules, update_rules, apply_sockets_rule, save_actions, \
-    update_triggers_sockets, get_actions_settings, get_rules_settings, getSources, \
-    create_ref_socket, poll_ref_socket
-from detector.misc.globals import Port, Subscription, action_names_dic0, CustomThread
+from backend.trigger_html_util import getTriggerParams, \
+    save_triggers, save_sources, save_rules, save_actions, \
+    get_actions_settings, get_rules_settings, get_sources_settings, set_source_channels
+from detector.misc.globals import action_names_dic0, ActionType, ConnState
 
-from threading import Thread
-from multiprocessing import Process
-
-from detector.action.action_process import main_action, sms_process
-from detector.action.relay_actions import turn
-from detector.action.send_email import send_email
-from detector.action.send_sms import send_sms
+from detector.action.action_process import exec_actions
 from detector.filter_trigger.rule import rule_picker
-from detector.filter_trigger.rule_resender import resend
-from detector.misc.misc_util import to_action_rules
-from detector.send_receive.signal_receiver import signal_receiver
-from detector.send_receive.triggers_proxy import triggers_proxy
-
-last_vals = {'triggers': {}, 'rules': {}}
+from detector.misc.misc_util import fill_out_triggerings, append_test_triggerings, \
+    to_actions_triggerings, group_triggerings
 
 
 class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
@@ -52,10 +50,11 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
         web_ui_dir = os.path.join(os.path.dirname(__file__), "backend")
         # self._print('Initializing trigger module...')
         super().__init__(standalone, config_params, njsp, logger_config, web_ui_dir=web_ui_dir)
-        self.message = 'Stopped'
+        self.message = 'starting...'
         config = self.get_config()
         # self._print('config:\n' + str(config) + '\n')
         self.restarting = False
+        self.njsp = njsp
 
     def custom_web_ui_request(self, in_data):
         path = in_data['path']  # .split('?')
@@ -68,18 +67,29 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
                         'c_type': 'image/' + ext}
         if in_data['type'] == 'post':
             content = in_data['binary_content']
-            response_dic = None
+            response_dic = {}
             if content and path not in ['saveSources', 'applyActions']:
                 request_dic = json.loads(content.decode())
 
             if path == 'initTrigger':
-                response_dic = getSources()
+                response_dic = get_sources_settings()
             if path == 'trigger':
                 triggers = request_dic['triggers']
+                triggers_ids = [int(sid) for sid in triggers]
+                triggerings_out = fill_out_triggerings(triggers_ids, glob.USER_TRIGGERINGS,
+                                                       glob.LAST_TRIGGERINGS)
+                response_dic['triggers'] = triggerings_out
             if path == 'rule':
                 triggers = request_dic['triggers']
+                triggers_ids = [int(sid) for sid in triggers]
+                triggerings_out = fill_out_triggerings(triggers_ids, glob.USER_TRIGGERINGS,
+                                                       glob.LAST_TRIGGERINGS)
+                response_dic['triggers'] = triggerings_out
                 rules = request_dic['rules']
-                response_dic['rules'] = rules
+                rules_ids = [int(sid) for sid in rules]
+                rules_out = fill_out_triggerings(rules_ids, glob.URULES_TRIGGERINGS,
+                                                 glob.LAST_RTRIGGERINGS)
+                response_dic['rules'] = rules_out
             if path == 'initRule':
                 params_list = getTriggerParams()
                 trigger_dic = {params['ind']: params['name'] for params in params_list}
@@ -91,27 +101,26 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
                 response_dic['actions'].update(sms_dic)
             if path == 'apply':
                 response_dic = {'apply': 1}
+                glob.restart = True
             if path == 'applyRules':
                 session_id = request_dic['sessionId']
                 html = request_dic['html']
                 save_rules(html)
-                self.restarting = True
+                self.restarting = glob.restart = True
             if path == 'save':
                 session_id = request_dic['sessionId']
                 html = request_dic['html']
                 save_triggers(html)
-                self.restarting = True
+                self.restarting = glob.restart = True
             if path == 'saveSources':
                 save_sources(content.decode())
-                self.restarting = True
+                self.restarting = glob.restart = True
             if path == 'applyActions':
                 save_actions(content.decode())
-                self.restarting = True
+                self.restarting = glob.restart = True
             if path == 'testActions':
-                ids = request_dic['ids']
-                for action_id in ids:
-                    action_id_s = '%02d' % action_id
-                    bin_message = Subscription.test.value + action_id_s.encode()
+                test_triggerings = {int(aid): v for aid, v in request_dic.items()}
+                glob.TEST_TRIGGERINGS.update(test_triggerings)
 
             if response_dic:
                 content = json.dumps(response_dic).encode()
@@ -123,50 +132,131 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
     def main(self):
         workdir = os.path.dirname(__file__)
         config = self.get_config()
-        # p = Popen(['python3', workdir + '/trigger_main.py'],
-        #           preexec_fn=os.setsid)
-        # p = Popen(['python3', '/var/lib/cloud9/trigger/trigger_main.py'],
-        #             stdout=PIPE, shell=True, preexec_fn=os.setsid)
 
         if self.config.error:
             self.config.set_config(config)
             self.config.error = None
+        logger = glob.logger = self.logger
         self.message = 'Starting...'
-        station, conn_data = getSources().items()[0]
-        njsp_params = {
+        base_params = {
             'reconnect': True,
             'reconnect_period': 30,
             'bson': True,
             'handshake': {
                 'subscriptions': ['status', 'log', 'streams', 'alarms'],
-                'flush_buffer': True,
-                'client_name': 'TRIG'
+                'flush_buffer': False,
+                'client_name': 'NOTSET'
             }
         }
-        njsp_queue = Queue(100)
-        host = conn_data['host']
-        port = conn_data['port']
-        reader_id = self.njsp.add_reader(host, port, 'TRIG', njsp_params, njsp_queue)
-        check_time = UTCDateTime() + 60
-        while not self.shutdown_event.is_set():
-            # sleep(1)
-            while not self.shutdown_event.is_set():
-                if not self.njsp.isalive(reader_id):
-                    self.message = 'Connecting...'
-                    check_time = UTCDateTime() + 60
-                self.message = 'Running'
-                try:
-                    packets = njsp_queue.get(timeout=1)
-                    for packet_type, content in packets.items():
-                        if packet_type == 'streams':
-                            for stream_name, stream_data in content.items():
-                                for ch_name in stream_data:
-                                    stream_data[ch_name] = len(stream_data[ch_name])
-                    self.logger.info('packets:\n' + str(packets))
-                except Empty:
-                    continue
-            self.message = 'Stopped'
 
-        # os.killpg(os.getpgid(p.pid), SIGTERM)
+        while not self.shutdown_event.is_set():
+            glob.restart = False
+            njsp_queue = Queue(100)
+            packets_q = []
+            readers = {}
+            streamers = {}
+            sample_rates = {}
+
+            counters = {}
+            pet_times = {}
+            ks = defaultdict(dict)
+
+            triggerings = []
+            rules_triggerings = []
+            actions_triggerings = []
+
+            rules_settings = get_rules_settings()
+
+            sources = get_sources_settings()
+            for station in sources:
+                njsp_params = deepcopy(base_params)
+                njsp_params['handshake']['client_name'] = station
+                conn_data = sources[station]
+                readers[station] = self.njsp.add_reader(conn_data['host'], int(conn_data['port']), station,
+                                                        njsp_params, njsp_queue)
+
+            glob.TEST_TRIGGERINGS = {}
+            actions_settings = get_actions_settings()
+            for action_id in [ActionType.relay_A.value, ActionType.relay_B.value]:
+                execute_action(action_id, 0, actions_settings[action_id].get('inverse', False))
+            for action_id in actions_settings:
+                counters[action_id] = pet_times[action_id] = 0
+                glob.TEST_TRIGGERINGS[action_id] = 0
+                # glob.TEST_TRIGGERINGS[action_id] = -1 if action_id in \
+                #     [ActionType.relay_A.value, ActionType.relay_B.value] else 0
+
+            triggers = construct_triggers(getTriggerParams())
+
+            check_time = UTCDateTime()
+            glob.CONN_STATE = ConnState.CONNECTING
+            while not glob.restart and not self.shutdown_event.is_set():
+                self.message = glob.CONN_STATE.name.lower()
+                cur_time = UTCDateTime()
+                try:
+                    packets_data = njsp_queue.get(timeout=1)
+                    check_time = cur_time
+                    glob.CONN_STATE = ConnState.CONNECTED
+                    for conn_name, dev_packets in packets_data.items():
+                        station = conn_name.split(':')[1]
+                        for packet_type, content in dev_packets.items():
+                            packet_type, content = rename_packet(packet_type, content, station)
+                            if 'parameters' == packet_type and station not in streamers:
+                                streamer_params = {'init_packet': {'parameters': content.copy()},
+                                                   'ringbuffer_size': 10}
+                                streamers[station] = self.njsp.add_streamer('', sources[station]['out_port'],
+                                                                            streamer_params)
+                                station_data = content['streams'][station]
+                                sample_rates[station] = station_data['sample_rate']
+                                chans = list(station_data['channels'].keys())
+                                set_source_channels(station, chans)
+                                for chan in chans:
+                                    ks[station][chan] = \
+                                        station_data['channels'][chan]['counts_in_volt']
+                                for trigger_list in triggers[station].values():
+                                    for trigger in trigger_list:
+                                        trigger.set_sample_rate(sample_rates[station])
+                            if 'streams' == packet_type:
+                                packets_q.append({packet_type: content})
+                                starttime = UTCDateTime(content[station]['timestamp'])
+                                channels_data = content[station]['samples']
+                                # logger.debug(f'channels:{list(channels_data.keys())}')
+                                for chan, bytez in channels_data.items():
+                                    k = ks[station][chan]
+                                    data = np.frombuffer(bytez, 'int').astype('float') / k
+                                    for trigger in triggers.get(station, {}).get(chan, []):
+                                        triggerings.extend(trigger.pick(starttime, data))
+                    triggerings.sort()
+                    # process triggerings and clear after that
+                    for rule_id, rule_settings in rules_settings.items():
+                        rules_triggerings.extend(rule_picker(rule_id, triggerings,
+                                                             rule_settings['triggers_ids'],
+                                                             rule_settings['formula']))
+                    rules_triggerings.sort()
+                    # logger.debug(f'rules_triggerings:{rules_triggerings}')
+                    to_actions_triggerings(rules_triggerings, rules_settings, actions_triggerings)
+                    actions_triggerings.sort()
+                    group_triggerings(triggerings, glob.USER_TRIGGERINGS, glob.LAST_TRIGGERINGS)
+                    group_triggerings(rules_triggerings, glob.URULES_TRIGGERINGS, glob.LAST_RTRIGGERINGS)
+                except Empty:
+                    if cur_time > check_time + 10:
+                        glob.CONN_STATE = ConnState.NO_CONNECTION
+                packets_q[:-glob.PBUF_SIZE] = []
+                if any(glob.TEST_TRIGGERINGS.values()):
+                    logger.debug(f'test triggerings:{glob.TEST_TRIGGERINGS}')
+                append_test_triggerings(actions_triggerings, glob.TEST_TRIGGERINGS)
+                # logger.debug(f'actions triggerings:{actions_triggerings}')
+                exec_actions(actions_triggerings, packets_q, self.njsp, sample_rates, counters,
+                             pet_times, actions_settings, streamers)
+                triggerings.clear()
+                rules_triggerings.clear()
+                actions_triggerings.clear()
+
+            conns = list(streamers.values()) + list(readers.values())
+            for conn in conns:
+                self.njsp.remove(conn)
+            while set(conns) & set(self.njsp.handles):
+                sleep(.1)
+
         self.module_alive = False
+        self.message = 'Stopped'
         # self._print('Main thread exited')

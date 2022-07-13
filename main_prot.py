@@ -13,9 +13,9 @@ from copy import deepcopy
 from queue import Queue, Empty
 from time import sleep
 
-from backend.trigger_html_util import getSources, get_actions_settings, getTriggerParams, set_source_channels, get_rules_settings
+from backend.trigger_html_util import get_sources_settings, get_actions_settings, getTriggerParams, set_source_channels, get_rules_settings
 from detector.action.action_process import exec_actions
-from detector.misc.globals import logger
+from detector.misc.globals import logger, ConnState
 from detector.misc.misc_util import group_triggerings, to_actions_triggerings, append_test_triggerings
 
 base_params = {
@@ -51,7 +51,7 @@ def worker(njsp):
 
         rules_settings = get_rules_settings()
 
-        sources = getSources()
+        sources = get_sources_settings()
         for station in sources:
             njsp_params = deepcopy(base_params)
             njsp_params['handshake']['client_name'] = station
@@ -71,9 +71,14 @@ def worker(njsp):
 
         triggers = construct_triggers(getTriggerParams())
 
+        check_time = UTCDateTime()
+        glob.CONN_STATE = ConnState.CONNECTING
         while not glob.restart:
+            cur_time = UTCDateTime()
             try:
                 packets_data = njsp_queue.get(timeout=1)
+                check_time = cur_time
+                glob.CONN_STATE = ConnState.CONNECTED
                 for conn_name, dev_packets in packets_data.items():
                     station = conn_name.split(':')[1]
                     for packet_type, content in dev_packets.items():
@@ -105,19 +110,24 @@ def worker(njsp):
                                     triggerings.extend(trigger.pick(starttime, data))
                 triggerings.sort()
                 # process triggerings and clear after that
-                for rule_id, rule_settings in rules_settings:
+                for rule_id, rule_settings in rules_settings.items():
                     rules_triggerings.extend(rule_picker(rule_id, triggerings,
-                                                         rule_settings['triggers'],
+                                                         rule_settings['triggers_ids'],
                                                          rule_settings['formula']))
                 rules_triggerings.sort()
+                # logger.debug(f'rules_triggerings:{rules_triggerings}')
                 to_actions_triggerings(rules_triggerings, rules_settings, actions_triggerings)
-                append_test_triggerings(actions_triggerings, glob.TEST_TRIGGERINGS)
                 actions_triggerings.sort()
                 group_triggerings(triggerings, glob.USER_TRIGGERINGS, glob.LAST_TRIGGERINGS)
                 group_triggerings(rules_triggerings, glob.URULES_TRIGGERINGS, glob.LAST_RTRIGGERINGS)
             except Empty:
-                pass
+                if cur_time > check_time + 10:
+                    glob.CONN_STATE = ConnState.NO_CONNECTION
             packets_q[:-glob.PBUF_SIZE] = []
+            if any(glob.TEST_TRIGGERINGS.values()):
+                logger.debug(f'test triggerings:{glob.TEST_TRIGGERINGS}')
+            append_test_triggerings(actions_triggerings, glob.TEST_TRIGGERINGS)
+            # logger.debug(f'actions triggerings:{actions_triggerings}')
             exec_actions(actions_triggerings, packets_q, njsp, sample_rates, counters,
                          pet_times, actions_settings, streamers)
             triggerings.clear()

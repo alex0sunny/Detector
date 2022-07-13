@@ -4,7 +4,7 @@ from threading import Thread
 
 import zmq
 
-from backend.trigger_html_util import getTriggerParams, getSources, get_actions_settings, get_rules_settings
+from backend.trigger_html_util import getTriggerParams, get_sources_settings, get_actions_settings, get_rules_settings
 #from backend.web_server import web_server
 from detector.action.action_process import main_action, sms_process
 from detector.action.relay_actions import turn
@@ -115,7 +115,7 @@ if __name__ == '__main__':
             del trigger_params['channel']
             triggers_params[station][channel].append(trigger_params)
             #kwargs_list.append({'target': trigger_picker, 'kwargs': trigger_params})
-        for station, conn_data in getSources().items():
+        for station, conn_data in get_sources_settings().items():
             kwargs = {'target': signal_receiver,
                       'kwargs': {'conn_str': 'tcp://' + conn_data['host'] + ':' + str(conn_data['port']),
                                  'station_bin': station.encode(),

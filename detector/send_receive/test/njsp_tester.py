@@ -10,8 +10,8 @@ from detector.send_receive.njsp.njsp import NJSP
 show_signal = True
 
 host = 'localhost'
-port = 10001
-station = 'ND01'
+port = 10011
+station = 'NDXX'
 sample_rate = init_packet = check_time = None
 
 logpath = None
@@ -38,6 +38,7 @@ njsp_params = {
 
 njsp_queue = Queue(100)
 reader1 = njsp.add_reader(host, port, 'TRIG', njsp_params, njsp_queue)
+print('reader:', reader1)
 # reader2 = njsp.add_reader('localhost', 10011, 'TRIG', njsp_params, njsp_queue)
 
 while not njsp.is_alive(reader1):
@@ -53,7 +54,7 @@ while True:
     try:
         packets_data = njsp_queue.get(timeout=1)
     except Empty:
-        logger.info('no data')
+        #logger.info('no data')
         continue
     for conn_name, dev_packets in packets_data.items():
         for packet_type, content in dev_packets.items():
@@ -80,7 +81,7 @@ while True:
                             st.plot(fig=figure)
                             pyplot.show()
                             pyplot.pause(.1)
-                logger.debug(f'stream content, streams:{list(content.keys())} sample_rate:{sample_rate}')
+                # logger.debug(f'stream content, streams:{list(content.keys())} sample_rate:{sample_rate}')
             if packet_type == 'parameters' and station in content['streams']:
                 for stream in list(content['streams'].keys()):
                     if stream != station:

@@ -73,6 +73,15 @@ class Subscription(Enum):
     confirm = bytes([8])
 
 
+class ConnState(Enum):
+    CONNECTING = 1
+    CONNECTED = 2
+    NO_CONNECTION = 3
+
+
+CONN_STATE = ConnState.CONNECTING
+
+
 class CustomThread(Thread):
 
     def get_id(self):

@@ -54,7 +54,7 @@ def get_rules_settings():
         for el in row[formula_col].iter():
             if 'selected' in el.attrib:
                 if 'trigger_id' in el.attrib:
-                    formula_list.append(el.attrib['trigger_id'])
+                    formula_list.append(int(el.attrib['trigger_id']))
                 else:
                     formula_list.append(el.text)
         rule_dic[rule_id]['formula'] = formula_list
@@ -66,7 +66,7 @@ def get_rules_settings():
     return rule_dic
 
 
-def getSources():
+def get_sources_settings():
     root = etree.parse(os.path.split(inspect.getfile(backend))[0] + '/sources.html')
     headers_dic = getHeaderDic(root)
     station_col = headers_dic['station']
