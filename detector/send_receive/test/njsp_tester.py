@@ -51,10 +51,11 @@ if show_signal:
     st = Stream()
 
 while True:
+    #logger.debug(f'qsize:{njsp_queue.qsize()}')
     try:
         packets_data = njsp_queue.get(timeout=1)
     except Empty:
-        #logger.info('no data')
+        logger.info('no data')
         continue
     for conn_name, dev_packets in packets_data.items():
         for packet_type, content in dev_packets.items():

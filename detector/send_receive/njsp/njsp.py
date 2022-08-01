@@ -153,12 +153,13 @@ class NJSP_READER(NJSP_HANDLE_BASE):
         self.logger.info("Reader created")
 
     async def find_local_streamer(self):
-        if self.ip != '127.0.0.1': return False
+        if self.ip != '127.0.0.1': return None
         local_streamer = None
         async with self.njsp.aio_lock:
             for streamer in self.njsp.handles.values():
                 if streamer.tp == NJSP.STREAMER and streamer.port == self.port:
                     return streamer
+        return None
 
     async def _internal_loop(self):
         reader, writer = await asyncio.open_connection(self.ip, self.port)
@@ -177,7 +178,11 @@ class NJSP_READER(NJSP_HANDLE_BASE):
         while True:
             packet = await self.read_packet(reader)
             self.queue.put_nowait({self.name: packet})
-            if 'abort' in packet: raise RuntimeError('Connection aborted by streamer')
+            if 'abort' in packet:
+                writer.close()
+                # await writer.wait_closed()
+                break
+                #raise RuntimeError('Connection aborted by streamer')
 
     async def _task_loop(self):
         self.last_state = "Disconnected"
@@ -188,7 +193,7 @@ class NJSP_READER(NJSP_HANDLE_BASE):
             local_streamer = await self.find_local_streamer()
 
             try:
-                if local_streamer is None or local_streamer is False:
+                if local_streamer == None:
                     await self._internal_loop()
                 else:
                     client = NJSP_LOCAL_CLIENT(self, local_streamer)
@@ -235,7 +240,6 @@ class NJSP_READER(NJSP_HANDLE_BASE):
 class NJSP_STREAMER_CLIENT(NJSP_HANDLE_BASE):
     def __init__(self, streamer, reader, writer):
         self.streamer, self.reader, self.writer = streamer, reader, writer
-        print(f'params:{writer.get_extra_info("peername")}')
         super().__init__(streamer.njsp, NJSP.CLIENT, *writer.get_extra_info('peername'), None)
 
     def write_nonblock(self, encoded_packet):
@@ -281,10 +285,22 @@ class NJSP_STREAMER_CLIENT(NJSP_HANDLE_BASE):
                     await asyncio.wait_for(self.writer.drain(), timeout=0.25)
         self.streamer.register_client(self)
         self.logger.info('Connected')
-        try:
-            await self.writer.wait_closed()
-        except BrokenPipeError:
-            self.logger.info("Socket closed: BrokenPipeError")
+
+        socket_closed = asyncio.create_task(self.writer.wait_closed())
+        streamer_closed = asyncio.create_task(self.streamer.closed.wait())
+
+        done, pending = await asyncio.wait([socket_closed, streamer_closed], return_when=asyncio.FIRST_COMPLETED)
+        if socket_closed in done: self.logger.info("Client connection closed")
+        if streamer_closed in done:
+            self.logger.info("Streamer closed, breaking connection")
+            abort_packet = self.encode_hdr_and_payload({'abort': 'Streamer closed'})
+            self.writer.write(abort_packet)
+            await self.writer.drain()
+            try:
+                await asyncio.wait_for(self.writer.wait_closed(), timeout=1.0)
+            except asyncio.TimeoutError:
+                self.logger.info("Timeout while waiting reader for closing socket")
+                self.writer.close()
 
 
 class NJSP_STREAMER(NJSP_HANDLE_BASE):
@@ -383,8 +399,7 @@ class NJSP:
     LOCAL_CLIENT = 'LO'
 
     def __init__(self, logger=logging.getLogger(), log_level=logging.INFO):
-        #self.logger = NJSP_LOGGER_ADAPTER(logger, {'prefix': 'NJSP'})
-        self.logger = logger
+        self.logger = NJSP_LOGGER_ADAPTER(logger, {'prefix': 'NJSP'})
         self.logger.setLevel(log_level)
         self.handles = dict()
         start_event = threading.Event()

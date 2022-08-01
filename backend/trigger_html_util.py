@@ -1,16 +1,11 @@
-import json
-
-from lxml import etree
 import inspect
 import os
 
-from lxml.etree import tostring
+from lxml import etree
 
 import backend
-import zmq
-
 from detector.filter_trigger.trigger_types import TriggerType
-from detector.misc.globals import logger, Subscription, ActionType
+from detector.misc.globals import ActionType
 
 
 def getHeaderDic(root):
@@ -155,34 +150,8 @@ def save_pprint(xml, file):
     tree.write(file)
 
 
-def clear_triggers(sockets_trigger, sockets_detrigger):
-    for socket_cur in list(sockets_trigger.values()) + list(sockets_detrigger.values()):
-        try:
-            while True:
-                socket_cur.recv(zmq.NOBLOCK)
-        except zmq.ZMQError:
-            pass
-
-
-def update_sockets(trigger_index, conn_str, context, sockets_trigger, subscription=Subscription.trigger.value):
-    logger.info('update sockets with ' + str(trigger_index))
-    socket_trigger = context.socket(zmq.SUB)
-    socket_trigger.connect(conn_str)
-    trigger_index_s = '%02d' % trigger_index
-    socket_trigger.setsockopt(zmq.SUBSCRIBE, subscription + trigger_index_s.encode())
-    sockets_trigger[trigger_index] = socket_trigger
-
-
 def save_triggers(post_data_str):
     save_pprint_trig(post_data_str, os.path.split(inspect.getfile(backend))[0] + '/triggers.html')
-
-
-def update_triggers_sockets(conn_str, context, sockets_trigger):
-    # clear_triggers(sockets_trigger, sockets_detrigger)
-    for trigger_param in getTriggerParams():
-        trigger_index = trigger_param['ind']
-        if trigger_index not in sockets_trigger:
-            update_sockets(trigger_index, conn_str, context, sockets_trigger)
 
 
 def save_sources(post_data_str):
@@ -195,56 +164,6 @@ def save_rules(post_data_str):
 
 def save_actions(post_data_str):
     save_pprint(post_data_str, os.path.split(inspect.getfile(backend))[0] + '/actions.html')
-
-
-def apply_sockets_rule(conn_str, context, sockets_rule):
-    # clear_triggers(sockets_rule, sockets_rule_off)
-    trigger_dic = {params['ind']: params['name'] for params in getTriggerParams()}
-    for rule_id in get_rules_settings().keys():
-        if rule_id not in sockets_rule:
-            update_sockets(rule_id, conn_str, context, sockets_rule, Subscription.rule.value)
-
-
-def post_triggers(json_triggers, sockets_trigger, last_trigs=None):
-    triggers = {int(k): v for k, v in json_triggers.items()}
-    for i in triggers:
-        if last_trigs and i in last_trigs:
-            triggers[i] = last_trigs[i]
-            continue
-        if i in sockets_trigger:
-            socket_trigger = sockets_trigger[i]
-            try:
-                mes = socket_trigger.recv(zmq.NOBLOCK)
-                triggers[i] = int(mes[3:4])
-            except zmq.ZMQError:
-                pass
-        else:
-            #logger.warning('i ' + str(i) + ' not in triggers')
-            pass
-    return {'triggers': triggers}
-
-
-def update_rules(json_rules, sockets_rule, last_triggerings=None):
-    # logger.debug('json_rules:' + str(json_rules))
-    rules = {int(k): v for k, v in json_rules.items()}
-    # logger.debug('post_data_str:' + post_data_str + '\ntriggers dic:' + str(triggers) + '\ntriggers keys:' +
-    #              str(triggers.keys()))
-    # logger.debug('rules:' + str(rules) + ' n of rule sockets:' + str(len(sockets_rule)))
-    for i in rules:
-        if last_triggerings and i in last_triggerings:
-            rules[i] = last_triggerings[i]
-            continue
-        if i in sockets_rule:
-            socket_rule = sockets_rule[i]
-            try:
-                mes = socket_rule.recv(zmq.NOBLOCK)
-                rules[i] = int(mes[3:4])
-            except zmq.ZMQError:
-                pass
-        else:
-            logger.warning('i ' + str(i) + ' not in rules')
-
-    return rules
 
 
 # print(str(getTriggerParams()))

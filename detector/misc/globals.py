@@ -9,8 +9,6 @@ from threading import Thread
 import logging
 from time import sleep
 
-import zmq
-
 import os
 
 if os.name == 'nt':
@@ -112,9 +110,6 @@ class CustomThread(Thread):
             sleep(.1)
             logger.info('raise Exception')
             self.raise_exception(Exception)
-            sleep(.1)
-            logger.info('raise ZMQError')
-            self.raise_exception(zmq.ZMQError)
             sleep(.1)
         self.join()
 

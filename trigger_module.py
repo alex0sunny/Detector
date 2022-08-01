@@ -190,7 +190,12 @@ class MAIN_MODULE_CLASS(COMMON_MAIN_MODULE_CLASS):
             check_time = UTCDateTime()
             glob.CONN_STATE = ConnState.CONNECTING
             while not glob.restart and not self.shutdown_event.is_set():
-                self.message = glob.CONN_STATE.name.lower()
+                if glob.CONN_STATE != ConnState.CONNECTED:
+                    self.message = glob.CONN_STATE.name.lower()
+                elif any(glob.LAST_RTRIGGERINGS.values()):
+                    self.message = 'TRIGGERED'
+                else:
+                    self.message = 'running'
                 cur_time = UTCDateTime()
                 try:
                     packets_data = njsp_queue.get(timeout=1)

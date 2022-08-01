@@ -1,6 +1,13 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
-<html><head><title>triggers table</title></head><body wfd-invisible="true">
-		<table style="width: 100%" id="triggerTable"><tbody><tr><th align="left">del</th>
+<html>
+	<head>
+		<title>triggers table</title>
+	</head>
+	<body wfd-invisible="true">
+		<table style="width: 100%" id="triggerTable">
+			<tbody>
+				<tr>
+					<th align="left">del</th>
 					<th style="display: none;" wfd-invisible="true" align="left">ind</th>
 					<th align="left">name</th>
 					<th align="left">station</th>
@@ -14,119 +21,231 @@
 					<th align="left">freqmin</th>
 					<th align="left">freqmax</th>
 					<th align="left">val</th>
-				</tr><tr><td>
+				</tr>
+				<tr>
+					<td>
 						<button type="button" style="color: red;" onclick="removeTrigger(this.parentNode.parentNode)">X</button>
 					</td>
 					<td style="display: none;" wfd-invisible="true">1</td>
 					<td>
-						<input value="rmsY1" size="6"/></td>
+						<input value="rmsY1" size="6"/>
+					</td>
 					<td>
-						<select onchange="stationChange(this)"><option>NDXX</option><option selected="selected">NDYY</option></select></td>
+						<select onchange="stationChange(this)">
+							<option>NDXX</option>
+							<option selected="selected">NDYY</option>
+						</select>
+					</td>
 					<td>
-						<select><option selected="selected">CHN</option><option>CHZ</option><option>CHX</option></select></td>
+						<select>
+							<option selected="selected">CHN</option>
+							<option>CHZ</option>
+							<option>CHX</option>
+						</select>
+					</td>
 					<td>
-						<select onchange="setUnits(this.parentNode.parentNode)"><option>sta_lta</option><option selected="selected">RMS</option><option>level</option></select></td>
+						<select onchange="setUnits(this.parentNode.parentNode)">
+							<option>sta_lta</option>
+							<option selected="selected">RMS</option>
+							<option>level</option>
+						</select>
+					</td>
 					<td>
-						<input type="numeric" value="1" size="2" style="text-align: right; display: inline;"/></td>
+						<input type="numeric" value="1" size="2" style="text-align: right; display: inline;"/>
+					</td>
 					<td contenteditable="true">
-						<input type="numeric" value="3" size="2" style="text-align: right; display: none;" wfd-invisible="true"/></td>
+						<input type="numeric" value="3" size="2" style="text-align: right; display: none;" wfd-invisible="true"/>
+					</td>
 					<td>
-						<input type="numeric" value="0.41" size="5" style="text-align: right;"/><output>V</output></td>
+						<input type="numeric" value="0.41" size="5" style="text-align: right;"/>
+						<output>V</output>
+					</td>
 					<td>
-						<input type="numeric" value="0.39" size="5" style="text-align: right;"/><output>V</output></td>
+						<input type="numeric" value="0.39" size="5" style="text-align: right;"/>
+						<output>V</output>
+					</td>
 					<td>
-						<input type="checkbox" onchange="setFrequencesVisibility(this.parentNode.parentNode)"/></td>
+						<input type="checkbox" onchange="setFrequencesVisibility(this.parentNode.parentNode)"/>
+					</td>
 					<td>
-						<input type="numeric" value="100" size="2" style="text-align: right; display: none;" wfd-invisible="true"/></td>
+						<input type="numeric" value="100" size="2" style="text-align: right; display: none;" wfd-invisible="true"/>
+					</td>
 					<td>
-						<input type="numeric" value="300" size="2" style="text-align: right; display: none;" wfd-invisible="true"/></td>
+						<input type="numeric" value="300" size="2" style="text-align: right; display: none;" wfd-invisible="true"/>
+					</td>
 					<td>
-						<img src="img\circle-gray.jpg"/></td>
-				</tr><tr><td>
+						<img src="img\circle-gray.jpg"/>
+					</td>
+				</tr>
+				<tr>
+					<td>
 						<button type="button" style="color: red;" onclick="removeTrigger(this.parentNode.parentNode)">X</button>
 					</td>
 					<td style="display: none;" wfd-invisible="true">2</td>
 					<td>
-						<input value="sltaX1" size="6"/></td>
+						<input value="sltaX1" size="6"/>
+					</td>
 					<td>
-						<select onchange="stationChange(this)"><option selected="selected">NDXX</option><option>NDYY</option></select></td>
+						<select onchange="stationChange(this)">
+							<option selected="selected">NDXX</option>
+							<option>NDYY</option>
+						</select>
+					</td>
 					<td>
-						<select><option>CHN</option><option>CHZ</option><option selected="selected">CHE</option></select></td>
+						<select>
+							<option>CHN</option>
+							<option>CHZ</option>
+							<option selected="selected">CHE</option>
+						</select>
+					</td>
 					<td>
-						<select onchange="setUnits(this.parentNode.parentNode)"><option selected="selected">sta_lta</option><option>RMS</option><option>level</option></select></td>
+						<select onchange="setUnits(this.parentNode.parentNode)">
+							<option selected="selected">sta_lta</option>
+							<option>RMS</option>
+							<option>level</option>
+						</select>
+					</td>
 					<td>
-						<input type="numeric" value="1" size="2" style="text-align: right; display: inline;"/></td>
+						<input type="numeric" value="1" size="2" style="text-align: right; display: inline;"/>
+					</td>
 					<td contenteditable="true">
-						<input type="numeric" value="3" size="2" style="text-align: right; display: inline;" wfd-invisible="true"/></td>
+						<input type="numeric" value="3" size="2" style="text-align: right; display: inline;" wfd-invisible="true"/>
+					</td>
 					<td>
-						<input type="numeric" value="2" size="5" style="text-align: right;"/><output/></td>
+						<input type="numeric" value="2" size="5" style="text-align: right;"/>
+						<output/>
+					</td>
 					<td>
-						<input type="numeric" value="1" size="5" style="text-align: right;"/><output/></td>
+						<input type="numeric" value="1" size="5" style="text-align: right;"/>
+						<output/>
+					</td>
 					<td>
-						<input type="checkbox" onchange="setFrequencesVisibility(this.parentNode.parentNode)" checked="checked"/></td>
+						<input type="checkbox" onchange="setFrequencesVisibility(this.parentNode.parentNode)" checked="checked"/>
+					</td>
 					<td>
-						<input type="numeric" value="100" size="2" style="text-align: right; display: inline;" wfd-invisible="true"/></td>
+						<input type="numeric" value="100" size="2" style="text-align: right; display: inline;" wfd-invisible="true"/>
+					</td>
 					<td>
-						<input type="numeric" value="300" size="2" style="text-align: right; display: inline;" wfd-invisible="true"/></td>
+						<input type="numeric" value="300" size="2" style="text-align: right; display: inline;" wfd-invisible="true"/>
+					</td>
 					<td>
-						<img src="img\circle-green.jpg"/></td>
-				</tr><tr><td>
+						<img src="img\circle-green.jpg"/>
+					</td>
+				</tr>
+				<tr>
+					<td>
 						<button type="button" style="color: red;" onclick="removeTrigger(this.parentNode.parentNode)">X</button>
 					</td>
 					<td style="display: none;" wfd-invisible="true">3</td>
 					<td>
-						<input value="rms40" size="6"/></td>
+						<input value="rms40" size="6"/>
+					</td>
 					<td>
-						<select onchange="stationChange(this)"><option>NDXX</option><option selected="selected">NDYY</option></select></td>
+						<select onchange="stationChange(this)">
+							<option>NDXX</option>
+							<option selected="selected">NDYY</option>
+						</select>
+					</td>
 					<td>
-						<select><option selected="selected">CHN</option><option>CHZ</option><option>CHX</option><option>CHE</option></select></td>
+						<select>
+							<option selected="selected">CHN</option>
+							<option>CHZ</option>
+							<option>CHX</option>
+							<option>CHE</option>
+						</select>
+					</td>
 					<td>
-						<select onchange="setUnits(this.parentNode.parentNode)"><option>sta_lta</option><option selected="selected">RMS</option><option>level</option></select></td>
+						<select onchange="setUnits(this.parentNode.parentNode)">
+							<option>sta_lta</option>
+							<option selected="selected">RMS</option>
+							<option>level</option>
+						</select>
+					</td>
 					<td>
-						<input type="numeric" value="1" size="2" style="text-align: right; display: inline;"/></td>
+						<input type="numeric" value="1" size="2" style="text-align: right; display: inline;"/>
+					</td>
 					<td contenteditable="true">
-						<input type="numeric" value="3" size="2" style="text-align: right; display: none;" wfd-invisible="true"/></td>
+						<input type="numeric" value="3" size="2" style="text-align: right; display: none;" wfd-invisible="true"/>
+					</td>
 					<td>
-						<input type="numeric" value="0.40" size="5" style="text-align: right;"/><output>V</output></td>
+						<input type="numeric" value="0.40" size="5" style="text-align: right;"/>
+						<output>V</output>
+					</td>
 					<td>
-						<input type="numeric" value="0.40" size="5" style="text-align: right;"/><output>V</output></td>
+						<input type="numeric" value="0.40" size="5" style="text-align: right;"/>
+						<output>V</output>
+					</td>
 					<td>
-						<input type="checkbox" onchange="setFrequencesVisibility(this.parentNode.parentNode)"/></td>
+						<input type="checkbox" onchange="setFrequencesVisibility(this.parentNode.parentNode)"/>
+					</td>
 					<td>
-						<input type="numeric" value="100" size="2" style="text-align: right; display: none;" wfd-invisible="true"/></td>
+						<input type="numeric" value="100" size="2" style="text-align: right; display: none;" wfd-invisible="true"/>
+					</td>
 					<td>
-						<input type="numeric" value="300" size="2" style="text-align: right; display: none;" wfd-invisible="true"/></td>
+						<input type="numeric" value="300" size="2" style="text-align: right; display: none;" wfd-invisible="true"/>
+					</td>
 					<td>
-						<img src="img\circle-gray.jpg"/></td>
-				</tr><tr><td>
+						<img src="img\circle-gray.jpg"/>
+					</td>
+				</tr>
+				<tr>
+					<td>
 						<button type="button" style="color: red;" onclick="removeTrigger(this.parentNode.parentNode)">X</button>
 					</td>
 					<td style="display: none;" wfd-invisible="true">4</td>
 					<td>
-						<input value="rms38" size="6"/></td>
+						<input value="rms38" size="6"/>
+					</td>
 					<td>
-						<select onchange="stationChange(this)"><option>NDXX</option><option selected="selected">NDYY</option></select></td>
+						<select onchange="stationChange(this)">
+							<option>NDXX</option>
+							<option selected="selected">NDYY</option>
+						</select>
+					</td>
 					<td>
-						<select><option selected="selected">CHN</option><option>CHZ</option><option>CHX</option></select></td>
+						<select>
+							<option selected="selected">CHN</option>
+							<option>CHZ</option>
+							<option>CHX</option>
+						</select>
+					</td>
 					<td>
-						<select onchange="setUnits(this.parentNode.parentNode)"><option>sta_lta</option><option selected="selected">RMS</option><option>level</option></select></td>
+						<select onchange="setUnits(this.parentNode.parentNode)">
+							<option>sta_lta</option>
+							<option selected="selected">RMS</option>
+							<option>level</option>
+						</select>
+					</td>
 					<td>
-						<input type="numeric" value="1" size="2" style="text-align: right; display: inline;"/></td>
+						<input type="numeric" value="1" size="2" style="text-align: right; display: inline;"/>
+					</td>
 					<td contenteditable="true">
-						<input type="numeric" value="3" size="2" style="text-align: right; display: none;" wfd-invisible="true"/></td>
+						<input type="numeric" value="3" size="2" style="text-align: right; display: none;" wfd-invisible="true"/>
+					</td>
 					<td>
-						<input type="numeric" value="0.35" size="5" style="text-align: right;"/><output>V</output></td>
+						<input type="numeric" value="0.35" size="5" style="text-align: right;"/>
+						<output>V</output>
+					</td>
 					<td>
-						<input type="numeric" value="0.35" size="5" style="text-align: right;"/><output>V</output></td>
+						<input type="numeric" value="0.35" size="5" style="text-align: right;"/>
+						<output>V</output>
+					</td>
 					<td>
-						<input type="checkbox" onchange="setFrequencesVisibility(this.parentNode.parentNode)"/></td>
+						<input type="checkbox" onchange="setFrequencesVisibility(this.parentNode.parentNode)"/>
+					</td>
 					<td>
-						<input type="numeric" value="100" size="2" style="text-align: right; display: none;" wfd-invisible="true"/></td>
+						<input type="numeric" value="100" size="2" style="text-align: right; display: none;" wfd-invisible="true"/>
+					</td>
 					<td>
-						<input type="numeric" value="300" size="2" style="text-align: right; display: none;" wfd-invisible="true"/></td>
+						<input type="numeric" value="300" size="2" style="text-align: right; display: none;" wfd-invisible="true"/>
+					</td>
 					<td>
-						<img src="img\circle-gray.jpg"/></td>
-				</tr></tbody></table><p style="text-align: left;">
+						<img src="img\circle-gray.jpg"/>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<p style="text-align: left;">
 			<a href="index.html">main</a>
 			<a href="rules.html">rules</a>
 			<span style="float: right;">
@@ -138,4 +257,6 @@
 		</p>
 		<script src="triggers.js" wfd-invisible="true">
 
-		</script></body></html>
+		</script>
+	</body>
+</html>

@@ -20,7 +20,7 @@ from detector.misc.misc_util import group_triggerings, to_actions_triggerings, a
 
 base_params = {
     'reconnect': True,
-    'reconnect_period': 30,
+    'reconnect_period': 10,
     'bson': True,
     'handshake': {
         'subscriptions': ['status', 'log', 'streams', 'alarms'],
@@ -121,6 +121,7 @@ def worker(njsp):
                 group_triggerings(triggerings, glob.USER_TRIGGERINGS, glob.LAST_TRIGGERINGS)
                 group_triggerings(rules_triggerings, glob.URULES_TRIGGERINGS, glob.LAST_RTRIGGERINGS)
             except Empty:
+                logger.warning('no data')
                 if cur_time > check_time + 10:
                     glob.CONN_STATE = ConnState.NO_CONNECTION
             packets_q[:-glob.PBUF_SIZE] = []

@@ -1,19 +1,14 @@
 import json
 import logging
-from threading import Thread
-from time import sleep
-
+import os
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from os.path import curdir, sep
-import os
+from threading import Thread
+
 import detector.misc.globals as glob
-
-from obspy import UTCDateTime
-
-from backend.trigger_html_util import save_pprint_trig, getTriggerParams, save_triggers, update_sockets, post_triggers, \
-    save_sources, save_rules, update_rules, apply_sockets_rule, save_actions, \
-    update_triggers_sockets, get_actions_settings, get_rules_settings, get_sources_settings
-from detector.misc.globals import Port, Subscription, action_names_dic0, logger, CustomThread
+from backend.trigger_html_util import getTriggerParams, save_triggers, save_sources, save_rules, save_actions, \
+    get_actions_settings, get_sources_settings
+from detector.misc.globals import action_names_dic0, logger
 from detector.misc.misc_util import fill_out_triggerings
 from detector.send_receive.njsp.njsp import NJSP
 from main_prot import worker
