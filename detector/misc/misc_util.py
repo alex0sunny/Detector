@@ -1,11 +1,6 @@
 import time
-from collections import defaultdict
-from time import sleep
 
-import zmq
 from obspy import UTCDateTime
-
-from detector.misc.globals import Port, Subscription, logger
 
 
 def get_expr(formula_list, triggers_dic):
