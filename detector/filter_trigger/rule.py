@@ -1,6 +1,5 @@
 from time import sleep
 
-import zmq
 from obspy import UTCDateTime
 import detector.misc.globals as glob
 

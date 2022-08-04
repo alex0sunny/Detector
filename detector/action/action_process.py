@@ -52,7 +52,7 @@ def main_action(action_id, triggering, packets_q, pet_times, counters, pem, pet,
         pet_times[action_id] = 0
         if action_id != ActionType.send_SIGNAL.value:
             execute_action(action_id, 0, inverse, action_message, action_address)
-    if action_id == ActionType.send_SIGNAL.value and streamers: #and pet_times[action_id]:
+    if action_id == ActionType.send_SIGNAL.value and streamers and pet_times[action_id]:
         while packets_q:
             streams_packet = packets_q.pop(0)
             station, = streams_packet['streams'].keys()

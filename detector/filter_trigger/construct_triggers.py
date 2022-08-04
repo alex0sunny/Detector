@@ -1,8 +1,9 @@
 from detector.filter_trigger.StaLtaTrigger import TriggerWrapper
+from collections import defaultdict
 
 
 def construct_triggers(params_list):
-    triggers_objs_dic = {}
+    triggers_objs_dic = defaultdict(dict)
     for params_dic in params_list:
         station = params_dic['station']
         channel = params_dic['channel']
