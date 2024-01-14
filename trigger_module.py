@@ -11,12 +11,12 @@ import numpy as np
 from com_main_module import COMMON_MAIN_MODULE_CLASS
 from obspy import UTCDateTime
 
+sys.path.append(os.path.dirname(__file__))
+
 import detector.misc.globals as glob
 from detector.action.action_pipe import execute_action
 from detector.filter_trigger.construct_triggers import construct_triggers
 from main_prot import rename_packet
-
-sys.path.append(os.path.dirname(__file__))
 
 from backend.trigger_html_util import getTriggerParams, \
     save_triggers, save_sources, save_rules, save_actions, \
